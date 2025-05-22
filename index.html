@@ -41,6 +41,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', sans-serif;
+      line-height: 1.6; /* Ensure line height is defined */
       background: var(--primary-bg);
       color: var(--text-color);
       display: flex; flex-direction: column;
@@ -310,6 +311,52 @@
       text-align: center;
       border: 1px solid rgba(106, 13, 173, 0.2);
     }
+    .status-banner {
+        background-color: var(--light-grey);
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 0.95em;
+        text-align: center;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+    }
+    .status-banner.clocked-in {
+        background-color: var(--completed-bg);
+        border-color: var(--completed-border);
+        color: var(--boh-color);
+    }
+    .status-banner.clocked-out {
+        background-color: var(--incomplete-bg);
+        border-color: var(--incomplete-border);
+        color: var(--incomplete-border);
+    }
+    .status-banner button {
+        flex-shrink: 0; /* Prevent button from shrinking */
+        padding: 8px 15px;
+        font-size: 0.9em;
+        border-radius: 6px;
+        transition: background-color 0.2s ease;
+    }
+    .status-banner.clocked-in button {
+        background-color: var(--incomplete-border); /* Red-orange to clock out */
+        color: white;
+    }
+    .status-banner.clocked-in button:hover {
+        background-color: #e07b00;
+    }
+    .status-banner.clocked-out button {
+        background-color: var(--boh-color); /* Green to clock in */
+        color: white;
+    }
+    .status-banner.clocked-out button:hover {
+        background-color: #218838;
+    }
+
+
 
     /* Rota View */
     .rota-grid-container {
@@ -444,7 +491,7 @@
       text-align: right;
     }
 
-    .no-tasks {
+    .no-tasks, .no-data {
       text-align: center;
       padding: 20px;
       color: var(--dark-grey);
@@ -645,8 +692,8 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
-    /* Admin Assigned Items Lists */
-    #admin-assigned-tasks, #admin-assigned-shifts {
+    /* Admin Assigned Items Lists & Task Overview */
+    #admin-assigned-tasks, #admin-assigned-shifts, #admin-attendance-list, #admin-task-overview-list {
       list-style: none;
       padding: 0;
       max-height: 250px;
@@ -657,7 +704,7 @@
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    #admin-assigned-tasks li, #admin-assigned-shifts li {
+    #admin-assigned-tasks li, #admin-assigned-shifts li, #admin-attendance-list li, #admin-task-overview-list li {
       padding: 10px 15px;
       border-bottom: 1px solid var(--light-grey);
       display: flex;
@@ -667,14 +714,14 @@
       transition: background-color 0.2s ease;
     }
 
-    #admin-assigned-tasks li:last-child, #admin-assigned-shifts li:last-child {
+    #admin-assigned-tasks li:last-child, #admin-assigned-shifts li:last-child, #admin-attendance-list li:last-child, #admin-task-overview-list li:last-child {
       border-bottom: none;
     }
-    #admin-assigned-tasks li:hover, #admin-assigned-shifts li:hover {
+    #admin-assigned-tasks li:hover, #admin-assigned-shifts li:hover, #admin-attendance-list li:hover, #admin-task-overview-list li:hover {
       background-color: #f0f0f0;
     }
 
-    #admin-assigned-tasks li span, #admin-assigned-shifts li span {
+    #admin-assigned-tasks li span, #admin-assigned-shifts li span, #admin-attendance-list li span, #admin-task-overview-list li span {
       flex-grow: 1;
     }
 
@@ -701,6 +748,22 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
+    /* Specific styles for Task Overview list items */
+    .admin-task-overview-item.completed {
+        background-color: var(--completed-light-bg);
+        color: var(--boh-color);
+        border-left: 4px solid var(--completed-border);
+    }
+    .admin-task-overview-item.pending {
+        background-color: var(--light-grey);
+        color: var(--dark-grey);
+        border-left: 4px solid var(--dark-grey);
+    }
+    .admin-task-overview-item.overdue {
+        background-color: var(--incomplete-bg);
+        color: var(--incomplete-border);
+        border-left: 4px solid var(--incomplete-border);
+    }
 
     /* Footer */
     footer {
@@ -801,6 +864,10 @@
         <main>
             <!-- My Tasks View (default) -->
             <section id="my-tasks-view" class="active">
+                <div id="clock-status-banner" class="status-banner">
+                    <span id="clock-status-text">Loading clock status...</span>
+                    <button id="clock-in-out-btn">Toggle Clock</button>
+                </div>
                 <div class="info-banner">Your tasks for <span id="current-day-info">Today</span></div>
                 <ul id="task-list">
                     <li class="no-tasks">No tasks assigned for today.</li>
@@ -883,7 +950,7 @@
                         </div>
                     </div>
                     <ul id="admin-assigned-shifts">
-                        <li class="no-tasks">Select staff & date to view assigned shifts.</li>
+                        <li class="no-data">Select staff & date to view assigned shifts.</li>
                     </ul>
                 </div>
 
@@ -923,9 +990,45 @@
                         </div>
                     </div>
                     <ul id="admin-assigned-tasks">
-                        <li class="no-tasks">Select staff & date to view assigned tasks.</li>
+                        <li class="no-data">Select staff & date to view assigned tasks.</li>
                     </ul>
                 </div>
+
+                <div class="admin-section">
+                    <h3>Shift Attendance</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <div>
+                            <label for="attendance-date">Date:</label>
+                            <input type="date" id="attendance-date">
+                        </div>
+                    </div>
+                    <ul id="admin-attendance-list">
+                        <li class="no-data">Select date to view attendance.</li>
+                    </ul>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Task Overview</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <div>
+                            <label for="task-overview-date">Date:</label>
+                            <input type="date" id="task-overview-date">
+                        </div>
+                        <div>
+                            <label for="task-status-filter">Status:</label>
+                            <select id="task-status-filter">
+                                <option value="all">All</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                    </div>
+                    <ul id="admin-task-overview-list">
+                        <li class="no-data">Select date and filter to view tasks.</li>
+                    </ul>
+                </div>
+
             </section>
         </main>
 
@@ -953,6 +1056,10 @@
         const mainSections = document.querySelectorAll('main section');
 
         const myTasksView = document.getElementById('my-tasks-view');
+        const clockStatusBanner = document.getElementById('clock-status-banner'); // Clock status banner
+        const clockStatusText = document.getElementById('clock-status-text');     // Clock status text
+        const clockInOutBtn = document.getElementById('clock-in-out-btn');       // Clock in/out button
+
         const weeklyRotaView = document.getElementById('weekly-rota-view');
         const calendarView = document.getElementById('calendar-view');
         const adminView = document.getElementById('admin-view');
@@ -976,8 +1083,16 @@
         const taskDescriptionInput = document.getElementById('task-description');
 
         const viewTaskUserSelect = document.getElementById('view-task-user-select');
-        const viewTaskDateInput = document = document.getElementById('view-task-date');
+        const viewTaskDateInput = document.getElementById('view-task-date');
         const adminAssignedTasksList = document.getElementById('admin-assigned-tasks');
+
+        const attendanceDateInput = document.getElementById('attendance-date'); // New attendance date input
+        const adminAttendanceList = document.getElementById('admin-attendance-list'); // New attendance list
+
+        const taskOverviewDateInput = document.getElementById('task-overview-date'); // New task overview date input
+        const taskStatusFilter = document.getElementById('task-status-filter');     // New task status filter
+        const adminTaskOverviewList = document.getElementById('admin-task-overview-list'); // New task overview list
+
 
         const prevMonthBtn = document.getElementById('prev-month-btn');
         const nextMonthBtn = document.getElementById('next-month-btn');
@@ -991,6 +1106,7 @@
             ROTA: 'rota',
             DAILY_TASKS: 'dailyTasks',
             COMPLETED_TASKS: 'completedTasks',
+            CLOCK_INS: 'clockIns', // New key for clock-in/out data
             CURRENT_USER_NAME: 'currentUserName',
             CURRENT_USER_ROLE: 'currentUserRole',
             IS_ADMIN_MODE: 'isAdminMode',
@@ -1002,6 +1118,7 @@
         let rota = {};
         let dailyTasks = {};
         let completedTasks = {};
+        let clockIns = {}; // { 'YYYY-MM-DD': { 'Staff Name': { 'in': timestamp, 'out': timestamp | null } } }
         let currentUserName = '';
         let currentUserRole = '';
         let isAdminMode = false;
@@ -1044,6 +1161,15 @@
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const day = date.getDate().toString().padStart(2, '0');
             return `${year}-${month}-${day}`;
+        }
+
+        /**
+         * Formats a timestamp into a user-friendly time string.
+         * @param {number} timestamp - The timestamp.
+         * @returns {string} Formatted time string.
+         */
+        function formatTimestampToTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
         /**
@@ -1093,6 +1219,21 @@
         }
 
         /**
+         * Checks if a given date string is in the future relative to the current day (start of day).
+         * @param {string} dateString - The date string in 'YYYY-MM-DD' format.
+         * @returns {boolean} True if the date is in the future.
+         */
+        function isFutureDay(dateString) {
+            const checkDate = new Date(dateString);
+            const today = new Date();
+
+            checkDate.setHours(0, 0, 0, 0);
+            today.setHours(23, 59, 59, 999); // Compare against end of today
+
+            return checkDate > today;
+        }
+
+        /**
          * Gets a staff member object by name.
          * @param {string} name - The staff member's name.
          * @returns {object|undefined} The staff object or undefined.
@@ -1132,6 +1273,7 @@
             rota = loadData(LS_KEYS.ROTA) || {};
             dailyTasks = loadData(LS_KEYS.DAILY_TASKS) || {};
             completedTasks = loadData(LS_KEYS.COMPLETED_TASKS) || {};
+            clockIns = loadData(LS_KEYS.CLOCK_INS) || {}; // Initialize clock-in data
             currentUserName = loadData(LS_KEYS.CURRENT_USER_NAME) || '';
             currentUserRole = loadData(LS_KEYS.CURRENT_USER_ROLE) || '';
             isAdminMode = loadData(LS_KEYS.IS_ADMIN_MODE) || false;
@@ -1142,6 +1284,7 @@
             saveData(LS_KEYS.ROTA, rota);
             saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
             saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+            saveData(LS_KEYS.CLOCK_INS, clockIns);
             saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName);
             saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole);
             saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
@@ -1355,7 +1498,7 @@
         }
 
         /**
-         * Renders the current user's tasks for the current day.
+         * Renders the current user's tasks for the current day, and clock-in/out status.
          */
         function renderMyTasks() {
             taskList.innerHTML = '';
@@ -1369,6 +1512,30 @@
                 return;
             }
 
+            // --- Render Clock-in/out status ---
+            const userClockData = (clockIns[formattedToday] && clockIns[formattedToday][currentUserName]) || {};
+            let clockStatusMessage = '';
+            let clockButtonText = 'Clock In';
+            clockStatusBanner.classList.remove('clocked-in', 'clocked-out');
+
+            if (userClockData.in && !userClockData.out) {
+                clockStatusMessage = `You are clocked in since ${formatTimestampToTime(userClockData.in)}`;
+                clockButtonText = 'Clock Out';
+                clockStatusBanner.classList.add('clocked-in');
+            } else if (userClockData.in && userClockData.out) {
+                clockStatusMessage = `Clocked in: ${formatTimestampToTime(userClockData.in)}, Clocked out: ${formatTimestampToTime(userClockData.out)}`;
+                clockButtonText = 'Clock In'; // Allow re-clocking in for same day if needed
+                clockStatusBanner.classList.add('clocked-out');
+            } else {
+                clockStatusMessage = 'You are not clocked in for today.';
+                clockButtonText = 'Clock In';
+                clockStatusBanner.classList.add('clocked-out');
+            }
+            clockStatusText.textContent = clockStatusMessage;
+            clockInOutBtn.textContent = clockButtonText;
+
+
+            // --- Render Tasks ---
             const tasksForToday = (dailyTasks[formattedToday] && dailyTasks[formattedToday][currentUserName]) || [];
             const completedTasksForToday = (completedTasks[formattedToday] && completedTasks[formattedToday][currentUserName]) || {};
 
@@ -1401,7 +1568,7 @@
                 const timestampSpan = document.createElement('span');
                 timestampSpan.classList.add('timestamp');
                 if (isCompleted) {
-                    timestampSpan.textContent = new Date(isCompleted).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    timestampSpan.textContent = formatTimestampToTime(isCompleted);
                 }
 
                 li.appendChild(checkbox);
@@ -1410,6 +1577,42 @@
                 taskList.appendChild(li);
             });
         }
+
+        /**
+         * Handles the clock in/out toggle for the current user.
+         */
+        function toggleClockStatus() {
+            const today = new Date();
+            const formattedToday = getFormattedDate(today);
+            const now = Date.now();
+
+            clockIns[formattedToday] = clockIns[formattedToday] || {};
+            clockIns[formattedToday][currentUserName] = clockIns[formattedToday][currentUserName] || {};
+
+            const userClockData = clockIns[formattedToday][currentUserName];
+
+            if (!userClockData.in) {
+                // Clock In
+                userClockData.in = now;
+                userClockData.out = null; // Clear any old out time if re-clocking
+                alert(`${currentUserName} clocked in at ${formatTimestampToTime(now)}.`);
+            } else if (userClockData.in && !userClockData.out) {
+                // Clock Out
+                userClockData.out = now;
+                alert(`${currentUserName} clocked out at ${formatTimestampToTime(now)}.`);
+            } else if (userClockData.in && userClockData.out) {
+                // Already clocked out, re-clock in for a new shift that day
+                userClockData.in = now;
+                userClockData.out = null;
+                alert(`${currentUserName} re-clocked in at ${formatTimestampToTime(now)}.`);
+            }
+            saveData(LS_KEYS.CLOCK_INS, clockIns);
+            renderMyTasks(); // Re-render to update UI
+            if (isAdminMode) { // If admin panel is open, update attendance there too
+                renderAdminShiftAttendance();
+            }
+        }
+
 
         /**
          * Renders the calendar for the currentMonthYearDisplay date, applying role-based filtering.
@@ -1456,11 +1659,13 @@
 
                 const staffForDisplay = staffMembers.filter(staff => {
                     const staffRole = staff.role;
-                    // Apply current user's role restrictions
-                    if (currentUserRole === 'FOH') {
-                        if (staffRole === 'BOH') return false; // FOH cannot see BOH shifts
-                    } else if (currentUserRole === 'BOH') {
-                        if (staffRole === 'FOH') return false; // BOH cannot see FOH shifts
+                    // Apply current user's role restrictions for read-only access
+                    if (!isCurrentUserAdmin()) { // If not admin, filter roles
+                        if (currentUserRole === 'FOH') {
+                            if (staffRole === 'BOH') return false; // FOH cannot see BOH shifts
+                        } else if (currentUserRole === 'BOH') {
+                            if (staffRole === 'FOH') return false; // BOH cannot see FOH shifts
+                        }
                     }
                     // Admins see all staff roles by default.
 
@@ -1508,10 +1713,14 @@
             taskDateInput.value = formattedToday;
             viewShiftDateInput.value = formattedToday;
             viewTaskDateInput.value = formattedToday;
+            attendanceDateInput.value = formattedToday; // Set attendance date
+            taskOverviewDateInput.value = formattedToday; // Set task overview date
 
             // Trigger initial render of admin assigned lists
             renderAdminAssignedShifts();
             renderAdminAssignedTasks();
+            renderAdminShiftAttendance(); // Render attendance
+            renderAdminTaskOverview(); // Render task overview
         }
 
         /**
@@ -1523,7 +1732,7 @@
             const selectedDate = viewShiftDateInput.value;
 
             if (!selectedStaffName || !selectedDate) {
-                adminAssignedShiftsList.innerHTML = '<li class="no-tasks">Select staff & date to view assigned shifts.</li>';
+                adminAssignedShiftsList.innerHTML = '<li class="no-data">Select staff & date to view assigned shifts.</li>';
                 return;
             }
 
@@ -1531,7 +1740,7 @@
             const shift = dayRota[selectedStaffName];
 
             if (!shift) {
-                adminAssignedShiftsList.innerHTML = '<li class="no-tasks">No shift assigned for this day.</li>';
+                adminAssignedShiftsList.innerHTML = '<li class="no-data">No shift assigned for this day.</li>';
                 return;
             }
 
@@ -1552,14 +1761,14 @@
             const selectedDate = viewTaskDateInput.value;
 
             if (!selectedStaffName || !selectedDate) {
-                adminAssignedTasksList.innerHTML = '<li class="no-tasks">Select staff & date to view assigned tasks.</li>';
+                adminAssignedTasksList.innerHTML = '<li class="no-data">Select staff & date to view assigned tasks.</li>';
                 return;
             }
 
             const tasks = (dailyTasks[selectedDate] && dailyTasks[selectedDate][selectedStaffName]) || [];
 
             if (tasks.length === 0) {
-                adminAssignedTasksList.innerHTML = '<li class="no-tasks">No tasks assigned for this day.</li>';
+                adminAssignedTasksList.innerHTML = '<li class="no-data">No tasks assigned for this day.</li>';
                 return;
             }
 
@@ -1571,6 +1780,118 @@
                 `;
                 adminAssignedTasksList.appendChild(li);
             });
+        }
+
+        /**
+         * Renders the attendance list for a selected date in the admin view.
+         */
+        function renderAdminShiftAttendance() {
+            adminAttendanceList.innerHTML = '';
+            const selectedDate = attendanceDateInput.value;
+
+            if (!selectedDate) {
+                adminAttendanceList.innerHTML = '<li class="no-data">Select a date to view attendance.</li>';
+                return;
+            }
+
+            const dailyClockData = clockIns[selectedDate] || {};
+            let hasAttendance = false;
+
+            staffMembers.forEach(member => {
+                const clockData = dailyClockData[member.name];
+                const li = document.createElement('li');
+                let statusText = '';
+                if (clockData && clockData.in) {
+                    statusText = `Clocked In: ${formatTimestampToTime(clockData.in)}`;
+                    if (clockData.out) {
+                        statusText += `, Clocked Out: ${formatTimestampToTime(clockData.out)}`;
+                    } else {
+                        statusText += ` (Still Clocked In)`;
+                    }
+                    li.classList.add('admin-attendance-item', 'clocked-in'); // Add status class for styling
+                    hasAttendance = true;
+                } else {
+                    statusText = `Not Clocked In`;
+                    li.classList.add('admin-attendance-item', 'clocked-out'); // Add status class for styling
+                }
+                li.innerHTML = `<span>${member.name}: ${statusText}</span>`;
+                adminAttendanceList.appendChild(li);
+            });
+
+            if (!hasAttendance && staffMembers.length > 0) {
+                 adminAttendanceList.innerHTML = '<li class="no-data">No staff clocked in for this date.</li>';
+            } else if (staffMembers.length === 0) {
+                 adminAttendanceList.innerHTML = '<li class="no-data">No staff members defined.</li>';
+            }
+        }
+
+        /**
+         * Renders the task overview list based on selected date and status filter.
+         */
+        function renderAdminTaskOverview() {
+            adminTaskOverviewList.innerHTML = '';
+            const selectedDate = taskOverviewDateInput.value;
+            const filterStatus = taskStatusFilter.value;
+            const todayFormatted = getFormattedDate(new Date());
+
+            if (!selectedDate) {
+                adminTaskOverviewList.innerHTML = '<li class="no-data">Select a date to view tasks.</li>';
+                return;
+            }
+
+            const tasksForDate = dailyTasks[selectedDate] || {};
+            const completedForDate = completedTasks[selectedDate] || {};
+            let hasTasks = false;
+
+            staffMembers.forEach(member => {
+                const tasks = tasksForDate[member.name] || [];
+                const completed = completedForDate[member.name] || {};
+
+                tasks.forEach(task => {
+                    const isTaskCompleted = !!completed[task];
+                    let display = false;
+                    let statusClass = '';
+                    let statusLabel = '';
+
+                    if (isTaskCompleted) {
+                        statusClass = 'completed';
+                        statusLabel = 'Completed';
+                        if (filterStatus === 'all' || filterStatus === 'completed') {
+                            display = true;
+                        }
+                    } else {
+                        if (isPastEndOfDay(selectedDate)) {
+                            statusClass = 'overdue';
+                            statusLabel = 'Overdue';
+                            if (filterStatus === 'all' || filterStatus === 'overdue') {
+                                display = true;
+                            }
+                        } else {
+                            statusClass = 'pending';
+                            statusLabel = 'Pending';
+                            if (filterStatus === 'all' || filterStatus === 'pending') {
+                                display = true;
+                            }
+                        }
+                    }
+
+                    if (display) {
+                        hasTasks = true;
+                        const li = document.createElement('li');
+                        li.classList.add('admin-task-overview-item', statusClass);
+                        li.innerHTML = `
+                            <span>${member.name}: ${task} (${statusLabel})</span>
+                        `;
+                        adminTaskOverviewList.appendChild(li);
+                    }
+                });
+            });
+
+            if (!hasTasks && staffMembers.length > 0) {
+                adminTaskOverviewList.innerHTML = '<li class="no-data">No tasks found matching the filter for this date.</li>';
+            } else if (staffMembers.length === 0) {
+                adminTaskOverviewList.innerHTML = '<li class="no-data">No staff members defined.</li>';
+            }
         }
 
 
@@ -1635,6 +1956,9 @@
             }
             saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
             renderMyTasks();
+            if (isAdminMode) { // Update admin task overview if admin mode is active
+                renderAdminTaskOverview();
+            }
         }
 
         /**
@@ -1695,6 +2019,7 @@
                 saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
                 renderMyTasks();
                 renderAdminAssignedTasks();
+                renderAdminTaskOverview(); // Update admin task overview
                 alert(`Task '${task}' added for ${staff} on ${date}.`);
             } else {
                 alert('This task is already assigned for this staff member on this day.');
@@ -1730,6 +2055,7 @@
                             }
                             renderAdminAssignedTasks(); // Re-render admin task list
                             renderMyTasks(); // Re-render personal task list
+                            renderAdminTaskOverview(); // Update admin task overview
                             alert('Task deleted successfully.');
                         }
                     }
@@ -1785,6 +2111,7 @@
             // --- Event Listeners ---
             adminToggleButton.addEventListener('click', toggleAdminView);
             signOutButton.addEventListener('click', handleSignOut); // Event listener for sign out
+            clockInOutBtn.addEventListener('click', toggleClockStatus); // Event listener for clock in/out
 
             navButtons.forEach(button => {
                 button.addEventListener('click', handleNavButtonClick);
@@ -1804,6 +2131,18 @@
             viewTaskUserSelect.addEventListener('change', renderAdminAssignedTasks);
             viewTaskDateInput.addEventListener('change', renderAdminAssignedTasks);
             adminAssignedTasksList.addEventListener('click', handleDeleteAdminItem); // Event delegation for delete buttons
+
+            // Admin attendance and task overview listeners
+            attendanceDateInput.addEventListener('change', renderAdminShiftAttendance);
+            taskOverviewDateInput.addEventListener('change', renderAdminTaskOverview);
+            taskStatusFilter.addEventListener('change', renderAdminTaskOverview);
+            
+            // Initial render of admin attendance and task overview if admin view is active
+            if (isAdminMode) {
+                renderAdminShiftAttendance();
+                renderAdminTaskOverview();
+            }
+
 
             // Calendar controls
             prevMonthBtn.addEventListener('click', goToPrevMonth);
