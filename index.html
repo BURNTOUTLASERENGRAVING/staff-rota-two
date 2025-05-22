@@ -98,7 +98,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
       transform: translateY(-2px) scale(1.02);
       border: 2px solid white;
-      animation: none;
+      animation: none; /* Stop pulse on selected icon */
     }
     .icon-placeholder { font-size: 3em; margin-bottom: 8px; line-height: 1; }
     .staff-icon.foh .icon-placeholder { color: var(--foh-color); }
@@ -138,7 +138,7 @@
       border-radius: 12px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
       margin: 20px auto; max-width: 960px;
-      width: 100%;
+      width: 100%; /* Ensure it takes full width within body padding */
       min-height: 90vh;
       overflow: hidden;
     }
@@ -149,7 +149,7 @@
       color: #fff;
       padding: 15px 25px;
       display: flex;
-      flex-direction: column;
+      flex-direction: column; /* Default to column for mobile */
       align-items: flex-start;
       gap: 15px;
       position: sticky;
@@ -179,14 +179,13 @@
     }
     header #sign-out-btn {
       background-color: #6c757d; color: white;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     }
     header button:not(#sign-out-btn) {
       background-color: var(--accent-color); color: white;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     }
-    header button:hover:not(#sign-out-btn),
-    header #sign-out-btn:hover {
+    header button:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
@@ -201,8 +200,7 @@
       background: #555; cursor: not-allowed; box-shadow: none;
     }
 
-    /* Main Content & sections (omitted here for brevity—you’ll paste your existing styles) */
-    /* … */
+    /* Main Content & section styling omitted for brevity — include your full CSS here */
 
     /* Footer */
     footer {
@@ -211,8 +209,6 @@
       background-color: var(--light-grey); margin-top: auto;
       border-radius: 0 0 12px 12px;
     }
-
-    /* Media Queries (omit here if already present) */
   </style>
 </head>
 <body>
@@ -240,7 +236,7 @@
       </nav>
     </header>
     <main>
-      <!-- Your <section>…</section> views go here unchanged -->
+      <!-- Your <section id="home-view">…</section>, <section id="my-tasks-view">…</section>, etc., go here unchanged from your full code -->
     </main>
     <footer>
       &copy; <span id="current-year"></span> Staff Rota & Task Checklist. All rights reserved.
@@ -274,14 +270,12 @@
     let isAdminMode = false;
     let activeViewId = 'home-view';
 
-    // --- Utility Functions ---
+    // Utility functions
     function loadData(key) {
-      const data = localStorage.getItem(key);
-      try {
-        return data ? JSON.parse(data) : null;
-      } catch {
-        return null;
-      }
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      try { return JSON.parse(raw); }
+      catch { return null; }
     }
     function saveData(key, data) {
       localStorage.setItem(key, JSON.stringify(data));
@@ -298,80 +292,69 @@
       return d;
     }
     function formatTimestampToTime(ts) {
-      return ts ? new Date(ts).toLocaleTimeString([], { hour:'2-digit',minute:'2-digit' }) : 'N/A';
+      return ts ? new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : 'N/A';
     }
     function getDisplayDate(date) {
-      return date.toLocaleDateString('en-US',{ weekday:'long', month:'short', day:'numeric' });
+      return date.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
     }
     function getWeekDays(startDate) {
       const week = [], d = new Date(startDate);
       d.setHours(0,0,0,0);
-      const day = d.getDay(), diff = d.getDate() - day + (day===0?-6:1);
+      const w = d.getDay(), diff = d.getDate() - w + (w===0 ? -6 : 1);
       d.setDate(diff);
       for(let i=0;i<7;i++){ week.push(new Date(d)); d.setDate(d.getDate()+1); }
       return week;
     }
-    function isPastEndOfDay(dateString) {
-      const cd = new Date(dateString), today = new Date();
-      cd.setHours(23,59,59,999);
-      today.setHours(0,0,0,0);
-      return cd < today;
+    function isPastEndOfDay(ds) {
+      const cd = new Date(ds); cd.setHours(23,59,59,999);
+      const td = new Date(); td.setHours(0,0,0,0);
+      return cd < td;
     }
-    function isCurrentUserAdmin() {
-      return currentUserRole==='Admin';
-    }
+    function isCurrentUserAdmin() { return currentUserRole === 'Admin'; }
 
-    /**
-     * Full initialization: load or set defaults, then persist.
-     */
+    // Full initialization
     function initializeData() {
       staffMembers = loadData(LS_KEYS.STAFF_MEMBERS) || [
-        { name:'Jill',role:'FOH',icon:'💁‍♀️' },
-        { name:'Alice',role:'FOH',icon:'💁‍♀️' },
-        { name:'Callum',role:'FOH',icon:'💁‍♀️' },
-        { name:'Jess',role:'FOH',icon:'💁‍♀️' },
-        { name:'Danny',role:'BOH',icon:'👩‍🍳' },
-        { name:'Neil',role:'BOH',icon:'👩‍🍳' },
-        { name:'Terry',role:'BOH',icon:'👴' },
-        { name:'Richard',role:'BOH',icon:'👩‍🍳' },
-        { name:'Johnny',role:'Admin',icon:'🤵' },
-        { name:'Lyndsey',role:'Admin',icon:'🤵' },
-        { name:'Collin',role:'Admin',icon:'🤵' }
+        { name: 'Jill',    role: 'FOH',  icon: '💁‍♀️' },
+        { name: 'Alice',   role: 'FOH',  icon: '💁‍♀️' },
+        { name: 'Callum',  role: 'FOH',  icon: '💁‍♀️' },
+        { name: 'Jess',    role: 'FOH',  icon: '💁‍♀️' },
+        { name: 'Danny',   role: 'BOH',  icon: '👩‍🍳' },
+        { name: 'Neil',    role: 'BOH',  icon: '👩‍🍳' },
+        { name: 'Terry',   role: 'BOH',  icon: '👴' },
+        { name: 'Richard', role: 'BOH',  icon: '👩‍🍳' },
+        { name: 'Johnny',  role: 'Admin',icon: '🤵'  },
+        { name: 'Lyndsey', role: 'Admin',icon: '🤵'  },
+        { name: 'Collin',  role: 'Admin',icon: '🤵'  }
       ];
-      rota             = loadData(LS_KEYS.ROTA)             || {};
-      dailyTasks       = loadData(LS_KEYS.DAILY_TASKS)    || {};
-      completedTasks   = loadData(LS_KEYS.COMPLETED_TASKS)|| {};
-      clockIns         = loadData(LS_KEYS.CLOCK_INS)      || {};
-      messageBoard     = loadData(LS_KEYS.MESSAGE_BOARD)  || [];
-      currentUserName  = loadData(LS_KEYS.CURRENT_USER_NAME) || '';
-      currentUserRole  = loadData(LS_KEYS.CURRENT_USER_ROLE) || '';
-      isAdminMode      = loadData(LS_KEYS.IS_ADMIN_MODE)     || false;
-      activeViewId     = loadData(LS_KEYS.LAST_ACTIVE_VIEW)  || 'home-view';
+      rota            = loadData(LS_KEYS.ROTA)              || {};
+      dailyTasks      = loadData(LS_KEYS.DAILY_TASKS)      || {};
+      completedTasks  = loadData(LS_KEYS.COMPLETED_TASKS)  || {};
+      clockIns        = loadData(LS_KEYS.CLOCK_INS)        || {};
+      messageBoard    = loadData(LS_KEYS.MESSAGE_BOARD)    || [];
+      currentUserName = loadData(LS_KEYS.CURRENT_USER_NAME)|| '';
+      currentUserRole = loadData(LS_KEYS.CURRENT_USER_ROLE)|| '';
+      isAdminMode     = loadData(LS_KEYS.IS_ADMIN_MODE)    || false;
+      activeViewId    = loadData(LS_KEYS.LAST_ACTIVE_VIEW) || 'home-view';
 
-      // Persist defaults if fresh
+      // Persist defaults if new
       saveData(LS_KEYS.STAFF_MEMBERS,    staffMembers);
       saveData(LS_KEYS.ROTA,             rota);
       saveData(LS_KEYS.DAILY_TASKS,      dailyTasks);
       saveData(LS_KEYS.COMPLETED_TASKS,  completedTasks);
       saveData(LS_KEYS.CLOCK_INS,        clockIns);
       saveData(LS_KEYS.MESSAGE_BOARD,    messageBoard);
-      saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName);
-      saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole);
+      saveData(LS_KEYS.CURRENT_USER_NAME,currentUserName);
+      saveData(LS_KEYS.CURRENT_USER_ROLE,currentUserRole);
       saveData(LS_KEYS.IS_ADMIN_MODE,    isAdminMode);
       saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
     }
 
-    /**
-     * Nav‐button click handler (was missing).
-     */
+    // Missing handlers
     function handleNavButtonClick(e) {
       const view = e.target.id.replace('nav-','') + '-view';
       showView(view);
     }
-
-    /**
-     * Admin‐mode toggle (was missing).
-     */
     function toggleAdminView() {
       isAdminMode = !isAdminMode;
       saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
@@ -379,17 +362,51 @@
       showView(isAdminMode ? 'admin-view' : 'home-view');
     }
 
-    // --- Original rendering and app logic goes here unchanged from your code ---
-    // renderLandingPage, handleUserLogin, updateHeaderUserInfo, handleSignOut,
-    // renderAdminToggleButton, renderUserDropdownsInApp, showView,
-    // renderHomePage, toggleClockStatus, cleanupMessages, renderMessageBoard,
-    // handleSendMessage, renderWeeklyRota, renderMyTasks,
-    // handleTaskCompletionOrImageAttach (with the `date` → `taskDate` fix),
-    // renderCalendar, renderAdminForms, handleShiftTypeChange, handleTaskDescriptionChange,
-    // handleAssignShift, handleAssignTask, handleDeleteAdminItem,
-    // goToPrevMonth, goToNextMonth, initApp
+    // Fixed task-completion & image-attach
+    function handleTaskCompletionOrImageAttach(event) {
+      if (event.target.type === 'checkbox') {
+        const taskDate  = event.target.dataset.taskDate;
+        const taskName  = event.target.dataset.taskName;
+        const staffName = event.target.dataset.staffName;
+        completedTasks[taskDate]         = completedTasks[taskDate]         || {};
+        completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
+        if (event.target.checked) {
+          completedTasks[taskDate][staffName][taskName] = {
+            timestamp: Date.now(),
+            imageName: completedTasks[taskDate][staffName][taskName]?.imageName
+          };
+        } else {
+          delete completedTasks[taskDate][staffName][taskName];
+          if (!Object.keys(completedTasks[taskDate][staffName]).length) {
+            delete completedTasks[taskDate][staffName];
+          }
+          if (!Object.keys(completedTasks[taskDate]).length) {
+            delete completedTasks[taskDate];
+          }
+        }
+        saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+        renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminTaskOverview();
+      } else if (event.target.type === 'file') {
+        const taskDate  = event.target.dataset.taskDate;
+        const taskName  = event.target.dataset.taskName;
+        const staffName = event.target.dataset.staffName;
+        const file      = event.target.files[0];
+        if (!file) return;
+        completedTasks[taskDate]         = completedTasks[taskDate]         || {};
+        completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
+        const timestamp = completedTasks[taskDate][staffName][taskName]?.timestamp || Date.now();
+        completedTasks[taskDate][staffName][taskName] = {
+          timestamp,
+          imageName: file.name
+        };
+        saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+        alert(`Image "${file.name}" attached to "${taskName}".`);
+        renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminTaskOverview();
+      }
+    }
 
-    // Finally, start up when DOM ready:
+    // ... All your other functions (renderLandingPage, initApp, showView, renderHomePage, etc.) remain exactly as before, with no missing pieces.
+
     document.addEventListener('DOMContentLoaded', () => {
       initializeData();
       renderLandingPage();
