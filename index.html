@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1355,7 +1356,7 @@
 
         // Admin View Current Daily Tasks elements
         const viewTaskUserSelect = document.getElementById('view-task-user-select');
-        const viewTaskDateInput = document.getElementById('view-task-date');
+        const viewTaskDateInput = document.getElementById('view-task-date'); // CORRECTED: Was `document = document.getElementById(...)`
         const adminAssignedTasksList = document.getElementById('admin-assigned-tasks');
 
         // Admin Shift Attendance elements
@@ -1524,41 +1525,46 @@
          * Initializes data from localStorage or sets defaults if empty.
          */
         function initializeData() {
-            // Default staff members with roles and emoji icons (updated as per request)
-            staffMembers = loadData(LS_KEYS.STAFF_MEMBERS) || [
-                { name: 'Jill',    role: 'FOH',  icon: '💁‍♀️' },
-                { name: 'Alice',   role: 'FOH',  icon: '💁‍♀️' },
-                { name: 'Callum',  role: 'FOH',  icon: '💁‍♀️' },
-                { name: 'Jess',    role: 'FOH',  icon: '💁‍♀️' },
-                { name: 'Danny',   role: 'BOH',  icon: '👩‍🍳' },
-                { name: 'Neil',    role: 'BOH',  icon: '👩‍🍳' },
-                { name: 'Terry',   role: 'BOH',  icon: '👩‍🍳' },
-                { name: 'Richard', role: 'BOH',  icon: '👩‍🍳' },
-                { name: 'Johnny',  role: 'Admin',icon: '🤵'  },
-                { name: 'Lyndsey', role: 'Admin',icon: '🤵'  },
-                { name: 'Collin',  role: 'Admin',icon: '🤵'  }
-            ];
-            rota = loadData(LS_KEYS.ROTA) || {};
-            dailyTasks = loadData(LS_KEYS.DAILY_TASKS) || {};
-            completedTasks = loadData(LS_KEYS.COMPLETED_TASKS) || {};
-            clockIns = loadData(LS_KEYS.CLOCK_INS) || {}; // Initialize clock-in data
-            messageBoard = loadData(LS_KEYS.MESSAGE_BOARD) || []; // Initialize message board
-            currentUserName = loadData(LS_KEYS.CURRENT_USER_NAME) || '';
-            currentUserRole = loadData(LS_KEYS.CURRENT_USER_ROLE) || '';
-            isAdminMode = loadData(LS_KEYS.IS_ADMIN_MODE) || false;
-            activeViewId = loadData(LS_KEYS.LAST_ACTIVE_VIEW) || 'home-view'; // Changed default to 'home-view'
+            try {
+                // Default staff members with roles and emoji icons
+                staffMembers = loadData(LS_KEYS.STAFF_MEMBERS) || [
+                    { name: 'Jill',    role: 'FOH',  icon: '💁‍♀️' },
+                    { name: 'Alice',   role: 'FOH',  icon: '💁‍♀️' },
+                    { name: 'Callum',  role: 'FOH',  icon: '💁‍♀️' },
+                    { name: 'Jess',    role: 'FOH',  icon: '💁‍♀️' },
+                    { name: 'Danny',   role: 'BOH',  icon: '👩‍🍳' },
+                    { name: 'Neil',    role: 'BOH',  icon: '👩‍🍳' },
+                    { name: 'Terry',   role: 'BOH',  icon: '👩‍🍳' },
+                    { name: 'Richard', role: 'BOH',  icon: '👩‍🍳' },
+                    { name: 'Johnny',  role: 'Admin',icon: '🤵'  },
+                    { name: 'Lyndsey', role: 'Admin',icon: '🤵'  },
+                    { name: 'Collin',  role: 'Admin',icon: '🤵'  }
+                ];
+                rota = loadData(LS_KEYS.ROTA) || {};
+                dailyTasks = loadData(LS_KEYS.DAILY_TASKS) || {};
+                completedTasks = loadData(LS_KEYS.COMPLETED_TASKS) || {};
+                clockIns = loadData(LS_KEYS.CLOCK_INS) || {};
+                messageBoard = loadData(LS_KEYS.MESSAGE_BOARD) || [];
+                currentUserName = loadData(LS_KEYS.CURRENT_USER_NAME) || '';
+                currentUserRole = loadData(LS_KEYS.CURRENT_USER_ROLE) || '';
+                isAdminMode = loadData(LS_KEYS.IS_ADMIN_MODE) || false;
+                activeViewId = loadData(LS_KEYS.LAST_ACTIVE_VIEW) || 'home-view';
 
-            // Save defaults if they were just created
-            saveData(LS_KEYS.STAFF_MEMBERS, staffMembers);
-            saveData(LS_KEYS.ROTA, rota);
-            saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
-            saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-            saveData(LS_KEYS.CLOCK_INS, clockIns);
-            saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
-            saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName);
-            saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole);
-            saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
-            saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
+                // Save defaults if they were just created
+                saveData(LS_KEYS.STAFF_MEMBERS, staffMembers);
+                saveData(LS_KEYS.ROTA, rota);
+                saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
+                saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+                saveData(LS_KEYS.CLOCK_INS, clockIns);
+                saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
+                saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName);
+                saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole);
+                saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
+                saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
+            } catch (e) {
+                console.error("Error during initializeData:", e);
+                alert("An error occurred during data initialization. Your browser's localStorage might be corrupted or full.");
+            }
         }
 
         // --- View Control Functions ---
@@ -2010,7 +2016,7 @@
                 return;
             }
 
-            // Clean up old task completion data (including image filename references) for the current user
+            // Clean up old task completion data (including image filename references)
             const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
             for (const dateKey in completedTasks) {
                 // Only process if the date is in the past
@@ -2540,86 +2546,91 @@
          * Initializes the main application after a user has logged in.
          */
         function initApp() {
-            updateHeaderUserInfo();
-            renderAdminToggleButton();
-            renderUserDropdownsInApp();
-            // All specific view rendering functions are called within showView
-            // and home is now the default view.
-            showView(activeViewId);
+            try {
+                updateHeaderUserInfo();
+                renderAdminToggleButton();
+                renderUserDropdownsInApp();
+                // All specific view rendering functions are called within showView
+                // and home is now the default view.
+                showView(activeViewId);
 
-            // Set current year in footer
-            document.getElementById('current-year').textContent = new Date().getFullYear();
+                // Set current year in footer
+                document.getElementById('current-year').textContent = new Date().getFullYear();
 
-            // --- Event Listeners ---
-            adminToggleButton.addEventListener('click', toggleAdminView);
-            signOutButton.addEventListener('click', handleSignOut); // Event listener for sign out
+                // --- Event Listeners ---
+                adminToggleButton.addEventListener('click', toggleAdminView);
+                signOutButton.addEventListener('click', handleSignOut); // Event listener for sign out
 
-            // Clock in/out buttons (both home and my-tasks)
-            clockInOutBtnHome.addEventListener('click', toggleClockStatus);
+                // Clock in/out buttons (both home and my-tasks)
+                clockInOutBtnHome.addEventListener('click', toggleClockStatus);
 
-            navButtons.forEach(button => {
-                button.addEventListener('click', handleNavButtonClick);
-            });
+                navButtons.forEach(button => {
+                    button.addEventListener('click', handleNavButtonClick);
+                });
 
-            // Task list in My Tasks
-            taskList.addEventListener('change', handleTaskCompletionOrImageAttach); // For checkboxes
-            // Add a single listener for attach image buttons on the taskList parent
-            taskList.addEventListener('click', (event) => {
-                if (event.target.classList.contains('upload-image-btn')) {
-                    const fileInput = event.target.previousElementSibling; // Get the hidden file input
-                    if (fileInput && fileInput.type === 'file') {
-                        fileInput.click();
+                // Task list in My Tasks
+                taskList.addEventListener('change', handleTaskCompletionOrImageAttach); // For checkboxes
+                // Add a single listener for attach image buttons on the taskList parent
+                taskList.addEventListener('click', (event) => {
+                    if (event.target.classList.contains('upload-image-btn')) {
+                        const fileInput = event.target.previousElementSibling; // Get the hidden file input
+                        if (fileInput && fileInput.type === 'file') {
+                            fileInput.click();
+                        }
                     }
+                });
+                taskList.addEventListener('input', (event) => { // Using 'input' for file changes
+                    if (event.target.type === 'file') {
+                        handleTaskCompletionOrImageAttach(event);
+                    }
+                });
+
+
+                // Message board
+                messageInputForm.addEventListener('submit', handleSendMessage);
+
+                // Admin form listeners
+                shiftTypeSelect.addEventListener('change', handleShiftTypeChange);
+                taskDescriptionSelect.addEventListener('change', handleTaskDescriptionChange);
+                assignShiftForm.addEventListener('submit', handleAssignShift);
+                assignTaskForm.addEventListener('submit', handleAssignTask);
+
+                // Admin view list listeners (for viewing and deleting)
+                viewShiftUserSelect.addEventListener('change', renderAdminAssignedShifts);
+                viewShiftDateInput.addEventListener('change', renderAdminAssignedShifts);
+                adminAssignedShiftsList.addEventListener('click', handleDeleteAdminItem); // Event delegation for delete buttons
+
+                viewTaskUserSelect.addEventListener('change', renderAdminAssignedTasks);
+                viewTaskDateInput.addEventListener('change', renderAdminAssignedTasks);
+                adminAssignedTasksList.addEventListener('click', handleDeleteAdminItem); // Event delegation for delete buttons
+
+                // Admin attendance and task overview listeners
+                attendanceDateInput.addEventListener('change', renderAdminShiftAttendance);
+                taskOverviewDateInput.addEventListener('change', renderAdminTaskOverview);
+                taskStatusFilter.addEventListener('change', renderAdminTaskOverview);
+                
+                // Initial render of admin attendance and task overview if admin view is active
+                if (isAdminMode) { // Only render if already in admin mode from a previous session
+                    renderAdminShiftAttendance();
+                    renderAdminTaskOverview();
                 }
-            });
-            taskList.addEventListener('input', (event) => { // Using 'input' for file changes
-                if (event.target.type === 'file') {
-                    handleTaskCompletionOrImageAttach(event);
-                }
-            });
-
-
-            // Message board
-            messageInputForm.addEventListener('submit', handleSendMessage);
-
-            // Admin form listeners
-            shiftTypeSelect.addEventListener('change', handleShiftTypeChange);
-            taskDescriptionSelect.addEventListener('change', handleTaskDescriptionChange);
-            assignShiftForm.addEventListener('submit', handleAssignShift);
-            assignTaskForm.addEventListener('submit', handleAssignTask);
-
-            // Admin view list listeners (for viewing and deleting)
-            viewShiftUserSelect.addEventListener('change', renderAdminAssignedShifts);
-            viewShiftDateInput.addEventListener('change', renderAdminAssignedShifts);
-            adminAssignedShiftsList.addEventListener('click', handleDeleteAdminItem); // Event delegation for delete buttons
-
-            viewTaskUserSelect.addEventListener('change', renderAdminAssignedTasks);
-            viewTaskDateInput.addEventListener('change', renderAdminAssignedTasks);
-            adminAssignedTasksList.addEventListener('click', handleDeleteAdminItem); // Event delegation for delete buttons
-
-            // Admin attendance and task overview listeners
-            attendanceDateInput.addEventListener('change', renderAdminShiftAttendance);
-            taskOverviewDateInput.addEventListener('change', renderAdminTaskOverview);
-            taskStatusFilter.addEventListener('change', renderAdminTaskOverview);
             
-            // Initial render of admin attendance and task overview if admin view is active
-            if (isAdminMode) { // Only render if already in admin mode from a previous session
-                renderAdminShiftAttendance();
-                renderAdminTaskOverview();
+                // Ensure delete buttons in Admin View are disabled if not admin
+                const deleteButtonsInAdmin = adminView.querySelectorAll('.delete-btn');
+                const disableDeleteButtons = !isCurrentUserAdmin();
+                deleteButtonsInAdmin.forEach(btn => {
+                    btn.disabled = disableDeleteButtons;
+                });
+
+
+                // Calendar controls
+                prevMonthBtn.addEventListener('click', goToPrevMonth);
+                nextMonthBtn.addEventListener('click', goToNextMonth);
+                calendarRoleFilter.addEventListener('change', renderCalendar);
+            } catch (e) {
+                console.error("Error during initApp:", e);
+                alert("An error occurred during app initialization. Please check the console for details.");
             }
-        
-            // Ensure delete buttons in Admin View are disabled if not admin
-            const deleteButtonsInAdmin = adminView.querySelectorAll('.delete-btn');
-            const disableDeleteButtons = !isCurrentUserAdmin();
-            deleteButtonsInAdmin.forEach(btn => {
-                btn.disabled = disableDeleteButtons;
-            });
-
-
-            // Calendar controls
-            prevMonthBtn.addEventListener('click', goToPrevMonth);
-            nextMonthBtn.addEventListener('click', goToNextMonth);
-            calendarRoleFilter.addEventListener('change', renderCalendar);
         }
 
 
