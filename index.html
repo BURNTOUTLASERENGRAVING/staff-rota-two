@@ -117,7 +117,7 @@
       color: white;
     }
 
-    /* hide old login button */
+    /* Login button (hidden as per request) */
     #login-button { display: none; }
 
     /* Pulse animation */
@@ -200,7 +200,7 @@
       margin-right: 10px;
     }
 
-    header button, header #user-select {
+    header button {
       padding: 10px 15px;
       border: none;
       border-radius: 6px;
@@ -210,20 +210,25 @@
       white-space: nowrap;
     }
 
-    header #user-select { /* This was removed in previous iteration, ensuring no stray styles */
-      background-color: var(--secondary-bg);
-      color: var(--text-color);
-      border: 1px solid var(--border-color);
-      min-width: 120px;
+    header #sign-out-btn {
+      background-color: #6c757d; /* Grey for sign out */
+      color: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    }
+    header #sign-out-btn:hover {
+      background-color: #5a6268;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
 
-    header button {
+
+    header button:not(#sign-out-btn) { /* Apply accent styles to other buttons */
       background-color: var(--accent-color);
       color: white;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     }
 
-    header button:hover {
+    header button:not(#sign-out-btn):hover {
       background-color: var(--accent-hover);
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -784,6 +789,7 @@
             <div class="top-controls">
                 <span id="user-info"></span>
                 <button id="admin-toggle-btn">Admin Mode</button>
+                <button id="sign-out-btn">Sign Out</button>
             </div>
             <nav class="nav-buttons">
                 <button id="nav-my-tasks" class="active">My Tasks</button>
@@ -938,11 +944,11 @@
         // --- DOM Elements ---
         const landingPage = document.getElementById('landing-page');
         const staffIconsContainer = document.getElementById('staff-icons-container');
-        // const loginButton = document.getElementById('login-button'); // Removed as per request
         const appContainer = document.getElementById('app-container');
 
         const userInfoSpan = document.getElementById('user-info');
         const adminToggleButton = document.getElementById('admin-toggle-btn');
+        const signOutButton = document.getElementById('sign-out-btn'); // New sign-out button
         const navButtons = document.querySelectorAll('.nav-buttons button');
         const mainSections = document.querySelectorAll('main section');
 
@@ -962,7 +968,7 @@
 
         const viewShiftUserSelect = document.getElementById('view-shift-user-select');
         const viewShiftDateInput = document.getElementById('view-shift-date');
-        const adminAssignedShiftsList = document.getElementById('admin-assigned-shifts');
+        const adminAssignedShiftsList = document.getElementById('admin-assigned-shifts'); // New shifts list in admin
 
         const assignTaskForm = document.getElementById('assign-task-form');
         const taskUserSelect = document.getElementById('task-user-select');
@@ -970,7 +976,7 @@
         const taskDescriptionInput = document.getElementById('task-description');
 
         const viewTaskUserSelect = document.getElementById('view-task-user-select');
-        const viewTaskDateInput = document.getElementById('view-task-date');
+        const viewTaskDateInput = document = document.getElementById('view-task-date');
         const adminAssignedTasksList = document.getElementById('admin-assigned-tasks');
 
         const prevMonthBtn = document.getElementById('prev-month-btn');
@@ -1001,8 +1007,6 @@
         let isAdminMode = false;
         let currentCalendarDate = new Date(); // Tracks month/year for calendar view
         let activeViewId = 'my-tasks-view'; // Default active view in app
-
-        let selectedLandingUser = null; // Stores the selected staff icon element on landing page (kept for potential future selected effects, though direct login now)
 
         // --- Utility Functions ---
 
@@ -1187,8 +1191,7 @@
          */
         function renderLandingPage() {
             staffIconsContainer.innerHTML = '';
-            // selectedLandingUser = null; // No longer needed for logic after direct login
-            // loginButton.disabled = true; // No login button
+            // selectedLandingUser = null; // Not strictly necessary with direct login
 
             staffMembers.forEach(member => {
                 const iconDiv = document.createElement('div');
@@ -1236,6 +1239,26 @@
          */
         function updateHeaderUserInfo() {
             userInfoSpan.textContent = `${currentUserName} (${currentUserRole})`;
+        }
+
+        /**
+         * Handles user sign out.
+         */
+        function handleSignOut() {
+            // Clear current user data from localStorage
+            localStorage.removeItem(LS_KEYS.CURRENT_USER_NAME);
+            localStorage.removeItem(LS_KEYS.CURRENT_USER_ROLE);
+            localStorage.removeItem(LS_KEYS.IS_ADMIN_MODE); // Exit admin mode on sign out
+
+            // Reset current user state variables
+            currentUserName = '';
+            currentUserRole = '';
+            isAdminMode = false;
+
+            // Hide app container and show landing page
+            appContainer.style.display = 'none';
+            landingPage.style.display = 'flex';
+            renderLandingPage(); // Re-render staff icons for new login
         }
 
         /**
@@ -1433,25 +1456,19 @@
 
                 const staffForDisplay = staffMembers.filter(staff => {
                     const staffRole = staff.role;
-                    const isFOH = staffRole === 'FOH';
-                    const isBOH = staffRole === 'BOH';
-                    const isAdmin = staffRole === 'Admin';
-
                     // Apply current user's role restrictions
                     if (currentUserRole === 'FOH') {
-                        if (isBOH && filterRole !== 'all') return false; // FOH cannot see BOH shifts unless 'all' is selected (though UI filter controls this)
-                        if (isAdmin && filterRole === 'BOH') return false; // FOH should not see Admin if filtering BOH
+                        if (staffRole === 'BOH') return false; // FOH cannot see BOH shifts
                     } else if (currentUserRole === 'BOH') {
-                        if (isFOH && filterRole !== 'all') return false; // BOH cannot see FOH shifts unless 'all' is selected
-                        if (isAdmin && filterRole === 'FOH') return false; // BOH should not see Admin if filtering FOH
+                        if (staffRole === 'FOH') return false; // BOH cannot see FOH shifts
                     }
-                    // Admins see all staff roles by default, no restriction here based on currentUserRole
+                    // Admins see all staff roles by default.
 
-                    // Apply selected filter from dropdown for what roles are shown
+                    // Apply selected filter from dropdown
                     if (filterRole === 'all') {
-                        return true; // If 'all' is selected, show all roles not restricted by user's permission
+                        return true; // Show all roles allowed by user's permission
                     } else {
-                        return staffRole === filterRole; // Only show staff with the selected role
+                        return staffRole === filterRole; // Only show selected role
                     }
                 }).sort((a, b) => {
                     const roleOrder = { 'FOH': 1, 'BOH': 2, 'Admin': 3 };
@@ -1645,7 +1662,7 @@
             saveData(LS_KEYS.ROTA, rota);
             renderWeeklyRota();
             renderCalendar();
-            renderAdminAssignedShifts();
+            renderAdminAssignedShifts(); // Update admin shift list
             alert(`Shift '${shift}' assigned to ${staff} on ${date}.`);
             shiftTypeInput.value = '';
         }
@@ -1704,14 +1721,15 @@
                             if (Object.keys(dailyTasks[date]).length === 0) delete dailyTasks[date];
                             saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
 
+                            // Also remove from completed tasks if it was completed
                             if (completedTasks[date] && completedTasks[date][staffName] && completedTasks[date][staffName][taskToDelete]) {
                                 delete completedTasks[date][staffName][taskToDelete];
                                 if (Object.keys(completedTasks[date][staffName]).length === 0) delete completedTasks[date][staffName];
                                 if (Object.keys(completedTasks[date]).length === 0) delete completedTasks[date];
                                 saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
                             }
-                            renderAdminAssignedTasks();
-                            renderMyTasks();
+                            renderAdminAssignedTasks(); // Re-render admin task list
+                            renderMyTasks(); // Re-render personal task list
                             alert('Task deleted successfully.');
                         }
                     }
@@ -1721,9 +1739,9 @@
                             delete rota[date][staffName];
                             if (Object.keys(rota[date]).length === 0) delete rota[date];
                             saveData(LS_KEYS.ROTA, rota);
-                            renderAdminAssignedShifts();
-                            renderWeeklyRota();
-                            renderCalendar();
+                            renderAdminAssignedShifts(); // Re-render admin shift list
+                            renderWeeklyRota(); // Update weekly rota view
+                            renderCalendar(); // Update calendar view
                             alert('Shift deleted successfully.');
                         }
                     }
@@ -1766,6 +1784,7 @@
 
             // --- Event Listeners ---
             adminToggleButton.addEventListener('click', toggleAdminView);
+            signOutButton.addEventListener('click', handleSignOut); // Event listener for sign out
 
             navButtons.forEach(button => {
                 button.addEventListener('click', handleNavButtonClick);
