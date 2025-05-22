@@ -364,15 +364,21 @@
       padding-bottom: 10px;
     }
 
-    #weekly-rota-view .rota-grid {
+    #weekly-rota-view .rota-grid, #home-view .who-is-working-grid {
       display: grid;
-      grid-template-columns: repeat(7, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Responsive columns */
       gap: 12px;
-      min-width: 1000px;
+      min-width: 1000px; /* Ensure it's wide enough to scroll if necessary */
       text-align: center;
     }
 
-    .rota-day-column {
+    #home-view .who-is-working-grid {
+        min-width: unset; /* Don't force min-width for home grid */
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        margin-bottom: 20px;
+    }
+
+    .rota-day-column, .working-staff-column {
       background-color: var(--light-grey);
       border-radius: 8px;
       padding: 15px 10px;
@@ -384,6 +390,16 @@
       justify-content: flex-start;
     }
 
+    .working-staff-column {
+        padding: 10px 5px;
+    }
+    .working-staff-column strong {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--accent-color);
+        font-size: 1em;
+    }
+
     .rota-day-column strong {
       display: block;
       margin-bottom: 10px;
@@ -391,13 +407,13 @@
       font-size: 1em;
     }
 
-    .rota-day-column ul {
+    .rota-day-column ul, .working-staff-column ul {
       list-style: none;
       padding: 0;
       width: 100%;
     }
 
-    .rota-day-column li {
+    .rota-day-column li, .working-staff-column li {
       background-color: var(--secondary-bg);
       padding: 8px 5px;
       margin-bottom: 5px;
@@ -409,12 +425,12 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .rota-day-column li:last-child {
+    .rota-day-column li:last-child, .working-staff-column li:last-child {
       margin-bottom: 0;
     }
-    .rota-day-column li.foh { color: var(--foh-color); }
-    .rota-day-column li.boh { color: var(--boh-color); }
-    .rota-day-column li.admin { color: var(--admin-color); }
+    .rota-day-column li.foh, .working-staff-column li.foh { color: var(--foh-color); }
+    .rota-day-column li.boh, .working-staff-column li.boh { color: var(--boh-color); }
+    .rota-day-column li.admin, .working-staff-column li.admin { color: var(--admin-color); }
 
 
     /* My Tasks View */
@@ -441,6 +457,7 @@
       gap: 15px;
       transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
       box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      flex-wrap: wrap; /* Allow items to wrap */
     }
 
     .task-item:hover {
@@ -448,14 +465,43 @@
       box-shadow: 0 3px 8px rgba(0,0,0,0.1);
     }
 
+    .task-item-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
     .task-item input[type="checkbox"] {
-      margin-right: 10px;
+      margin-right: 0px; /* Adjust margin as it's now in a flex container */
       min-width: 24px;
       min-height: 24px;
       accent-color: var(--accent-color);
       cursor: pointer;
       transform: scale(1.1);
     }
+    .task-item .upload-image-btn {
+        background-color: var(--dark-grey);
+        color: white;
+        padding: 6px 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 0.8em;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .task-item .upload-image-btn:hover {
+        background-color: #555;
+    }
+
+    .task-item .attached-image-info {
+        font-size: 0.75em;
+        color: var(--dark-grey);
+        margin-left: 10px;
+        flex-basis: 100%; /* Take full width below other items */
+        text-align: right;
+    }
+
 
     .task-item.completed {
       background-color: var(--completed-bg);
@@ -501,6 +547,58 @@
       margin-top: 15px;
     }
 
+    /* Home View specific styles */
+    #home-view #my-tasks-for-home, #home-view #message-board {
+        margin-top: 20px; /* Space between sections */
+    }
+    #message-board .message-list {
+        list-style: none;
+        padding: 0;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background-color: var(--primary-bg);
+    }
+    .message-list li {
+        padding: 8px 15px;
+        border-bottom: 1px solid var(--light-grey);
+        font-size: 0.9em;
+    }
+    .message-list li:last-child { border-bottom: none; }
+    .message-list .message-sender { font-weight: bold; color: var(--accent-color); margin-right: 5px; }
+    .message-list .message-timestamp { font-size: 0.8em; color: var(--dark-grey); }
+    #message-input-form {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        align-items: center;
+    }
+    #message-input-form textarea {
+        flex-grow: 1;
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        min-height: 60px;
+        resize: vertical;
+        font-family: inherit;
+        font-size: 0.9em;
+        background-color: var(--primary-bg);
+    }
+    #message-input-form button {
+        padding: 10px 15px;
+        font-size: 0.9em;
+        border-radius: 6px;
+        background-color: var(--accent-color);
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    #message-input-form button:hover {
+        background-color: var(--accent-hover);
+    }
+
+
     /* Calendar View */
     #calendar-view .calendar-controls {
       display: flex;
@@ -533,6 +631,10 @@
       font-size: 0.9em;
       background-color: var(--primary-bg);
       color: var(--text-color);
+    }
+    #calendar-view .calendar-controls select:disabled {
+        background-color: #f0f0f0;
+        cursor: not-allowed;
     }
 
 
@@ -750,12 +852,12 @@
 
     /* Specific styles for Task Overview list items */
     .admin-task-overview-item.completed {
-        background-color: var(--completed-light-bg);
+        background-color: var(--completed-bg);
         color: var(--boh-color);
         border-left: 4px solid var(--completed-border);
     }
     .admin-task-overview-item.pending {
-        background-color: var(--light-grey);
+        background-color: var(--secondary-bg);
         color: var(--dark-grey);
         border-left: 4px solid var(--dark-grey);
     }
@@ -855,19 +957,62 @@
                 <button id="sign-out-btn">Sign Out</button>
             </div>
             <nav class="nav-buttons">
-                <button id="nav-my-tasks" class="active">My Tasks</button>
+                <button id="nav-home" class="active">Home</button> <!-- New Home button -->
+                <button id="nav-my-tasks">My Tasks</button>
                 <button id="nav-weekly-rota">Weekly Rota</button>
                 <button id="nav-calendar">Calendar View</button>
             </nav>
         </header>
 
         <main>
-            <!-- My Tasks View (default) -->
-            <section id="my-tasks-view" class="active">
-                <div id="clock-status-banner" class="status-banner">
-                    <span id="clock-status-text">Loading clock status...</span>
-                    <button id="clock-in-out-btn">Toggle Clock</button>
+            <!-- Home View (New Default Page) -->
+            <section id="home-view" class="active">
+                <div id="clock-status-banner-home" class="status-banner">
+                    <span id="clock-status-text-home">Loading clock status...</span>
+                    <button id="clock-in-out-btn-home">Toggle Clock</button>
                 </div>
+
+                <h2>Who's Working Today?</h2>
+                <div class="who-is-working-grid">
+                    <div class="working-staff-column">
+                        <strong>FOH</strong>
+                        <ul id="foh-working-list">
+                            <li class="no-data">No FOH staff working.</li>
+                        </ul>
+                    </div>
+                    <div class="working-staff-column">
+                        <strong>BOH</strong>
+                        <ul id="boh-working-list">
+                            <li class="no-data">No BOH staff working.</li>
+                        </ul>
+                    </div>
+                    <div class="working-staff-column">
+                        <strong>Admin</strong>
+                        <ul id="admin-working-list">
+                            <li class="no-data">No Admin staff working.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2 id="my-tasks-for-home">Your Tasks for Today</h2>
+                <ul id="home-task-list">
+                    <li class="no-tasks">No tasks assigned for today.</li>
+                </ul>
+
+                <h2 id="message-board">Message Board</h2>
+                <div class="message-list-container">
+                    <ul id="message-list">
+                        <li class="no-data">No messages yet.</li>
+                    </ul>
+                    <form id="message-input-form">
+                        <textarea id="message-text" placeholder="Write a message..." rows="3" required></textarea>
+                        <button type="submit">Send</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- My Tasks View -->
+            <section id="my-tasks-view">
                 <div class="info-banner">Your tasks for <span id="current-day-info">Today</span></div>
                 <ul id="task-list">
                     <li class="no-tasks">No tasks assigned for today.</li>
@@ -888,9 +1033,9 @@
             <section id="calendar-view">
                 <h2>Monthly Rota Calendar</h2>
                 <div class="calendar-controls">
-                    <button id="prev-month-btn">← Prev Month</button>
+                    <button id="prev-month-btn">&larr; Prev Month</button>
                     <h3 id="current-month-year"></h3>
-                    <button id="next-month-btn">Next Month →</button>
+                    <button id="next-month-btn">Next Month &rarr;</button>
                     <select id="calendar-role-filter">
                         <option value="all">All Staff</option>
                         <option value="FOH">Front of House</option>
@@ -928,8 +1073,23 @@
                             <input type="date" id="shift-date" required>
                         </div>
                         <div>
-                            <label for="shift-type">Shift Type:</label>
-                            <input type="text" id="shift-type" placeholder="e.g., Morning, Evening, Off" required>
+                            <label for="shift-type-select">Shift Type:</label>
+                            <select id="shift-type-select" required>
+                                <option value="">Select Shift</option>
+                                <option value="8AM-4PM">8AM-4PM</option>
+                                <option value="12PM-8PM">12PM-8PM</option>
+                                <option value="5PM-Close">5PM-Close</option>
+                                <option value="Off">Off</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div id="custom-shift-input-container" style="display: none;">
+                            <label for="custom-shift-type">Custom Shift:</label>
+                            <input type="text" id="custom-shift-type" placeholder="e.g., 9AM-5PM">
+                        </div>
+                        <div>
+                            <label for="shift-repeat-days">Repeat for (days):</label>
+                            <input type="number" id="shift-repeat-days" value="1" min="1" max="7">
                         </div>
                         <button type="submit">Assign Shift</button>
                     </form>
@@ -968,8 +1128,25 @@
                             <input type="date" id="task-date" required>
                         </div>
                         <div>
-                            <label for="task-description">Task Description:</label>
-                            <input type="text" id="task-description" placeholder="e.g., Clean coffee machine" required>
+                            <label for="task-description-select">Task Description:</label>
+                            <select id="task-description-select" required>
+                                <option value="">Select Task</option>
+                                <option value="Slicing Lemons">Slicing Lemons</option>
+                                <option value="Rolling Silverware">Rolling Silverware</option>
+                                <option value="Polishing Glasses">Polishing Glasses</option>
+                                <option value="Cleaning Beer Lines">Cleaning Beer Lines</option>
+                                <option value="Cleaning Fridge Seals">Cleaning Fridge Seals</option>
+                                <option value="Cleaning Glasswash">Cleaning Glasswash</option>
+                                <option value="Custom Task">Custom Task</option>
+                            </select>
+                        </div>
+                        <div id="custom-task-input-container" style="display: none;">
+                            <label for="custom-task-description">Custom Task:</label>
+                            <input type="text" id="custom-task-description" placeholder="e.g., Organize storage room">
+                        </div>
+                        <div>
+                            <label for="task-repeat-days">Repeat for (days):</label>
+                            <input type="number" id="task-repeat-days" value="1" min="1" max="7">
                         </div>
                         <button type="submit">Add Task</button>
                     </form>
@@ -1033,7 +1210,7 @@
         </main>
 
         <footer>
-            <p>© <span id="current-year"></span> Staff Rota & Task Checklist. All rights reserved.</p>
+            <p>&copy; <span id="current-year"></span> Staff Rota & Task Checklist. All rights reserved.</p>
         </footer>
     </div>
 
@@ -1055,50 +1232,76 @@
         const navButtons = document.querySelectorAll('.nav-buttons button');
         const mainSections = document.querySelectorAll('main section');
 
+        // Home View elements
+        const homeView = document.getElementById('home-view'); // New Home View
+        const clockStatusBannerHome = document.getElementById('clock-status-banner-home');
+        const clockStatusTextHome = document.getElementById('clock-status-text-home');
+        const clockInOutBtnHome = document.getElementById('clock-in-out-btn-home');
+        const fohWorkingList = document.getElementById('foh-working-list');
+        const bohWorkingList = document.getElementById('boh-working-list');
+        const adminWorkingList = document.getElementById('admin-working-list');
+        const homeTaskList = document.getElementById('home-task-list'); // Tasks list on home page
+        const messageList = document.getElementById('message-list');
+        const messageInputForm = document.getElementById('message-input-form');
+        const messageTextarea = document.getElementById('message-text');
+
+        // My Tasks View elements
         const myTasksView = document.getElementById('my-tasks-view');
-        const clockStatusBanner = document.getElementById('clock-status-banner'); // Clock status banner
-        const clockStatusText = document.getElementById('clock-status-text');     // Clock status text
-        const clockInOutBtn = document.getElementById('clock-in-out-btn');       // Clock in/out button
-
-        const weeklyRotaView = document.getElementById('weekly-rota-view');
-        const calendarView = document.getElementById('calendar-view');
-        const adminView = document.getElementById('admin-view');
-
-        const rotaGrid = document.querySelector('#weekly-rota-view .rota-grid');
         const currentDayInfo = document.getElementById('current-day-info');
         const taskList = document.getElementById('task-list');
 
-        const assignShiftForm = document.getElementById('assign-shift-form');
-        const shiftUserSelect = document.getElementById('shift-user-select');
-        const shiftDateInput = document.getElementById('shift-date');
-        const shiftTypeInput = document.getElementById('shift-type');
+        // Weekly Rota View elements
+        const weeklyRotaView = document.getElementById('weekly-rota-view');
+        const rotaGrid = document.querySelector('#weekly-rota-view .rota-grid');
 
-        const viewShiftUserSelect = document.getElementById('view-shift-user-select');
-        const viewShiftDateInput = document.getElementById('view-shift-date');
-        const adminAssignedShiftsList = document.getElementById('admin-assigned-shifts'); // New shifts list in admin
-
-        const assignTaskForm = document.getElementById('assign-task-form');
-        const taskUserSelect = document.getElementById('task-user-select');
-        const taskDateInput = document.getElementById('task-date');
-        const taskDescriptionInput = document.getElementById('task-description');
-
-        const viewTaskUserSelect = document.getElementById('view-task-user-select');
-        const viewTaskDateInput = document.getElementById('view-task-date');
-        const adminAssignedTasksList = document.getElementById('admin-assigned-tasks');
-
-        const attendanceDateInput = document.getElementById('attendance-date'); // New attendance date input
-        const adminAttendanceList = document.getElementById('admin-attendance-list'); // New attendance list
-
-        const taskOverviewDateInput = document.getElementById('task-overview-date'); // New task overview date input
-        const taskStatusFilter = document.getElementById('task-status-filter');     // New task status filter
-        const adminTaskOverviewList = document.getElementById('admin-task-overview-list'); // New task overview list
-
-
+        // Calendar View elements
+        const calendarView = document.getElementById('calendar-view');
         const prevMonthBtn = document.getElementById('prev-month-btn');
         const nextMonthBtn = document.getElementById('next-month-btn');
         const currentMonthYearDisplay = document.getElementById('current-month-year');
         const calendarGrid = document.querySelector('#calendar-view .calendar-grid');
         const calendarRoleFilter = document.getElementById('calendar-role-filter');
+
+        // Admin View elements
+        const adminView = document.getElementById('admin-view');
+
+        // Admin Assign Shift elements
+        const assignShiftForm = document.getElementById('assign-shift-form');
+        const shiftUserSelect = document.getElementById('shift-user-select');
+        const shiftDateInput = document.getElementById('shift-date');
+        const shiftTypeSelect = document.getElementById('shift-type-select'); // Changed to select
+        const customShiftInputContainer = document.getElementById('custom-shift-input-container'); // Container for custom shift
+        const customShiftTypeInput = document.getElementById('custom-shift-type'); // Custom shift input
+        const shiftRepeatDaysInput = document.getElementById('shift-repeat-days'); // Repeat days for shift
+
+        // Admin View Assigned Shifts elements
+        const viewShiftUserSelect = document.getElementById('view-shift-user-select');
+        const viewShiftDateInput = document.getElementById('view-shift-date');
+        const adminAssignedShiftsList = document.getElementById('admin-assigned-shifts');
+
+        // Admin Assign Task elements
+        const assignTaskForm = document.getElementById('assign-task-form');
+        const taskUserSelect = document.getElementById('task-user-select');
+        const taskDateInput = document.getElementById('task-date');
+        const taskDescriptionSelect = document.getElementById('task-description-select'); // Changed to select
+        const customTaskInputContainer = document.getElementById('custom-task-input-container'); // Container for custom task
+        const customTaskDescriptionInput = document.getElementById('custom-task-description'); // Custom task input
+        const taskRepeatDaysInput = document.getElementById('task-repeat-days'); // Repeat days for task
+
+        // Admin View Current Daily Tasks elements
+        const viewTaskUserSelect = document.getElementById('view-task-user-select');
+        const viewTaskDateInput = document.getElementById('view-task-date');
+        const adminAssignedTasksList = document.getElementById('admin-assigned-tasks');
+
+        // Admin Shift Attendance elements
+        const attendanceDateInput = document.getElementById('attendance-date');
+        const adminAttendanceList = document.getElementById('admin-attendance-list');
+
+        // Admin Task Overview elements
+        const taskOverviewDateInput = document.getElementById('task-overview-date');
+        const taskStatusFilter = document.getElementById('task-status-filter');
+        const adminTaskOverviewList = document.getElementById('admin-task-overview-list');
+
 
         // --- Local Storage Keys ---
         const LS_KEYS = {
@@ -1107,6 +1310,7 @@
             DAILY_TASKS: 'dailyTasks',
             COMPLETED_TASKS: 'completedTasks',
             CLOCK_INS: 'clockIns', // New key for clock-in/out data
+            MESSAGE_BOARD: 'messageBoard', // New key for message board
             CURRENT_USER_NAME: 'currentUserName',
             CURRENT_USER_ROLE: 'currentUserRole',
             IS_ADMIN_MODE: 'isAdminMode',
@@ -1119,11 +1323,12 @@
         let dailyTasks = {};
         let completedTasks = {};
         let clockIns = {}; // { 'YYYY-MM-DD': { 'Staff Name': { 'in': timestamp, 'out': timestamp | null } } }
+        let messageBoard = []; // [{ sender: 'Name', text: 'Message', timestamp: 123456789 }]
         let currentUserName = '';
         let currentUserRole = '';
         let isAdminMode = false;
         let currentCalendarDate = new Date(); // Tracks month/year for calendar view
-        let activeViewId = 'my-tasks-view'; // Default active view in app
+        let activeViewId = 'home-view'; // Default active view in app, changed to 'home-view'
 
         // --- Utility Functions ---
 
@@ -1161,6 +1366,18 @@
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const day = date.getDate().toString().padStart(2, '0');
             return `${year}-${month}-${day}`;
+        }
+
+        /**
+         * Adds days to a given date.
+         * @param {Date} date - The initial date object.
+         * @param {number} days - Number of days to add.
+         * @returns {Date} A new Date object with the added days.
+         */
+        function addDays(date, days) {
+            const newDate = new Date(date);
+            newDate.setDate(date.getDate() + days);
+            return newDate;
         }
 
         /**
@@ -1219,21 +1436,6 @@
         }
 
         /**
-         * Checks if a given date string is in the future relative to the current day (start of day).
-         * @param {string} dateString - The date string in 'YYYY-MM-DD' format.
-         * @returns {boolean} True if the date is in the future.
-         */
-        function isFutureDay(dateString) {
-            const checkDate = new Date(dateString);
-            const today = new Date();
-
-            checkDate.setHours(0, 0, 0, 0);
-            today.setHours(23, 59, 59, 999); // Compare against end of today
-
-            return checkDate > today;
-        }
-
-        /**
          * Gets a staff member object by name.
          * @param {string} name - The staff member's name.
          * @returns {object|undefined} The staff object or undefined.
@@ -1274,10 +1476,11 @@
             dailyTasks = loadData(LS_KEYS.DAILY_TASKS) || {};
             completedTasks = loadData(LS_KEYS.COMPLETED_TASKS) || {};
             clockIns = loadData(LS_KEYS.CLOCK_INS) || {}; // Initialize clock-in data
+            messageBoard = loadData(LS_KEYS.MESSAGE_BOARD) || []; // Initialize message board
             currentUserName = loadData(LS_KEYS.CURRENT_USER_NAME) || '';
             currentUserRole = loadData(LS_KEYS.CURRENT_USER_ROLE) || '';
             isAdminMode = loadData(LS_KEYS.IS_ADMIN_MODE) || false;
-            activeViewId = loadData(LS_KEYS.LAST_ACTIVE_VIEW) || 'my-tasks-view';
+            activeViewId = loadData(LS_KEYS.LAST_ACTIVE_VIEW) || 'home-view'; // Changed default to 'home-view'
 
             // Save defaults if they were just created
             saveData(LS_KEYS.STAFF_MEMBERS, staffMembers);
@@ -1285,6 +1488,7 @@
             saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
             saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
             saveData(LS_KEYS.CLOCK_INS, clockIns);
+            saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
             saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName);
             saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole);
             saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
@@ -1295,7 +1499,7 @@
 
         /**
          * Controls which main section is visible.
-         * @param {string} viewId - The ID of the section to show (e.g., 'my-tasks-view').
+         * @param {string} viewId - The ID of the section to show (e.g., 'home-view').
          */
         function showView(viewId) {
             mainSections.forEach(section => {
@@ -1314,15 +1518,16 @@
             });
 
             // Re-render content specific to the activated view
-            if (viewId === 'my-tasks-view') {
+            if (viewId === 'home-view') {
+                renderHomePage();
+            } else if (viewId === 'my-tasks-view') {
                 renderMyTasks();
             } else if (viewId === 'weekly-rota-view') {
                 renderWeeklyRota();
             } else if (viewId === 'calendar-view') {
                 renderCalendar();
             } else if (viewId === 'admin-view') {
-                // Admin view is toggled separately via button, ensure it's displayed
-                adminView.style.display = 'flex';
+                adminView.style.display = 'flex'; // Ensure it's flex if active view
                 renderAdminForms();
             }
         }
@@ -1334,7 +1539,6 @@
          */
         function renderLandingPage() {
             staffIconsContainer.innerHTML = '';
-            // selectedLandingUser = null; // Not strictly necessary with direct login
 
             staffMembers.forEach(member => {
                 const iconDiv = document.createElement('div');
@@ -1429,7 +1633,13 @@
          * Populates the staff dropdowns within the main app forms.
          */
         function renderUserDropdownsInApp() {
-            [shiftUserSelect, taskUserSelect, viewShiftUserSelect, viewTaskUserSelect].forEach(select => {
+            // Combine all select elements that need staff members
+            const allStaffSelects = [
+                shiftUserSelect, taskUserSelect,
+                viewShiftUserSelect, viewTaskUserSelect
+            ];
+
+            allStaffSelects.forEach(select => {
                 select.innerHTML = '';
                 if (staffMembers.length === 0) {
                     const defaultOption = document.createElement('option');
@@ -1458,128 +1668,92 @@
         // --- Main Content View Renders ---
 
         /**
-         * Renders the weekly rota grid.
+         * Renders the home page content: clock status, who's working, and personal tasks.
          */
-        function renderWeeklyRota() {
-            rotaGrid.innerHTML = '';
-            const today = new Date();
-            const weekDays = getWeekDays(today);
-
-            weekDays.forEach(day => {
-                const formattedDate = getFormattedDate(day);
-                const dayColumn = document.createElement('div');
-                dayColumn.classList.add('rota-day-column');
-                dayColumn.innerHTML = `
-                    <strong>${getDisplayDate(day)}</strong>
-                    <ul></ul>
-                `;
-                const ul = dayColumn.querySelector('ul');
-
-                const dayRota = rota[formattedDate] || {};
-
-                const sortedStaff = [...staffMembers].sort((a, b) => {
-                    const roleOrder = { 'FOH': 1, 'BOH': 2, 'Admin': 3 };
-                    if (roleOrder[a.role] !== roleOrder[b.role]) {
-                        return roleOrder[a.role] - roleOrder[b.role];
-                    }
-                    return a.name.localeCompare(b.name);
-                });
-
-                sortedStaff.forEach(member => {
-                    const shift = dayRota[member.name] || 'Off';
-                    const li = document.createElement('li');
-                    li.textContent = `${member.name}: ${shift}`;
-                    li.classList.add(member.role.toLowerCase()); // Add class for FOH/BOH/Admin styling
-                    ul.appendChild(li);
-                });
-
-                rotaGrid.appendChild(dayColumn);
-            });
-        }
-
-        /**
-         * Renders the current user's tasks for the current day, and clock-in/out status.
-         */
-        function renderMyTasks() {
-            taskList.innerHTML = '';
+        function renderHomePage() {
             const today = new Date();
             const formattedToday = getFormattedDate(today);
 
-            currentDayInfo.textContent = getDisplayDate(today);
-
-            if (!currentUserName) {
-                taskList.innerHTML = '<li class="no-tasks">Please log in to see your tasks.</li>';
-                return;
-            }
-
-            // --- Render Clock-in/out status ---
+            // Render Clock-in/out status (re-using logic from renderMyTasks)
             const userClockData = (clockIns[formattedToday] && clockIns[formattedToday][currentUserName]) || {};
             let clockStatusMessage = '';
             let clockButtonText = 'Clock In';
-            clockStatusBanner.classList.remove('clocked-in', 'clocked-out');
+            clockStatusBannerHome.classList.remove('clocked-in', 'clocked-out');
 
             if (userClockData.in && !userClockData.out) {
                 clockStatusMessage = `You are clocked in since ${formatTimestampToTime(userClockData.in)}`;
                 clockButtonText = 'Clock Out';
-                clockStatusBanner.classList.add('clocked-in');
+                clockStatusBannerHome.classList.add('clocked-in');
             } else if (userClockData.in && userClockData.out) {
                 clockStatusMessage = `Clocked in: ${formatTimestampToTime(userClockData.in)}, Clocked out: ${formatTimestampToTime(userClockData.out)}`;
                 clockButtonText = 'Clock In'; // Allow re-clocking in for same day if needed
-                clockStatusBanner.classList.add('clocked-out');
+                clockStatusBannerHome.classList.add('clocked-out');
             } else {
                 clockStatusMessage = 'You are not clocked in for today.';
                 clockButtonText = 'Clock In';
-                clockStatusBanner.classList.add('clocked-out');
+                clockStatusBannerHome.classList.add('clocked-out');
             }
-            clockStatusText.textContent = clockStatusMessage;
-            clockInOutBtn.textContent = clockButtonText;
+            clockStatusTextHome.textContent = clockStatusMessage;
+            clockInOutBtnHome.textContent = clockButtonText;
 
 
-            // --- Render Tasks ---
+            // Render Who's Working Today
+            fohWorkingList.innerHTML = '';
+            bohWorkingList.innerHTML = '';
+            adminWorkingList.innerHTML = '';
+
+            const todayRota = rota[formattedToday] || {};
+            let fohCount = 0;
+            let bohCount = 0;
+            let adminCount = 0;
+
+            staffMembers.forEach(member => {
+                const shift = todayRota[member.name];
+                if (shift && shift !== 'Off') {
+                    const li = document.createElement('li');
+                    li.textContent = `${member.name} (${shift})`;
+                    li.classList.add(member.role.toLowerCase());
+                    if (member.role === 'FOH') {
+                        fohWorkingList.appendChild(li);
+                        fohCount++;
+                    } else if (member.role === 'BOH') {
+                        bohWorkingList.appendChild(li);
+                        bohCount++;
+                    } else if (member.role === 'Admin') {
+                        adminWorkingList.appendChild(li);
+                        adminCount++;
+                    }
+                }
+            });
+
+            if (fohCount === 0) fohWorkingList.innerHTML = '<li class="no-data">No FOH staff working.</li>';
+            if (bohCount === 0) bohWorkingList.innerHTML = '<li class="no-data">No BOH staff working.</li>';
+            if (adminCount === 0) adminWorkingList.innerHTML = '<li class="no-data">No Admin staff working.</li>';
+
+
+            // Render My Tasks for Home Page (simplified display)
+            homeTaskList.innerHTML = '';
             const tasksForToday = (dailyTasks[formattedToday] && dailyTasks[formattedToday][currentUserName]) || [];
             const completedTasksForToday = (completedTasks[formattedToday] && completedTasks[formattedToday][currentUserName]) || {};
 
             if (tasksForToday.length === 0) {
-                taskList.innerHTML = '<li class="no-tasks">No tasks assigned for today.</li>';
-                return;
+                homeTaskList.innerHTML = '<li class="no-tasks">No tasks assigned for today.</li>';
+            } else {
+                tasksForToday.forEach(task => {
+                    const li = document.createElement('li');
+                    const isCompleted = completedTasksForToday[task];
+                    li.textContent = `${task} ${isCompleted ? '(Completed)' : '(Pending)'}`;
+                    li.classList.add('task-item', isCompleted ? 'completed' : 'pending');
+                    homeTaskList.appendChild(li);
+                });
             }
 
-            tasksForToday.forEach(task => {
-                const li = document.createElement('li');
-                li.classList.add('task-item');
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.dataset.taskName = task;
-                checkbox.dataset.taskDate = formattedToday;
-                checkbox.dataset.staffName = currentUserName;
-
-                const isCompleted = completedTasksForToday[task];
-                if (isCompleted) {
-                    checkbox.checked = true;
-                    li.classList.add('completed');
-                } else if (isPastEndOfDay(formattedToday)) {
-                    li.classList.add('incomplete');
-                }
-
-                const taskSpan = document.createElement('span');
-                taskSpan.textContent = task;
-
-                const timestampSpan = document.createElement('span');
-                timestampSpan.classList.add('timestamp');
-                if (isCompleted) {
-                    timestampSpan.textContent = formatTimestampToTime(isCompleted);
-                }
-
-                li.appendChild(checkbox);
-                li.appendChild(taskSpan);
-                li.appendChild(timestampSpan);
-                taskList.appendChild(li);
-            });
+            // Render Message Board
+            renderMessageBoard();
         }
 
         /**
-         * Handles the clock in/out toggle for the current user.
+         * Handles the clock in/out toggle for the current user (used on Home and My Tasks).
          */
         function toggleClockStatus() {
             const today = new Date();
@@ -1607,9 +1781,259 @@
                 alert(`${currentUserName} re-clocked in at ${formatTimestampToTime(now)}.`);
             }
             saveData(LS_KEYS.CLOCK_INS, clockIns);
-            renderMyTasks(); // Re-render to update UI
+            renderHomePage(); // Update home page status
+            renderMyTasks(); // Update my tasks page status
             if (isAdminMode) { // If admin panel is open, update attendance there too
                 renderAdminShiftAttendance();
+            }
+        }
+
+
+        /**
+         * Renders the message board.
+         */
+        function renderMessageBoard() {
+            messageList.innerHTML = '';
+            if (messageBoard.length === 0) {
+                messageList.innerHTML = '<li class="no-data">No messages yet.</li>';
+                return;
+            }
+
+            // Display messages in reverse chronological order
+            [...messageBoard].reverse().forEach(message => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="message-sender">${message.sender}:</span>
+                    <span class="message-text">${message.text}</span>
+                    <span class="message-timestamp">(${new Date(message.timestamp).toLocaleString()})</span>
+                `;
+                messageList.appendChild(li);
+            });
+        }
+
+        /**
+         * Handles sending a new message.
+         * @param {Event} event - The form submit event.
+         */
+        function handleSendMessage(event) {
+            event.preventDefault();
+            const messageText = messageTextarea.value.trim();
+
+            if (!messageText) {
+                alert('Message cannot be empty.');
+                return;
+            }
+
+            if (!currentUserName) {
+                alert('Please log in to send a message.');
+                return;
+            }
+
+            const newMessage = {
+                sender: currentUserName,
+                text: messageText,
+                timestamp: Date.now()
+            };
+
+            messageBoard.push(newMessage);
+            saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
+            messageTextarea.value = ''; // Clear textarea
+            renderMessageBoard(); // Re-render to show new message
+        }
+
+        /**
+         * Renders the weekly rota grid.
+         */
+        function renderWeeklyRota() {
+            rotaGrid.innerHTML = '';
+            const today = new Date();
+            const weekDays = getWeekDays(today);
+
+            weekDays.forEach(day => {
+                const formattedDate = getFormattedDate(day);
+                const dayColumn = document.createElement('div');
+                dayColumn.classList.add('rota-day-column');
+                dayColumn.innerHTML = `
+                    <strong>${getDisplayDate(day)}</strong>
+                    <ul></ul>
+                `;
+                const ul = dayColumn.querySelector('ul');
+
+                const dayRota = rota[formattedDate] || {};
+
+                const staffForDisplay = staffMembers.filter(member => {
+                    // Apply current user's role restrictions for read-only access
+                    if (!isCurrentUserAdmin()) {
+                        if (currentUserRole === 'FOH' && member.role === 'BOH') return false;
+                        if (currentUserRole === 'BOH' && member.role === 'FOH') return false;
+                    }
+                    return true;
+                }).sort((a, b) => {
+                    const roleOrder = { 'FOH': 1, 'BOH': 2, 'Admin': 3 };
+                    if (roleOrder[a.role] !== roleOrder[b.role]) {
+                        return roleOrder[a.role] - roleOrder[b.role];
+                    }
+                    return a.name.localeCompare(b.name);
+                });
+
+                staffForDisplay.forEach(member => {
+                    const shift = dayRota[member.name] || 'Off';
+                    const li = document.createElement('li');
+                    li.textContent = `${member.name}: ${shift}`;
+                    li.classList.add(member.role.toLowerCase()); // Add class for FOH/BOH/Admin styling
+                    ul.appendChild(li);
+                });
+
+                rotaGrid.appendChild(dayColumn);
+            });
+        }
+
+        /**
+         * Renders the current user's tasks for the current day.
+         */
+        function renderMyTasks() {
+            taskList.innerHTML = '';
+            const today = new Date();
+            const formattedToday = getFormattedDate(today);
+
+            currentDayInfo.textContent = getDisplayDate(today);
+
+            if (!currentUserName) {
+                taskList.innerHTML = '<li class="no-tasks">Please log in to see your tasks.</li>';
+                return;
+            }
+
+            const tasksForToday = (dailyTasks[formattedToday] && dailyTasks[formattedToday][currentUserName]) || [];
+            const completedTasksForToday = (completedTasks[formattedToday] && completedTasks[formattedToday][currentUserName]) || {};
+
+            if (tasksForToday.length === 0) {
+                taskList.innerHTML = '<li class="no-tasks">No tasks assigned for today.</li>';
+                return;
+            }
+
+            tasksForToday.forEach(task => {
+                const li = document.createElement('li');
+                li.classList.add('task-item');
+
+                const taskContent = document.createElement('span');
+                taskContent.textContent = task;
+
+                const taskControls = document.createElement('div');
+                taskControls.classList.add('task-item-controls');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.dataset.taskName = task;
+                checkbox.dataset.taskDate = formattedToday;
+                checkbox.dataset.staffName = currentUserName;
+
+                const attachImageInput = document.createElement('input');
+                attachImageInput.type = 'file';
+                attachImageInput.accept = 'image/*';
+                attachImageInput.style.display = 'none'; // Hide file input directly
+                attachImageInput.dataset.taskName = task;
+                attachImageInput.dataset.taskDate = formattedToday;
+                attachImageInput.dataset.staffName = currentUserName;
+
+                const attachImageBtn = document.createElement('button');
+                attachImageBtn.textContent = 'Attach Image';
+                attachImageBtn.classList.add('upload-image-btn');
+                attachImageBtn.type = 'button'; // Prevent form submission
+                attachImageBtn.onclick = () => attachImageInput.click(); // Trigger file input click
+
+                const imageInfoSpan = document.createElement('span');
+                imageInfoSpan.classList.add('attached-image-info');
+
+                const isCompleted = completedTasksForToday[task];
+                if (isCompleted) {
+                    checkbox.checked = true;
+                    li.classList.add('completed');
+                    attachImageBtn.style.display = 'none'; // Hide attach button if completed
+                    if (isCompleted.imageName) { // Check if image info exists
+                         imageInfoSpan.textContent = `Image: ${isCompleted.imageName} attached.`;
+                    }
+                } else if (isPastEndOfDay(formattedToday)) {
+                    li.classList.add('incomplete');
+                }
+
+                taskControls.appendChild(checkbox);
+                taskControls.appendChild(attachImageInput);
+                taskControls.appendChild(attachImageBtn);
+
+                li.appendChild(taskContent);
+                li.appendChild(taskControls); // Add controls first
+
+                const timestampSpan = document.createElement('span');
+                timestampSpan.classList.add('timestamp');
+                if (isCompleted) {
+                    timestampSpan.textContent = formatTimestampToTime(isCompleted.timestamp || isCompleted); // Handle older data format
+                }
+                li.appendChild(timestampSpan);
+                li.appendChild(imageInfoSpan); // Add image info below
+
+                taskList.appendChild(li);
+            });
+        }
+
+        /**
+         * Handles task checkbox changes, including image attachment.
+         * @param {Event} event - The change event from the checkbox or file input.
+         */
+        function handleTaskCompletionOrImageAttach(event) {
+            if (event.target.type === 'checkbox') {
+                const checkbox = event.target;
+                const taskName = checkbox.dataset.taskName;
+                const taskDate = checkbox.dataset.taskDate;
+                const staffName = checkbox.dataset.staffName;
+
+                completedTasks[taskDate] = completedTasks[taskDate] || {};
+                completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
+
+                const existingCompletionData = completedTasks[taskDate][staffName][taskName] || {};
+
+                if (checkbox.checked) {
+                    completedTasks[taskDate][staffName][taskName] = {
+                        timestamp: Date.now(),
+                        imageName: existingCompletionData.imageName || null // Preserve existing image info
+                    };
+                } else {
+                    delete completedTasks[taskDate][staffName][taskName];
+                    if (Object.keys(completedTasks[taskDate][staffName]).length === 0) {
+                        delete completedTasks[taskDate][staffName];
+                    }
+                }
+                saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+                renderHomePage(); // Update tasks on home
+                renderMyTasks(); // Re-render to update UI (e.g., timestamp, styling)
+                if (isAdminMode) { // Update admin task overview if admin mode is active
+                    renderAdminTaskOverview();
+                }
+            } else if (event.target.type === 'file') {
+                const fileInput = event.target;
+                const taskName = fileInput.dataset.taskName;
+                const taskDate = fileInput.dataset.taskDate;
+                const staffName = fileInput.dataset.staffName;
+                const file = fileInput.files[0];
+
+                if (file) {
+                    completedTasks[taskDate] = completedTasks[taskDate] || {};
+                    completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
+
+                    const currentCompletion = completedTasks[taskDate][staffName][taskName] || { timestamp: null };
+
+                    // Store only the file name, not the actual image data in localStorage
+                    currentCompletion.imageName = file.name;
+                    currentCompletion.timestamp = currentCompletion.timestamp || Date.now(); // Ensure a timestamp is set if not already
+
+                    completedTasks[taskDate][staffName][taskName] = currentCompletion;
+                    saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+                    alert(`Image "${file.name}" attached to "${taskName}". (Note: Image data is not stored in this demo.)`);
+                    renderHomePage(); // Update tasks on home
+                    renderMyTasks(); // Re-render to show image info
+                    if (isAdminMode) { // Update admin task overview if admin mode is active
+                        renderAdminTaskOverview();
+                    }
+                }
             }
         }
 
@@ -1642,6 +2066,30 @@
             const todayFormatted = getFormattedDate(new Date());
             const filterRole = calendarRoleFilter.value; // Get selected filter from dropdown
 
+            // Adjust calendar role filter options based on current user's role
+            calendarRoleFilter.querySelectorAll('option').forEach(option => {
+                option.disabled = false; // Enable all by default
+            });
+
+            if (!isCurrentUserAdmin()) {
+                if (currentUserRole === 'FOH') {
+                    // Disable BOH and Admin options for FOH
+                    calendarRoleFilter.querySelector('option[value="BOH"]').disabled = true;
+                    calendarRoleFilter.querySelector('option[value="Admin"]').disabled = true;
+                    if (filterRole === 'BOH' || filterRole === 'Admin') { // If user was on restricted filter, reset
+                        calendarRoleFilter.value = 'all';
+                    }
+                } else if (currentUserRole === 'BOH') {
+                    // Disable FOH and Admin options for BOH
+                    calendarRoleFilter.querySelector('option[value="FOH"]').disabled = true;
+                    calendarRoleFilter.querySelector('option[value="Admin"]').disabled = true;
+                    if (filterRole === 'FOH' || filterRole === 'Admin') { // If user was on restricted filter, reset
+                        calendarRoleFilter.value = 'all';
+                    }
+                }
+            }
+
+
             for (let dayNum = 1; dayNum <= numDaysInMonth; dayNum++) {
                 const day = new Date(year, month, dayNum);
                 const formattedDate = getFormattedDate(day);
@@ -1660,12 +2108,9 @@
                 const staffForDisplay = staffMembers.filter(staff => {
                     const staffRole = staff.role;
                     // Apply current user's role restrictions for read-only access
-                    if (!isCurrentUserAdmin()) { // If not admin, filter roles
-                        if (currentUserRole === 'FOH') {
-                            if (staffRole === 'BOH') return false; // FOH cannot see BOH shifts
-                        } else if (currentUserRole === 'BOH') {
-                            if (staffRole === 'FOH') return false; // BOH cannot see FOH shifts
-                        }
+                    if (!isCurrentUserAdmin()) {
+                        if (currentUserRole === 'FOH' && staffRole === 'BOH') return false; // FOH cannot see BOH shifts
+                        if (currentUserRole === 'BOH' && staffRole === 'FOH') return false; // BOH cannot see FOH shifts
                     }
                     // Admins see all staff roles by default.
 
@@ -1716,11 +2161,46 @@
             attendanceDateInput.value = formattedToday; // Set attendance date
             taskOverviewDateInput.value = formattedToday; // Set task overview date
 
+            // Handle custom shift/task input visibility on load
+            shiftTypeSelect.value = '8AM-4PM'; // Default
+            customShiftInputContainer.style.display = 'none';
+            taskDescriptionSelect.value = 'Slicing Lemons'; // Default
+            customTaskInputContainer.style.display = 'none';
+
+
             // Trigger initial render of admin assigned lists
             renderAdminAssignedShifts();
             renderAdminAssignedTasks();
             renderAdminShiftAttendance(); // Render attendance
             renderAdminTaskOverview(); // Render task overview
+        }
+
+        /**
+         * Toggles visibility of custom shift input.
+         */
+        function handleShiftTypeChange() {
+            if (shiftTypeSelect.value === 'custom') {
+                customShiftInputContainer.style.display = 'block';
+                customShiftTypeInput.setAttribute('required', 'true');
+            } else {
+                customShiftInputContainer.style.display = 'none';
+                customShiftTypeInput.removeAttribute('required');
+                customShiftTypeInput.value = ''; // Clear custom input
+            }
+        }
+
+        /**
+         * Toggles visibility of custom task input.
+         */
+        function handleTaskDescriptionChange() {
+            if (taskDescriptionSelect.value === 'Custom Task') {
+                customTaskInputContainer.style.display = 'block';
+                customTaskDescriptionInput.setAttribute('required', 'true');
+            } else {
+                customTaskInputContainer.style.display = 'none';
+                customTaskDescriptionInput.removeAttribute('required');
+                customTaskDescriptionInput.value = ''; // Clear custom input
+            }
         }
 
         /**
@@ -1848,7 +2328,8 @@
                 const completed = completedForDate[member.name] || {};
 
                 tasks.forEach(task => {
-                    const isTaskCompleted = !!completed[task];
+                    const completionData = completed[task];
+                    const isTaskCompleted = !!completionData;
                     let display = false;
                     let statusClass = '';
                     let statusLabel = '';
@@ -1879,9 +2360,15 @@
                         hasTasks = true;
                         const li = document.createElement('li');
                         li.classList.add('admin-task-overview-item', statusClass);
-                        li.innerHTML = `
-                            <span>${member.name}: ${task} (${statusLabel})</span>
-                        `;
+                        let taskInfo = `${member.name}: ${task} (${statusLabel})`;
+                        if (isTaskCompleted && completionData.timestamp) {
+                            taskInfo += ` at ${formatTimestampToTime(completionData.timestamp)}`;
+                        }
+                        if (isTaskCompleted && completionData.imageName) {
+                            taskInfo += ` (Image: ${completionData.imageName})`;
+                        }
+
+                        li.innerHTML = `<span>${taskInfo}</span>`;
                         adminTaskOverviewList.appendChild(li);
                     }
                 });
@@ -1934,61 +2421,57 @@
         }
 
         /**
-         * Handles task checkbox changes.
-         * @param {Event} event - The change event from the checkbox.
-         */
-        function handleTaskCompletion(event) {
-            const checkbox = event.target;
-            const taskName = checkbox.dataset.taskName;
-            const taskDate = checkbox.dataset.taskDate;
-            const staffName = checkbox.dataset.staffName;
-
-            completedTasks[taskDate] = completedTasks[taskDate] || {};
-            completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
-
-            if (checkbox.checked) {
-                completedTasks[taskDate][staffName][taskName] = Date.now();
-            } else {
-                delete completedTasks[taskDate][staffName][taskName];
-                if (Object.keys(completedTasks[taskDate][staffName]).length === 0) {
-                    delete completedTasks[taskDate][staffName];
-                }
-            }
-            saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-            renderMyTasks();
-            if (isAdminMode) { // Update admin task overview if admin mode is active
-                renderAdminTaskOverview();
-            }
-        }
-
-        /**
          * Handles the submission of the assign shift form.
          * @param {Event} event - The form submit event.
          */
         function handleAssignShift(event) {
             event.preventDefault();
             const staff = shiftUserSelect.value;
-            const date = shiftDateInput.value;
-            const shift = shiftTypeInput.value.trim();
+            const baseDate = new Date(shiftDateInput.value);
+            const repeatDays = parseInt(shiftRepeatDaysInput.value);
+            let shiftType = shiftTypeSelect.value.trim();
 
-            if (!staff || !date || !shift) {
+            if (shiftType === 'custom') {
+                shiftType = customShiftTypeInput.value.trim();
+                if (!shiftType) {
+                    alert('Please enter a custom shift type.');
+                    return;
+                }
+            }
+
+            if (!staff || !baseDate || !shiftType) {
                 alert('Please fill all shift assignment fields.');
                 return;
             }
-
-            if (shift.length < 2 || shift.length > 20) {
+            if (shiftType.length < 2 || shiftType.length > 20) {
                 alert('Shift type should be between 2 and 20 characters.');
                 return;
             }
+            if (isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) {
+                alert('Repeat days must be between 1 and 7.');
+                return;
+            }
 
-            rota[date] = rota[date] || {};
-            rota[date][staff] = shift;
+            let assignmentsMade = 0;
+            for (let i = 0; i < repeatDays; i++) {
+                const currentDate = addDays(baseDate, i);
+                const formattedDate = getFormattedDate(currentDate);
+
+                rota[formattedDate] = rota[formattedDate] || {};
+                rota[formattedDate][staff] = shiftType;
+                assignmentsMade++;
+            }
+
             saveData(LS_KEYS.ROTA, rota);
             renderWeeklyRota();
             renderCalendar();
             renderAdminAssignedShifts(); // Update admin shift list
-            alert(`Shift '${shift}' assigned to ${staff} on ${date}.`);
-            shiftTypeInput.value = '';
+            renderHomePage(); // Update home page for "Who's working"
+            alert(`Shift '${shiftType}' assigned to ${staff} for ${assignmentsMade} day(s).`);
+            shiftTypeSelect.value = '8AM-4PM'; // Reset select
+            customShiftInputContainer.style.display = 'none'; // Hide custom input
+            customShiftTypeInput.value = ''; // Clear custom input
+            shiftRepeatDaysInput.value = '1'; // Reset repeat days
         }
 
         /**
@@ -1998,33 +2481,61 @@
         function handleAssignTask(event) {
             event.preventDefault();
             const staff = taskUserSelect.value;
-            const date = taskDateInput.value;
-            const task = taskDescriptionInput.value.trim();
+            const baseDate = new Date(taskDateInput.value);
+            const repeatDays = parseInt(taskRepeatDaysInput.value);
+            let taskDescription = taskDescriptionSelect.value.trim();
 
-            if (!staff || !date || !task) {
+            if (taskDescription === 'Custom Task') {
+                taskDescription = customTaskDescriptionInput.value.trim();
+                if (!taskDescription) {
+                    alert('Please enter a custom task description.');
+                    return;
+                }
+            }
+
+            if (!staff || !baseDate || !taskDescription) {
                 alert('Please fill all task assignment fields.');
                 return;
             }
 
-            if (task.length < 3 || task.length > 100) {
+            if (taskDescription.length < 3 || taskDescription.length > 100) {
                 alert('Task description should be between 3 and 100 characters.');
                 return;
             }
+            if (isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) {
+                alert('Repeat days must be between 1 and 7.');
+                return;
+            }
 
-            dailyTasks[date] = dailyTasks[date] || {};
-            dailyTasks[date][staff] = dailyTasks[date][staff] || [];
+            let assignmentsMade = 0;
+            for (let i = 0; i < repeatDays; i++) {
+                const currentDate = addDays(baseDate, i);
+                const formattedDate = getFormattedDate(currentDate);
 
-            if (!dailyTasks[date][staff].includes(task)) {
-                dailyTasks[date][staff].push(task);
+                dailyTasks[formattedDate] = dailyTasks[formattedDate] || {};
+                dailyTasks[formattedDate][staff] = dailyTasks[formattedDate][staff] || [];
+
+                if (!dailyTasks[formattedDate][staff].includes(taskDescription)) {
+                    dailyTasks[formattedDate][staff].push(taskDescription);
+                    assignmentsMade++;
+                }
+            }
+
+            if (assignmentsMade > 0) {
                 saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
+                renderHomePage(); // Update home page tasks
                 renderMyTasks();
                 renderAdminAssignedTasks();
-                renderAdminTaskOverview(); // Update admin task overview
-                alert(`Task '${task}' added for ${staff} on ${date}.`);
+                renderAdminTaskOverview();
+                alert(`Task '${taskDescription}' added for ${staff} for ${assignmentsMade} day(s).`);
             } else {
-                alert('This task is already assigned for this staff member on this day.');
+                alert('No new tasks were added (they might already exist).');
             }
-            taskDescriptionInput.value = '';
+
+            taskDescriptionSelect.value = 'Slicing Lemons'; // Reset select
+            customTaskInputContainer.style.display = 'none'; // Hide custom input
+            customTaskDescriptionInput.value = ''; // Clear custom input
+            taskRepeatDaysInput.value = '1'; // Reset repeat days
         }
 
         /**
@@ -2054,6 +2565,7 @@
                                 saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
                             }
                             renderAdminAssignedTasks(); // Re-render admin task list
+                            renderHomePage(); // Update home page tasks
                             renderMyTasks(); // Re-render personal task list
                             renderAdminTaskOverview(); // Update admin task overview
                             alert('Task deleted successfully.');
@@ -2068,6 +2580,7 @@
                             renderAdminAssignedShifts(); // Re-render admin shift list
                             renderWeeklyRota(); // Update weekly rota view
                             renderCalendar(); // Update calendar view
+                            renderHomePage(); // Update home page for "Who's working"
                             alert('Shift deleted successfully.');
                         }
                     }
@@ -2101,9 +2614,9 @@
             updateHeaderUserInfo();
             renderAdminToggleButton();
             renderUserDropdownsInApp();
-            renderWeeklyRota();
-            renderCalendar();
-            showView(activeViewId); // Show the last active view or default
+            // All specific view rendering functions are called within showView
+            // and home is now the default view.
+            showView(activeViewId);
 
             // Set current year in footer
             document.getElementById('current-year').textContent = new Date().getFullYear();
@@ -2111,15 +2624,34 @@
             // --- Event Listeners ---
             adminToggleButton.addEventListener('click', toggleAdminView);
             signOutButton.addEventListener('click', handleSignOut); // Event listener for sign out
-            clockInOutBtn.addEventListener('click', toggleClockStatus); // Event listener for clock in/out
+
+            // Clock in/out buttons (both home and my-tasks)
+            clockInOutBtnHome.addEventListener('click', toggleClockStatus);
 
             navButtons.forEach(button => {
                 button.addEventListener('click', handleNavButtonClick);
             });
 
-            taskList.addEventListener('change', handleTaskCompletion);
+            // Task list in My Tasks
+            taskList.addEventListener('change', handleTaskCompletionOrImageAttach); // For checkboxes
+            taskList.addEventListener('input', handleTaskCompletionOrImageAttach); // For file inputs
+            // Add a single listener for attach image buttons on the taskList parent
+            taskList.addEventListener('click', (event) => {
+                if (event.target.classList.contains('upload-image-btn')) {
+                    const fileInput = event.target.previousElementSibling; // Get the hidden file input
+                    if (fileInput && fileInput.type === 'file') {
+                        fileInput.click();
+                    }
+                }
+            });
+
+
+            // Message board
+            messageInputForm.addEventListener('submit', handleSendMessage);
 
             // Admin form listeners
+            shiftTypeSelect.addEventListener('change', handleShiftTypeChange);
+            taskDescriptionSelect.addEventListener('change', handleTaskDescriptionChange);
             assignShiftForm.addEventListener('submit', handleAssignShift);
             assignTaskForm.addEventListener('submit', handleAssignTask);
 
