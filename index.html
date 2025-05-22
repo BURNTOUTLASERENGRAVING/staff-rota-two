@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff Rota & Task Checklist</title>
+  <style>
+    /*
+     * CSS Styles
+     * Modern, minimalist design with mobile-first responsiveness.
+     * Color scheme: Black, white, dark grey, purple highlights.
+     */
+
+    :root {
+      --primary-bg: #f4f4f4;
+      --secondary-bg: #ffffff;
+      --text-color: #333;
+      --light-grey: #e0e0e0;
+      --dark-grey: #444;
+      --header-bg: #222;
+      --accent-color: #6a0dad;
+      --accent-hover: #8a2be2;
+      --border-color: #ddd;
+      --incomplete-bg: #ffe0b2;
+      --incomplete-border: #ff8c00;
+      --completed-bg: #e6ffe6;
+      --completed-border: #4CAF50;
+      --delete-btn-bg: #dc3545;
+      --delete-btn-hover: #c82333;
+      /* Role Colors */
+      --foh-color: #007bff;
+      --boh-color: #28a745;
+      --admin-color: #6c757d;
+      --foh-light-bg: #e0f2f7;
+      --boh-light-bg: #e6ffe6;
+      --admin-light-bg: #f0f0f0;
+    }
+
+    /* Basic Reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--primary-bg);
+      color: var(--text-color);
+      display: flex; flex-direction: column;
+      min-height: 100vh; padding: 10px;
+    }
+
+    /* Landing Page */
+    #landing-page {
+      background: var(--secondary-bg);
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      margin: auto; padding: 40px;
+      text-align: center;
+      max-width: 600px;
+      display: flex; flex-direction: column;
+      animation: fadeIn 0.5s ease-out;
+    }
+    #landing-page h1 { color: var(--accent-color); font-size: 2em; margin-bottom: 25px; }
+    #landing-page p  { color: var(--dark-grey); margin-bottom: 25px; font-size: 1.1em; }
+    #staff-icons-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px,1fr));
+      gap: 20px; margin-bottom: 30px;
+    }
+    .staff-icon {
+      background: var(--light-grey);
+      border-radius: 12px;
+      padding: 15px 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    .staff-icon:hover {
+      background: var(--accent-hover);
+      transform: translateY(-5px) scale(1.03);
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .icon-placeholder { font-size: 3em; margin-bottom: 8px; }
+    .staff-name { font-weight: bold; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .staff-role { font-size: 0.85em; padding: 3px 8px; border-radius: 4px; background: rgba(0,0,0,0.1); }
+
+    /* Pulse animation */
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* Fade-in */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Main App Container (hidden by default) */
+    #app-container {
+      display: none;
+      flex-direction: column;
+      background: var(--secondary-bg);
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      margin: 20px auto; max-width: 960px;
+      min-height: 90vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      background: var(--header-bg);
+      color: #fff;
+      padding: 15px 25px;
+      display
