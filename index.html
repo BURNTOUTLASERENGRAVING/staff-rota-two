@@ -5,109 +5,152 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Staff Rota & Task Checklist</title>
   <style>
-    /* CSS Styles omitted for brevity... */
-    /* (Include all your CSS here unchanged) */
+    /* (Your full CSS goes here unchanged from original) */
   </style>
 </head>
 <body>
-    <!-- Landing Page -->
-    <div id="landing-page">
-        <h1>Welcome, Staff!</h1>
-        <p>Please select your profile to continue:</p>
-        <div id="staff-icons-container"></div>
-    </div>
+  <!-- Landing Page -->
+  <div id="landing-page"></div>
+  <!-- Main App Container -->
+  <div id="app-container"></div>
+  <script>
+    // --- Local Storage Keys ---
+    const LS_KEYS = {
+      STAFF_MEMBERS: 'staffMembers',
+      ROTA: 'rota',
+      DAILY_TASKS: 'dailyTasks',
+      COMPLETED_TASKS: 'completedTasks',
+      CLOCK_INS: 'clockIns',
+      MESSAGE_BOARD: 'messageBoard',
+      CURRENT_USER_NAME: 'currentUserName',
+      CURRENT_USER_ROLE: 'currentUserRole',
+      IS_ADMIN_MODE: 'isAdminMode',
+      LAST_ACTIVE_VIEW: 'lastActiveView'
+    };
 
-    <!-- Main App Container -->
-    <div id="app-container">
-        <header>
-            <h1>Staff Rota & Tasks</h1>
-            <div class="top-controls">
-                <span id="user-info"></span>
-                <button id="admin-toggle-btn">Admin Mode</button>
-                <button id="sign-out-btn">Sign Out</button>
-            </div>
-            <nav class="nav-buttons">
-                <button id="nav-home" class="active">Home</button>
-                <button id="nav-my-tasks">My Tasks</button>
-                <button id="nav-weekly-rota">Weekly Rota</button>
-                <button id="nav-calendar">Calendar View</button>
-            </nav>
-        </header>
-        <main>
-            <!-- Sections omitted for brevity... -->
-        </main>
-        <footer>&copy; <span id="current-year"></span> Staff Rota & Task Checklist</footer>
-    </div>
+    // Data holders
+    let staffMembers, rota, dailyTasks, completedTasks, clockIns, messageBoard;
+    let currentUserName, currentUserRole, isAdminMode, activeViewId;
 
-    <script>
-        // All your existing JS logic up to before missing functions
+    /**
+     * Initializes data from localStorage or defaults.
+     */
+    function initializeData() {
+      staffMembers = loadData(LS_KEYS.STAFF_MEMBERS) || [
+        { name: 'Jill', role: 'FOH', icon: '💁‍♀️' },
+        { name: 'Alice', role: 'FOH', icon: '💁‍♀️' },
+        { name: 'Callum', role: 'FOH', icon: '💁‍♀️' },
+        { name: 'Jess', role: 'FOH', icon: '💁‍♀️' },
+        { name: 'Danny', role: 'BOH', icon: '👩‍🍳' },
+        { name: 'Neil', role: 'BOH', icon: '👩‍🍳' },
+        { name: 'Terry', role: 'BOH', icon: '👴' },
+        { name: 'Richard', role: 'BOH', icon: '👩‍🍳' },
+        { name: 'Johnny', role: 'Admin', icon: '🤵' },
+        { name: 'Lyndsey', role: 'Admin', icon: '🤵' },
+        { name: 'Collin', role: 'Admin', icon: '🤵' }
+      ];
+      rota = loadData(LS_KEYS.ROTA) || {};
+      dailyTasks = loadData(LS_KEYS.DAILY_TASKS) || {};
+      completedTasks = loadData(LS_KEYS.COMPLETED_TASKS) || {};
+      clockIns = loadData(LS_KEYS.CLOCK_INS) || {};
+      messageBoard = loadData(LS_KEYS.MESSAGE_BOARD) || [];
+      currentUserName = loadData(LS_KEYS.CURRENT_USER_NAME) || '';
+      currentUserRole = loadData(LS_KEYS.CURRENT_USER_ROLE) || '';
+      isAdminMode = loadData(LS_KEYS.IS_ADMIN_MODE) || false;
+      activeViewId = loadData(LS_KEYS.LAST_ACTIVE_VIEW) || 'home-view';
 
-        /**
-         * Navigates to the chosen view on nav button click.
-         */
-        function handleNavButtonClick(event) {
-            const view = event.target.id.replace('nav-', '') + '-view';
-            showView(view);
+      // Persist defaults if not previously set
+      saveData(LS_KEYS.STAFF_MEMBERS, staffMembers);
+      saveData(LS_KEYS.ROTA, rota);
+      saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
+      saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+      saveData(LS_KEYS.CLOCK_INS, clockIns);
+      saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
+      saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName);
+      saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole);
+      saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
+      saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
+    }
+
+    /** Utility: load JSON from localStorage */
+    function loadData(key) {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+    /** Utility: save JSON to localStorage */
+    function saveData(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    // Placeholder for render functions...
+    function renderLandingPage() { /* ... */ }
+    function initApp() { /* ... */ }
+    function showView(viewId) { /* ... */ }
+    function renderHomePage() { /* ... */ }
+    function renderMyTasks() { /* ... */ }
+    function renderWeeklyRota() { /* ... */ }
+    function renderCalendar() { /* ... */ }
+    function renderAdminTaskOverview() { /* ... */ }
+    function renderAdminToggleButton() { /* ... */ }
+
+    /** Handle nav clicks */
+    function handleNavButtonClick(event) {
+      const view = event.target.id.replace('nav-', '') + '-view';
+      showView(view);
+    }
+    /** Toggle Admin Mode */
+    function toggleAdminView() {
+      isAdminMode = !isAdminMode;
+      saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
+      renderAdminToggleButton();
+      showView(isAdminMode ? 'admin-view' : 'home-view');
+    }
+
+    /** Fix for task completion and image attach */
+    function handleTaskCompletionOrImageAttach(event) {
+      if (event.target.type === 'checkbox') {
+        const { taskname, taskdate, staffname } = event.target.dataset;
+        const taskName = event.target.dataset.taskname;
+        const taskDate = event.target.dataset.taskdate;
+        const staffName = event.target.dataset.staffname;
+        completedTasks[taskDate] = completedTasks[taskDate] || {};
+        completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
+        if (event.target.checked) {
+          completedTasks[taskDate][staffName][taskName] = { timestamp: Date.now(), imageName: completedTasks[taskDate][staffName][taskName]?.imageName };
+        } else {
+          delete completedTasks[taskDate][staffName][taskName];
+          if (Object.keys(completedTasks[taskDate][staffName]).length === 0) delete completedTasks[taskDate][staffName];
+          if (Object.keys(completedTasks[taskDate]).length === 0) delete completedTasks[taskDate];
         }
+        saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+        renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminTaskOverview();
+      } else if (event.target.type === 'file') {
+        const taskName = event.target.dataset.taskname;
+        const taskDate = event.target.dataset.taskdate;
+        const staffName = event.target.dataset.staffname;
+        const file = event.target.files[0];
+        if (!file) return;
+        completedTasks[taskDate] = completedTasks[taskDate] || {};
+        completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
+        const timestamp = completedTasks[taskDate][staffName][taskName]?.timestamp || Date.now();
+        completedTasks[taskDate][staffName][taskName] = { timestamp, imageName: file.name };
+        saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
+        alert(`Image "${file.name}" attached to "${taskName}".`);
+        renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminTaskOverview();
+      }
+    }
 
-        /**
-         * Toggles Admin Mode on/off.
-         */
-        function toggleAdminView() {
-            isAdminMode = !isAdminMode;
-            saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
-            renderAdminToggleButton();
-            showView(isAdminMode ? 'admin-view' : 'home-view');
-        }
-
-        /**
-         * Fix delete logic: ensure using taskDate not undefined 'date'.
-         */
-        function handleTaskCompletionOrImageAttach(event) {
-            if (event.target.type === 'checkbox') {
-                const { taskName: taskName, taskDate, staffName } = event.target.dataset;
-                if (!completedTasks[taskDate]) completedTasks[taskDate] = {};
-                if (!completedTasks[taskDate][staffName]) completedTasks[taskDate][staffName] = {};
-                if (event.target.checked) {
-                    completedTasks[taskDate][staffName][taskName] = { timestamp: Date.now(), imageName: completedTasks[taskDate][staffName][taskName]?.imageName };
-                } else {
-                    delete completedTasks[taskDate][staffName][taskName];
-                    if (Object.keys(completedTasks[taskDate][staffName]).length === 0) {
-                        delete completedTasks[taskDate][staffName];
-                    }
-                    if (Object.keys(completedTasks[taskDate]).length === 0) {
-                        delete completedTasks[taskDate];
-                    }
-                }
-                saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-                renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminTaskOverview();
-            } else if (event.target.type === 'file') {
-                const fileInput = event.target;
-                const { taskName: taskName, taskDate, staffName } = fileInput.dataset;
-                const file = fileInput.files[0];
-                if (file) {
-                    if (!completedTasks[taskDate]) completedTasks[taskDate] = {};
-                    if (!completedTasks[taskDate][staffName]) completedTasks[taskDate][staffName] = {};
-                    const timestamp = completedTasks[taskDate][staffName][taskName]?.timestamp || Date.now();
-                    completedTasks[taskDate][staffName][taskName] = { timestamp, imageName: file.name };
-                    saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-                    alert(`Image "${file.name}" attached to "${taskName}".`);
-                    renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminTaskOverview();
-                }
-            }
-        }
-
-        // Rest of your initApp, render and utility functions unchanged
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeData();
-            renderLandingPage();
-            if (currentUserName) {
-                landingPage.style.display = 'none';
-                appContainer.style.display = 'flex';
-                initApp();
-            }
-        });
-    </script>
+    // Startup
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeData();
+      renderLandingPage();
+      if (currentUserName) {
+        document.getElementById('landing-page').style.display = 'none';
+        document.getElementById('app-container').style.display = 'flex';
+        initApp();
+      }
+    });
+  </script>
 </body>
 </html>
