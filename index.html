@@ -1008,7 +1008,7 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans" x-init="init()">
 
   <!-- Landing Screen -->
   <div x-show="!user" x-transition class="min-h-screen flex flex-col items-center justify-center px-4" id="landing-page">
@@ -1032,13 +1032,13 @@
   <div x-show="user" x-transition class="min-h-screen flex flex-col" id="app-container">
 
     <!-- Header -->
-    <header class="bg-gray-900 shadow p-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
-      <div class="flex items-center space-x-4 mb-3 sm:mb-0">
+    <header class="bg-gray-900 shadow p-4 flex flex-col md:flex-row items-start justify-between sm:items-center">
+      <div class="flex items-center space-x-4 mb-3 md:mb-0">
         <h2 class="text-xl font-bold text-purple-400">Staff Rota & Tasks</h2>
         <span class="px-3 py-1 bg-purple-700 text-white rounded-full text-sm" x-text="user.name + ' (' + user.role + ')'"></span>
       </div>
       <div class="flex items-center space-x-2">
-        <template x-if="user.role === 'Admin'">
+        <template x-if="isCurrentUserAdmin()">
           <button
             @click="toggleAdminMode()"
             :class="isAdminMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'"
@@ -1075,7 +1075,7 @@
         :class="view==='calendar' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
         class="px-4 py-2 rounded transition whitespace-nowrap"
       >Calendar</button>
-      <template x-if="user.role==='Admin'">
+      <template x-if="isCurrentUserAdmin()">
         <button
           @click="view='admin'"
           :class="view==='admin' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
@@ -1088,7 +1088,7 @@
     <main class="flex-1 overflow-auto p-6 space-y-6">
 
       <!-- Home View -->
-      <section x-show="view==='home'" x-transition class="home-view active">
+      <section x-show="view==='home'" x-transition class="home-view" :class="{'active': view==='home'}">
         <div class="bg-white rounded-lg shadow p-4 flex flex-col md:flex-row items-center justify-between"
              :class="{'bg-green-100 border-green-400': isClockedIn, 'bg-red-100 border-red-400': !isClockedIn}">
           <span class="text-gray-700 font-semibold mb-2 md:mb-0" x-text="clockStatusMessage">Loading clock status...</span>
@@ -1187,7 +1187,7 @@
       </section>
 
       <!-- My Tasks -->
-      <section x-show="view==='tasks'" x-transition class="my-tasks-view">
+      <section x-show="view==='tasks'" x-transition class="my-tasks-view" :class="{'active': view==='tasks'}">
         <h3 class="text-2xl font-semibold mb-4 text-purple-600">My Tasks for <span x-text="currentDayInfo"></span></h3>
         <div class="bg-white rounded-lg shadow p-4">
             <template x-if="myTasks.length > 0">
@@ -1222,7 +1222,7 @@
       </section>
 
       <!-- Weekly Rota -->
-      <section x-show="view==='rota'" x-transition class="weekly-rota-view">
+      <section x-show="view==='rota'" x-transition class="weekly-rota-view" :class="{'active': view==='rota'}">
         <h3 class="text-2xl font-semibold mb-4 text-purple-600">Weekly Rota</h3>
         <div class="bg-white rounded-lg shadow p-4 overflow-x-auto rota-grid-container">
           <div class="rota-grid">
@@ -1242,7 +1242,7 @@
       </section>
 
       <!-- Calendar View -->
-      <section x-show="view==='calendar'" x-transition class="calendar-view">
+      <section x-show="view==='calendar'" x-transition class="calendar-view" :class="{'active': view==='calendar'}">
         <h3 class="text-2xl font-semibold mb-4 text-purple-600">Monthly Calendar</h3>
         <div class="bg-white rounded-lg shadow p-4">
             <div class="flex justify-between items-center mb-4 calendar-controls">
@@ -1284,7 +1284,7 @@
       </section>
 
       <!-- Admin Panel -->
-      <section x-show="view==='admin'" x-transition class="admin-view">
+      <section x-show="view==='admin'" x-transition class="admin-view" :class="{'active': view==='admin'}">
         <h3 class="text-2xl font-semibold mb-4 text-purple-600">Admin Panel</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1639,9 +1639,9 @@
                 
                 const shifts = this.staff.filter(member => {
                     // Apply current user's role restrictions for read-only access
-                    if (this.user && this.user.role !== 'Admin') {
-                        if (this.user.role === 'FOH' && member.role === 'BOH') return false;
-                        if (this.user.role === 'BOH' && member.role === 'FOH') return false;
+                    if (this.user && !this.isCurrentUserAdmin()) { // Check if user is NOT admin
+                        if (this.user.role === 'FOH' && member.role === 'BOH') return false; // FOH cannot see BOH shifts
+                        if (this.user.role === 'BOH' && member.role === 'FOH') return false; // BOH cannot see FOH shifts
                     }
                     return true;
                 }).sort((a, b) => {
@@ -1686,10 +1686,9 @@
 
                 const filteredShifts = this.staff.filter(member => {
                     // Apply user's role visibility and selected filter from dropdown
-                    if (this.user && this.user.role !== 'Admin') {
+                    if (this.user && !this.isCurrentUserAdmin()) { // Check if user is NOT admin
                         if (this.user.role === 'FOH' && member.role === 'BOH') return false;
                         if (this.user.role === 'BOH' && member.role === 'FOH') return false;
-                        // Admins can be seen by FOH/BOH, so no explicit filter there unless calendar filter is specific
                     }
                     
                     if (this.calendarRoleFilter === 'all') {
@@ -1725,7 +1724,7 @@
 
             this.staff.filter(member => {
                 // Apply current user's role restrictions for display on homepage
-                if (this.user && this.user.role !== 'Admin') {
+                if (this.user && !this.isCurrentUserAdmin()) { // Check if user is NOT admin
                     if (this.user.role === 'FOH' && member.role === 'BOH') return false;
                     if (this.user.role === 'BOH' && member.role === 'FOH') return false;
                 }
@@ -1741,76 +1740,8 @@
             });
             return { foh, boh, admin };
         },
-
-        // --- Initialization Logic ---
-        init() {
-            try {
-                // Load all data from localStorage
-                this.staff = this.loadData('staffMembers') || [
-                    { name: 'Jill',    role: 'FOH',  icon: '💁‍♀️' },
-                    { name: 'Alice',   role: 'FOH',  icon: '💁‍♀️' },
-                    { name: 'Callum',  role: 'FOH',  icon: '💁‍♀️' },
-                    { name: 'Jess',    role: 'FOH',  icon: '💁‍♀️' },
-                    { name: 'Danny',   role: 'BOH',  icon: '👩‍🍳' },
-                    { name: 'Neil',    role: 'BOH',  icon: '👩‍🍳' },
-                    { name: 'Terry',   role: 'BOH',  icon: '👴' },
-                    { name: 'Richard', role: 'BOH',  icon: '👩‍🍳' },
-                    { name: 'Johnny',  role: 'Admin',icon: '🤵'  },
-                    { name: 'Lyndsey', role: 'Admin',icon: '🤵'  },
-                    { name: 'Collin',  role: 'Admin',icon: '🤵'  }
-                ];
-                this.rota = this.loadData('rota') || {};
-                this.dailyTasks = this.loadData('dailyTasks') || {};
-                this.completedTasks = this.loadData('completedTasks') || {};
-                this.clockIns = this.loadData('clockIns') || {};
-                this.messageBoard = this.loadData('messageBoard') || [];
-
-                // Attempt to restore user session
-                const savedUserName = this.loadData('currentUserName');
-                const savedUserRole = this.loadData('currentUserRole');
-                if (savedUserName && savedUserRole) {
-                    this.user = this.staff.find(s => s.name === savedUserName && s.role === savedUserRole) || null;
-                    // If user restored, also restore admin mode status (if they are admin)
-                    if (this.user && this.user.role === 'Admin') {
-                        this.isAdminMode = this.loadData('isAdminMode') || false;
-                    } else {
-                        this.isAdminMode = false; // Force non-admin to not be in admin mode
-                    }
-                } else {
-                    this.user = null; // No saved user, ensure user is null
-                    this.isAdminMode = false;
-                }
-
-                // Initial view setup
-                if (this.user) {
-                    this.view = 'home'; // Always start at home if logged in
-                    this.cleanupOldData(); // Clean up data on app load
-                } else {
-                    this.view = 'landing'; // Show landing page
-                }
-
-                // Initialize form dates to today
-                const today = this.getFormattedDate(new Date());
-                this.shiftForm.date = today;
-                this.taskForm.date = today;
-                this.assignedShiftsView.date = today;
-                this.assignedTasksView.date = today;
-                this.attendanceView.date = today;
-                this.taskOverviewView.date = today;
-
-                // Initial renders for admin lists (since they depend on initial selected values)
-                this.renderAdminAssignedShifts();
-                this.renderAdminAssignedTasks();
-                this.renderAdminShiftAttendance();
-                this.renderAdminTaskOverview();
-
-            } catch (e) {
-                console.error(`Error during app initialization: ${e.message}`, e);
-                alert("An error occurred during app initialization. Please check the console for details.");
-            }
-        },
-
-        // --- Utility Methods (moved from global scope into app function) ---
+        
+        // --- Utility Methods ---
         loadData(key) {
             try {
                 const data = localStorage.getItem(key);
@@ -1853,6 +1784,12 @@
             today.setHours(0, 0, 0, 0);
             return checkDate < today;
         },
+        getStaffMember(name) {
+            return this.staff.find(s => s.name === name);
+        },
+        isCurrentUserAdmin() {
+            return this.user?.role === 'Admin'; // Access user via `this.user`
+        },
         // Cleans up messages and old task completion records
         cleanupOldData() {
             const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
@@ -1864,9 +1801,8 @@
             // Clean up old completed task records
             let cleanedCompletedTasks = {};
             for (const dateKey in this.completedTasks) {
-                if (!this.isPastEndOfDay(dateKey)) { // Keep current/future dates as-is
-                    cleanedCompletedTasks[dateKey] = this.completedTasks[dateKey];
-                } else { // For past dates, filter out old completed tasks
+                // Only process if the date is in the past
+                if (this.isPastEndOfDay(dateKey)) { 
                     let tasksForDate = {};
                     for (const staffName in this.completedTasks[dateKey]) {
                         let tasksForStaff = {};
@@ -1884,6 +1820,8 @@
                     if (Object.keys(tasksForDate).length > 0) {
                         cleanedCompletedTasks[dateKey] = tasksForDate;
                     }
+                } else { // Keep current/future dates as-is
+                    cleanedCompletedTasks[dateKey] = this.completedTasks[dateKey];
                 }
             }
             this.completedTasks = cleanedCompletedTasks;
@@ -1909,7 +1847,7 @@
             this.view = 'landing'; // Navigate to landing page
         },
         toggleAdminMode() {
-            if (!this.user || this.user.role !== 'Admin') {
+            if (!this.isCurrentUserAdmin()) { // Use `this.isCurrentUserAdmin()`
                 alert('You do not have permission to access Admin Mode.');
                 return;
             }
@@ -1919,14 +1857,13 @@
         },
 
         // --- Home View Specific Methods ---
+        // Render methods for Alpine are generally handled by Alpine's reactivity
+        // We call them here to ensure initial state and subsequent re-renders are triggered.
         renderHomePage() {
-            // Re-render clock status and message board, who's working
-            this.isClockedIn; // Re-evaluate computed property
-            this.clockStatusMessage; // Re-evaluate computed property
-            this.clockButtonText; // Re-evaluate computed property
-            this.workingStaff; // Re-evaluate computed property
-            this.homeTasks; // Re-evaluate computed property
-            this.cleanupOldData(); // Ensure cleanup runs when home is viewed
+            // No explicit call needed for computed properties in Alpine
+            // They re-evaluate automatically when their dependencies change.
+            // But we need to ensure cleanup runs when home is viewed.
+            this.cleanupOldData(); 
         },
         toggleClockStatus() {
             const now = Date.now();
@@ -1948,8 +1885,8 @@
                 alert(`${this.user.name} re-clocked in at ${this.formatTimestampToTime(now)}.`);
             }
             this.saveData('clockIns', this.clockIns);
-            // Alpine reactivity will update computed properties automatically
-            this.renderHomePage(); // Force full re-render of homepage for consistency
+            // Alpine reactivity updates automatically, but we might call `renderHomePage` if needed for non-reactive parts.
+            // For now, computed properties should handle the UI updates.
         },
         sendMessage() {
             if (this.newMessageText.trim() === '') {
@@ -1968,7 +1905,7 @@
             });
             this.saveData('messageBoard', this.messageBoard);
             this.newMessageText = ''; // Clear input
-            this.renderHomePage(); // Re-render message board (computed property will update)
+            // Reactivity will re-render message list
         },
 
         // --- My Tasks View Specific Methods ---
@@ -1994,8 +1931,7 @@
                 }
             }
             this.saveData('completedTasks', this.completedTasks);
-            // Alpine reactivity will update `myTasks` computed property
-            this.renderHomePage(); // Update home view
+            // Reactivity updates `myTasks` and `homeTasks`
             if (this.isAdminMode) this.renderAdminTaskOverview(); // Update admin view if open
         },
         attachImageToTask(taskName, file) {
@@ -2017,29 +1953,30 @@
 
             this.saveData('completedTasks', this.completedTasks);
             alert(`Image "${file.name}" attached to "${taskName}". (Note: Image data is NOT stored in this demo.)`);
-            // Alpine reactivity will update `myTasks` computed property
-            this.renderHomePage(); // Update home view
+            // Reactivity updates `myTasks` and `homeTasks`
             if (this.isAdminMode) this.renderAdminTaskOverview(); // Update admin view if open
         },
 
         // --- Rota View Specific Methods ---
-        renderWeeklyRota() {
-            // Computed property `weeklyRota` handles rendering
-            // No explicit action needed here beyond data updates triggering reactivity
-        },
+        // Render logic is now mostly in `weeklyRota` computed property.
+        renderWeeklyRota() { /* No specific manual re-render needed here as `weeklyRota` is reactive */ },
 
         // --- Calendar View Specific Methods ---
-        renderCalendar() {
-            // Computed property `calendarDays` handles rendering
-            // No explicit action needed here beyond data updates triggering reactivity
+        // Render logic is now mostly in `calendarDays` computed property.
+        renderCalendar() { 
+            // This is called explicitly when `calendarRoleFilter` or month buttons change.
+            // The template uses `calendarDays` computed property which automatically reacts.
+            // We just need to ensure the dropdown's disabled state is correctly set up.
+            this.isCurrentUserAdmin(); // Trigger reactivity for admin status
+            this.user?.role; // Trigger reactivity for user role
         },
         goToPrevMonth() {
             this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() - 1));
-            // Reactivity handles re-render
+            // Reactivity handles re-render of `calendarDays`
         },
         goToNextMonth() {
             this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + 1));
-            // Reactivity handles re-render
+            // Reactivity handles re-render of `calendarDays`
         },
 
         // --- Admin View Specific Methods ---
@@ -2058,25 +1995,29 @@
             this.renderAdminShiftAttendance();
             this.renderAdminTaskOverview();
 
-            // Handle custom input visibility for initial state
-            this.handleShiftTypeChange();
+            // Handle custom input visibility for initial state (will trigger Alpine reactivity)
+            this.handleShiftTypeChange(); 
             this.handleTaskDescriptionChange();
+
+            // Explicitly disable elements in admin forms if not admin
+            const adminFormElements = document.getElementById('admin-view').querySelectorAll('input, select, button');
+            const disableAdminControls = !this.isCurrentUserAdmin();
+            adminFormElements.forEach(element => {
+                // Ensure the element actually exists and is not a template root for x-if
+                if (element) {
+                    element.disabled = disableAdminControls;
+                }
+            });
         },
         handleShiftTypeChange() {
-            if (this.shiftForm.type === 'custom') {
-                // Ensure custom input is shown only for admins
-                document.getElementById('custom-shift-input-container').style.display = this.isCurrentUserAdmin() ? 'block' : 'none';
-            } else {
-                document.getElementById('custom-shift-input-container').style.display = 'none';
+            // The x-show on the div handles display. We just need to manage required/value.
+            if (this.shiftForm.type !== 'custom') {
                 this.shiftForm.customType = '';
             }
         },
         handleTaskDescriptionChange() {
-            if (this.taskForm.description === 'Custom Task') {
-                // Ensure custom input is shown only for admins
-                document.getElementById('custom-task-input-container').style.display = this.isCurrentUserAdmin() ? 'block' : 'none';
-            } else {
-                document.getElementById('custom-task-input-container').style.display = 'none';
+            // The x-show on the div handles display. We just need to manage required/value.
+            if (this.taskForm.description !== 'Custom Task') {
                 this.taskForm.customDescription = '';
             }
         },
@@ -2112,7 +2053,7 @@
             this.shiftForm.type = '8AM-4PM'; // Reset select
             this.shiftForm.customType = ''; // Clear custom input
             this.shiftForm.repeatDays = 1; // Reset repeat days
-            document.getElementById('custom-shift-input-container').style.display = 'none';
+            // Custom input display handled by x-show/Alpine reactivity
 
             this.renderWeeklyRota();
             this.renderCalendar();
@@ -2161,7 +2102,7 @@
             this.taskForm.description = 'Slicing Lemons'; // Reset select
             this.taskForm.customDescription = ''; // Clear custom input
             this.taskForm.repeatDays = 1; // Reset repeat days
-            document.getElementById('custom-task-input-container').style.display = 'none';
+            // Custom input display handled by x-show/Alpine reactivity
 
             this.renderHomePage();
             this.renderMyTasks();
