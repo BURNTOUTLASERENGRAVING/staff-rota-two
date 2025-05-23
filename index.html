@@ -1008,12 +1008,12 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans" x-init="init()">
+<body class="bg-gray-100 text-gray-800 font-sans" x-init="initializeAlpineApp()">
 
   <!-- Landing Screen -->
   <div x-show="!user" x-transition class="min-h-screen flex flex-col items-center justify-center px-4" id="landing-page">
     <h1 class="text-3xl font-bold text-purple-600 mb-4">Welcome, Staff!</h1>
-    <p class="mb-6 text-gray-600">Select your profile to continue:</p>
+    <p class="mb-6 text-gray-600">Please select your profile to continue:</p>
     <div id="staff-icons-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
       <template x-for="member in staff" :key="member.name">
         <button
@@ -1026,6 +1026,7 @@
         </button>
       </template>
     </div>
+    <!-- instant-login on icon click; no Enter App button anymore -->
   </div>
 
   <!-- App Container -->
@@ -1035,7 +1036,7 @@
     <header class="bg-gray-900 shadow p-4 flex flex-col md:flex-row items-start justify-between sm:items-center">
       <div class="flex items-center space-x-4 mb-3 md:mb-0">
         <h2 class="text-xl font-bold text-purple-400">Staff Rota & Tasks</h2>
-        <span class="px-3 py-1 bg-purple-700 text-white rounded-full text-sm" x-text="user.name + ' (' + user.role + ')'"></span>
+        <span class="px-3 py-1 bg-purple-700 text-white rounded-full text-sm" x-text="user?.name + ' (' + user?.role + ')'"></span>
       </div>
       <div class="flex items-center space-x-2">
         <template x-if="isCurrentUserAdmin()">
@@ -1246,16 +1247,16 @@
         <h3 class="text-2xl font-semibold mb-4 text-purple-600">Monthly Calendar</h3>
         <div class="bg-white rounded-lg shadow p-4">
             <div class="flex justify-between items-center mb-4 calendar-controls">
-                <button @click="goToPrevMonth()" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition">&larr; Prev</button>
+                <button @click="goToPrevMonth()" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition">← Prev</button>
                 <h4 class="text-lg font-semibold text-purple-600" x-text="currentCalendarMonthYear"></h4>
-                <button @click="goToNextMonth()" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition">Next &rarr;</button>
+                <button @click="goToNextMonth()" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition">Next →</button>
                 <select x-model="calendarRoleFilter" @change="renderCalendar()"
                         class="p-2 border rounded text-sm"
                         :disabled="!isCurrentUserAdmin()">
                     <option value="all">All Staff</option>
-                    <option value="FOH" :disabled="user.role !== 'Admin' && user.role !== 'FOH'">Front of House</option>
-                    <option value="BOH" :disabled="user.role !== 'Admin' && user.role !== 'BOH'">Back of House</option>
-                    <option value="Admin" :disabled="user.role !== 'Admin'">Admin</option>
+                    <option value="FOH" :disabled="!isCurrentUserAdmin() && user?.role !== 'FOH'">Front of House</option>
+                    <option value="BOH" :disabled="!isCurrentUserAdmin() && user?.role !== 'BOH'">Back of House</option>
+                    <option value="Admin" :disabled="!isCurrentUserAdmin()">Admin</option>
                 </select>
             </div>
             <div class="grid grid-cols-7 gap-2 text-center calendar-grid">
@@ -1266,7 +1267,7 @@
                 <div class="font-semibold text-gray-600 text-sm">Fri</div>
                 <div class="font-semibold text-gray-600 text-sm">Sat</div>
                 <div class="font-semibold text-gray-600 text-sm">Sun</div>
-                <template x-for="day in calendarDays" :key="day.date">
+                <template x-for="(day, index) in calendarDays" :key="day.date || 'empty-' + index">
                     <div class="border p-2 rounded text-sm h-28 overflow-hidden relative"
                          :class="{'bg-gray-50': !day.currentMonth, 'bg-white': day.currentMonth, 'border-purple-500 border-2': day.isToday, 'text-gray-400': !day.currentMonth}">
                         <div class="font-bold text-right" :class="{'text-purple-600': day.currentMonth && !day.isToday, 'text-purple-800': day.isToday}" x-text="day.dayNumber"></div>
@@ -1522,7 +1523,7 @@
 
     </main>
     <footer class="bg-gray-800 text-gray-400 p-4 text-center text-sm">
-      <p>&copy; <span x-text="new Date().getFullYear()"></span> Staff Rota & Tasks. All rights reserved.</p>
+      <p>© <span x-text="new Date().getFullYear()"></span> Staff Rota & Tasks. All rights reserved.</p>
     </footer>
   </div>
 
@@ -1673,6 +1674,7 @@
 
             let days = [];
             for (let i = 0; i < firstDayOfWeek; i++) {
+                // Use a unique key for empty days, like 'empty-0', 'empty-1', etc.
                 days.push({ date: null, dayNumber: '', currentMonth: false, isToday: false, shifts: [] });
             }
 
@@ -1828,6 +1830,76 @@
             this.saveData('completedTasks', this.completedTasks);
         },
 
+        // --- Initialization Logic ---
+        initializeAlpineApp() { // This method is called by x-init="initializeAlpineApp()"
+            try {
+                // Load all data from localStorage
+                this.staff = this.loadData('staffMembers') || [
+                    { name: 'Jill',    role: 'FOH',  icon: '💁‍♀️' },
+                    { name: 'Alice',   role: 'FOH',  icon: '💁‍♀️' },
+                    { name: 'Callum',  role: 'FOH',  icon: '💁‍♀️' },
+                    { name: 'Jess',    role: 'FOH',  icon: '💁‍♀️' },
+                    { name: 'Danny',   role: 'BOH',  icon: '👩‍🍳' },
+                    { name: 'Neil',    role: 'BOH',  icon: '👩‍🍳' },
+                    { name: 'Terry',   role: 'BOH',  icon: '👴' },
+                    { name: 'Richard', role: 'BOH',  icon: '👩‍🍳' },
+                    { name: 'Johnny',  role: 'Admin',icon: '🤵'  },
+                    { name: 'Lyndsey', role: 'Admin',icon: '🤵'  },
+                    { name: 'Collin',  role: 'Admin',icon: '🤵'  }
+                ];
+                this.rota = this.loadData('rota') || {};
+                this.dailyTasks = this.loadData('dailyTasks') || {};
+                this.completedTasks = this.loadData('completedTasks') || {};
+                this.clockIns = this.loadData('clockIns') || {};
+                this.messageBoard = this.loadData('messageBoard') || [];
+
+                // Attempt to restore user session
+                const savedUserName = this.loadData('currentUserName');
+                const savedUserRole = this.loadData('currentUserRole');
+                if (savedUserName && savedUserRole) {
+                    this.user = this.staff.find(s => s.name === savedUserName && s.role === savedUserRole) || null;
+                    // If user restored, also restore admin mode status (if they are admin)
+                    if (this.user && this.user.role === 'Admin') {
+                        this.isAdminMode = this.loadData('isAdminMode') || false;
+                    } else {
+                        this.isAdminMode = false; // Force non-admin to not be in admin mode
+                    }
+                } else {
+                    this.user = null; // No saved user, ensure user is null
+                    this.isAdminMode = false;
+                }
+
+                // Initial view setup (handled by x-show on template sections)
+                if (this.user) {
+                    this.view = 'home'; // Always start at home if logged in
+                    this.cleanupOldData(); // Clean up data on app load
+                } else {
+                    this.view = 'landing'; // This `view` property isn't directly used by x-show for landing, but good for internal state.
+                }
+
+                // Initialize form dates to today
+                const today = this.getFormattedDate(new Date());
+                this.shiftForm.date = today;
+                this.taskForm.date = today;
+                this.assignedShiftsView.date = today;
+                this.assignedTasksView.date = today;
+                this.attendanceView.date = today;
+                this.taskOverviewView.date = today;
+
+                // Initial renders for admin lists (since they depend on initial selected values)
+                // These will be called by `renderAdminForms` when 'admin' view becomes active.
+                // But we need to make sure the initial values for the selects are set correctly for these renders.
+                this.shiftForm.staffName = this.user ? this.user.name : (this.staff[0]?.name || '');
+                this.taskForm.staffName = this.user ? this.user.name : (this.staff[0]?.name || '');
+                this.assignedShiftsView.staffName = this.user ? this.user.name : (this.staff[0]?.name || '');
+                this.assignedTasksView.staffName = this.user ? this.user.name : (this.staff[0]?.name || '');
+                
+            } catch (e) {
+                console.error(`Error during initializeAlpineApp: ${e.message}`, e);
+                alert("An error occurred during app initialization. Please check the console for details.");
+            }
+        },
+
         // --- Authentication Methods ---
         login(member) {
             this.user = member;
@@ -1844,7 +1916,7 @@
             this.saveData('currentUserName', null);
             this.saveData('currentUserRole', null);
             this.saveData('isAdminMode', false);
-            this.view = 'landing'; // Navigate to landing page
+            // `x-show="!user"` on landing page will handle display
         },
         toggleAdminMode() {
             if (!this.isCurrentUserAdmin()) { // Use `this.isCurrentUserAdmin()`
@@ -1967,8 +2039,7 @@
             // This is called explicitly when `calendarRoleFilter` or month buttons change.
             // The template uses `calendarDays` computed property which automatically reacts.
             // We just need to ensure the dropdown's disabled state is correctly set up.
-            this.isCurrentUserAdmin(); // Trigger reactivity for admin status
-            this.user?.role; // Trigger reactivity for user role
+            // isCurrentUserAdmin() and user?.role are already reactive deps of the calendar filter
         },
         goToPrevMonth() {
             this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() - 1));
@@ -2073,197 +2144,4 @@
                 if (!taskDescription) { alert('Please enter a custom task description.'); return; }
             }
 
-            if (!staff || !baseDate || !taskDescription || !repeatDays) { alert('Please fill all task assignment fields.'); return; }
-            if (taskDescription.length < 3 || taskDescription.length > 100) { alert('Task description should be between 3 and 100 characters.'); return; }
-            if (isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) { alert('Repeat days must be between 1 and 7.'); return; }
-
-            let assignmentsMade = 0;
-            for (let i = 0; i < repeatDays; i++) {
-                const currentDate = this.addDays(baseDate, i);
-                const formattedDate = this.getFormattedDate(currentDate);
-
-                this.dailyTasks[formattedDate] = this.dailyTasks[formattedDate] || {};
-                this.dailyTasks[formattedDate][staff] = this.dailyTasks[formattedDate][staff] || [];
-
-                if (!this.dailyTasks[formattedDate][staff].includes(taskDescription)) {
-                    this.dailyTasks[formattedDate][staff].push(taskDescription);
-                    assignmentsMade++;
-                }
-            }
-
-            if (assignmentsMade > 0) {
-                this.saveData('dailyTasks', this.dailyTasks);
-                alert(`Task '${taskDescription}' added for ${staff} for ${assignmentsMade} day(s).`);
-            } else {
-                alert('No new tasks were added (they might already exist).');
-            }
-
-            // Reset form and update views
-            this.taskForm.description = 'Slicing Lemons'; // Reset select
-            this.taskForm.customDescription = ''; // Clear custom input
-            this.taskForm.repeatDays = 1; // Reset repeat days
-            // Custom input display handled by x-show/Alpine reactivity
-
-            this.renderHomePage();
-            this.renderMyTasks();
-            this.renderAdminAssignedTasks();
-            this.renderAdminTaskOverview();
-        },
-        renderAdminAssignedShifts() {
-            if (!this.isCurrentUserAdmin()) { this.assignedShifts = []; return; }
-            const staffName = this.assignedShiftsView.staffName;
-            const date = this.assignedShiftsView.date;
-            
-            if (!staffName || !date) {
-                this.assignedShifts = [];
-                return;
-            }
-
-            const shift = this.rota[date]?.[staffName];
-            this.assignedShifts = shift ? [{ name: staffName, type: shift, date: date }] : [];
-        },
-        renderAdminAssignedTasks() {
-            if (!this.isCurrentUserAdmin()) { this.assignedTasks = []; return; }
-            const staffName = this.assignedTasksView.staffName;
-            const date = this.assignedTasksView.date;
-
-            if (!staffName || !date) {
-                this.assignedTasks = [];
-                return;
-            }
-
-            const tasks = this.dailyTasks[date]?.[staffName] || [];
-            this.assignedTasks = tasks.map(task => ({ name: task }));
-        },
-        renderAdminShiftAttendance() {
-            if (!this.isCurrentUserAdmin()) { this.attendanceList = []; return; }
-            const selectedDate = this.attendanceView.date;
-            if (!selectedDate) {
-                this.attendanceList = [];
-                return;
-            }
-
-            const dailyClockData = this.clockIns[selectedDate] || {};
-            this.attendanceList = this.staff.map(member => {
-                const clockData = dailyClockData[member.name];
-                let statusText = 'Not Clocked In';
-                let status = 'Not Clocked In';
-                if (clockData && clockData.in) {
-                    statusText = `Clocked In: ${this.formatTimestampToTime(clockData.in)}`;
-                    status = 'Clocked In';
-                    if (clockData.out) {
-                        statusText += `, Clocked Out: ${this.formatTimestampToTime(clockData.out)}`;
-                        status = 'Clocked Out'; // More specific status
-                    } else {
-                        statusText += ` (Still Clocked In)`;
-                    }
-                }
-                return { name: member.name, statusText, status };
-            });
-        },
-        renderAdminTaskOverview() {
-            if (!this.isCurrentUserAdmin()) { this.taskOverviewList = []; return; }
-            const selectedDate = this.taskOverviewView.date;
-            const filterStatus = this.taskOverviewView.statusFilter;
-
-            if (!selectedDate) {
-                this.taskOverviewList = [];
-                return;
-            }
-
-            let overviewTasks = [];
-            const tasksForDate = this.dailyTasks[selectedDate] || {};
-            const completedForDate = this.completedTasks[selectedDate] || {};
-
-            this.staff.forEach(member => {
-                const tasks = tasksForDate[member.name] || [];
-                const completed = completedForDate[member.name] || {};
-
-                tasks.forEach(taskName => {
-                    const completionData = completed[taskName];
-                    const isTaskCompleted = !!completionData;
-                    const timestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
-                    const imageName = typeof completionData === 'object' ? completionData.imageName : null;
-
-                    let status = '';
-                    let statusText = '';
-
-                    if (isTaskCompleted) {
-                        status = 'completed';
-                        statusText = 'Completed';
-                    } else {
-                        if (this.isPastEndOfDay(selectedDate)) {
-                            status = 'overdue';
-                            statusText = 'Overdue';
-                        } else {
-                            status = 'pending';
-                            statusText = 'Pending';
-                        }
-                    }
-
-                    if (filterStatus === 'all' || filterStatus === status) {
-                        overviewTasks.push({
-                            staffName: member.name,
-                            taskName: taskName,
-                            status: status,
-                            statusText: statusText,
-                            timestamp: timestamp ? this.formatTimestampToTime(timestamp) : '',
-                            imageName: imageName
-                        });
-                    }
-                });
-            });
-            this.taskOverviewList = overviewTasks.sort((a,b) => a.staffName.localeCompare(b.staffName)); // Sort by staff name
-        },
-        deleteAdminItem(type, staffName, date, taskName = null) {
-            if (!this.isCurrentUserAdmin()) { alert('Permission denied.'); return; }
-
-            if (type === 'task') {
-                if (confirm(`Are you sure you want to delete task "${taskName}" for ${staffName} on ${date}?`)) {
-                    if (this.dailyTasks[date] && this.dailyTasks[date][staffName]) {
-                        this.dailyTasks[date][staffName] = this.dailyTasks[date][staffName].filter(t => t !== taskName);
-                        if (this.dailyTasks[date][staffName].length === 0) delete this.dailyTasks[date][staffName];
-                        if (Object.keys(this.dailyTasks[date]).length === 0) delete this.dailyTasks[date];
-                        this.saveData('dailyTasks', this.dailyTasks);
-
-                        // Also remove from completed tasks if it was completed
-                        if (this.completedTasks[date] && this.completedTasks[date][staffName] && this.completedTasks[date][staffName][taskName]) {
-                            delete this.completedTasks[date][staffName][taskName];
-                            if (Object.keys(this.completedTasks[date][staffName]).length === 0) delete this.completedTasks[date][staffName];
-                            if (Object.keys(this.completedTasks[date]).length === 0) delete this.completedTasks[date];
-                            this.saveData('completedTasks', this.completedTasks);
-                        }
-                        alert('Task deleted successfully.');
-                    }
-                }
-            } else if (type === 'shift') {
-                if (confirm(`Are you sure you want to delete the shift for ${staffName} on ${date}?`)) {
-                    if (this.rota[date] && this.rota[date][staffName]) {
-                        delete this.rota[date][staffName];
-                        if (Object.keys(this.rota[date]).length === 0) delete this.rota[date];
-                        this.saveData('rota', this.rota);
-                        alert('Shift deleted successfully.');
-                    }
-                }
-            }
-            // Re-render relevant parts after deletion
-            this.renderAdminAssignedShifts();
-            this.renderAdminAssignedTasks();
-            this.renderWeeklyRota();
-            this.renderCalendar();
-            this.renderHomePage();
-            this.renderAdminTaskOverview();
-        },
-
-        // --- Calendar Navigation ---
-        goToPrevMonth() {
-            this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() - 1));
-        },
-        goToNextMonth() {
-            this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + 1));
-        }
-      }
-    }
-  </script>
-</body>
-</html>
+            if (!staff || !baseDate || !taskDescription || !repeatDays) { alert('Please fill all task assignment fields.');
