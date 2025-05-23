@@ -1,41 +1,28 @@
 <!DOCTYPE html>
-<html lang="en" x-data="app()" x-init="initializeAlpineApp()" x-cloak>
+<html lang="en" x-data="app()" x-cloak>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Staff Rota & Tasks</title>
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
   <!-- Alpine.js for interactivity -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-  <!-- Define and register the Alpine component -->
   <script>
     function app() {
       return {
-        // --- Data Properties (Reactive) ---
         staff: [],
-        user: null, // Logged-in user object { name: '', role: '', icon: '' }
-        view: 'home', // Current active view ('home', 'tasks', 'rota', 'calendar', 'admin', 'landing')
-
-        // Core App Data (synced with localStorage)
-        rota: {}, // { 'YYYY-MM-DD': { 'Staff Name': 'Shift Type' } }
-        dailyTasks: {}, // { 'YYYY-MM-DD': { 'Staff Name': ['Task 1', 'Task 2'] } }
-        completedTasks: {}, // { 'YYYY-MM-DD': { 'Staff Name': { 'Task Name': {timestamp: ts, imageName: 'file.jpg'} } } }
-        clockIns: {}, // { 'YYYY-MM-DD': { 'Staff Name': { 'in': timestamp, 'out': timestamp | null } } }
-        messageBoard: [], // [{ sender: 'Name', text: 'Message', timestamp: 123456789 }]
-
-        // UI State for Forms/Views
+        user: null,
+        view: 'home',
+        rota: {},
+        dailyTasks: {},
+        completedTasks: {},
+        clockIns: {},
+        messageBoard: [],
         isAdminMode: false,
-        currentCalendarDate: new Date(), // For calendar view
-        calendarRoleFilter: 'all', // Filter for calendar view
-
-        // Form data for Admin Panel
+        currentCalendarDate: new Date(),
+        calendarRoleFilter: 'all',
         shiftForm: { staffName: '', date: '', type: '', customType: '', repeatDays: 1 },
         taskForm: { staffName: '', date: '', description: '', customDescription: '', repeatDays: 1 },
-
-        // Data for admin view lists
         assignedShiftsView: { staffName: '', date: '' },
         assignedShifts: [],
         assignedTasksView: { staffName: '', date: '' },
@@ -44,33 +31,27 @@
         attendanceList: [],
         taskOverviewView: { date: '', statusFilter: 'all' },
         taskOverviewList: [],
+        newMessageText: '',
 
-        newMessageText: '', // For message board input
-
-        // --- Computed Properties ---
         get todayFormatted() {
-          return this.getFormattedDate(new Date());
+          const d = new Date(); return this.getFormattedDate(d);
         },
         get currentDayInfo() {
-          return this.getDisplayDate(new Date());
+          const d = new Date(); return this.getDisplayDate(d);
         },
         get currentCalendarMonthYear() {
           return this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         },
         get isClockedIn() {
-          const data = this.clockIns[this.todayFormatted]?.[this.user?.name];
-          return data && data.in && !data.out;
+          const rec = this.clockIns[this.todayFormatted]?.[this.user?.name];
+          return rec?.in && !rec.out;
         },
         get clockStatusMessage() {
           if (!this.user) return 'Please log in.';
-          const data = this.clockIns[this.todayFormatted]?.[this.user.name];
-          if (data?.in && !data.out) {
-            return `You are clocked in since ${this.formatTimestampToTime(data.in)}`;
-          } else if (data?.in && data.out) {
-            return `Clocked in: ${this.formatTimestampToTime(data.in)}, Clocked out: ${this.formatTimestampToTime(data.out)}`;
-          } else {
-            return 'You are not clocked in for today.';
-          }
+          const rec = this.clockIns[this.todayFormatted]?.[this.user.name] || {};
+          if (rec.in && !rec.out) return `You are clocked in since ${this.formatTimestampToTime(rec.in)}`;
+          if (rec.in && rec.out) return `Clocked in: ${this.formatTimestampToTime(rec.in)}, Clocked out: ${this.formatTimestampToTime(rec.out)}`;
+          return 'You are not clocked in for today.';
         },
         get clockButtonText() {
           return this.isClockedIn ? 'Clock Out' : 'Clock In';
@@ -78,114 +59,103 @@
         get homeTasks() {
           if (!this.user) return [];
           const tasks = this.dailyTasks[this.todayFormatted]?.[this.user.name] || [];
-          const completed = this.completedTasks[this.todayFormatted]?.[this.user.name] || {};
-          return tasks.map(task => ({ name: task, status: completed[task] ? 'completed' : 'pending' }));
+          const comp = this.completedTasks[this.todayFormatted]?.[this.user.name] || {};
+          return tasks.map(t => ({ name: t, status: comp[t] ? 'completed' : 'pending' }));
         },
         get myTasks() {
           if (!this.user) return [];
           const tasks = this.dailyTasks[this.todayFormatted]?.[this.user.name] || [];
-          const completed = this.completedTasks[this.todayFormatted]?.[this.user.name] || {};
-          return tasks.map(taskName => {
-            const completionData = completed[taskName];
-            const isCompleted = !!completionData;
-            const timestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
-            const imageName = typeof completionData === 'object' ? completionData.imageName : null;
-            const status = isCompleted ? 'completed' : (this.isPastEndOfDay(this.todayFormatted) ? 'incomplete' : 'pending');
-            return { name: taskName, status, timestamp, timestampDisplay: timestamp ? this.formatTimestampToTime(timestamp) : '', imageName };
+          const comp = this.completedTasks[this.todayFormatted]?.[this.user.name] || {};
+          return tasks.map(name => {
+            const data = comp[name];
+            const done = !!data;
+            const ts = done && typeof data === 'object' ? data.timestamp : data;
+            const img = done && typeof data === 'object' ? data.imageName : null;
+            const status = done ? 'completed' : (this.isPastEndOfDay(this.todayFormatted) ? 'incomplete' : 'pending');
+            return { name, status, timestampDisplay: ts ? this.formatTimestampToTime(ts) : '', imageName: img };
           });
         },
         get weeklyRota() {
-          const weekDays = this.getWeekDays(new Date());
-          return weekDays.map(day => {
-            const formattedDate = this.getFormattedDate(day);
-            const dayRota = this.rota[formattedDate] || {};
-            const shifts = this.staff.filter(member => {
+          const days = this.getWeekDays(new Date());
+          return days.map(day => {
+            const date = this.getFormattedDate(day);
+            const dayRota = this.rota[date] || {};
+            const shifts = this.staff.filter(m => {
               if (this.user && !this.isCurrentUserAdmin()) {
-                if (this.user.role === 'FOH' && member.role === 'BOH') return false;
-                if (this.user.role === 'BOH' && member.role === 'FOH') return false;
+                if (this.user.role === 'FOH' && m.role === 'BOH') return false;
+                if (this.user.role === 'BOH' && m.role === 'FOH') return false;
               }
               return true;
-            }).sort((a, b) => {
-              const order = { 'FOH': 1, 'BOH': 2, 'Admin': 3 };
-              return order[a.role] - order[b.role] || a.name.localeCompare(b.name);
-            }).map(member => ({ name: member.name, role: member.role, shift: dayRota[member.name] || 'Off' }));
-            return { date: formattedDate, displayDate: this.getDisplayDate(day), shifts };
+            }).sort((a,b)=>( {FOH:1,BOH:2,Admin:3}[a.role] - {FOH:1,BOH:2,Admin:3}[b.role] || a.name.localeCompare(b.name) ))
+              .map(m=>({ name: m.name, role: m.role, shift: dayRota[m.name]||'Off' }));
+            return { date, displayDate: this.getDisplayDate(day), shifts };
           });
         },
         get calendarDays() {
           const year = this.currentCalendarDate.getFullYear();
           const month = this.currentCalendarDate.getMonth();
-          const firstDayOfMonth = new Date(year, month, 1);
-          const lastDayOfMonth = new Date(year, month + 1, 0);
-          const numDaysInMonth = lastDayOfMonth.getDate();
-          const firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
-          let days = [];
-          for (let i = 0; i < firstDayOfWeek; i++) days.push({ date: null, dayNumber: '', currentMonth: false, isToday: false, shifts: [] });
-          const todayFormatted = this.getFormattedDate(new Date());
-          for (let dayNum = 1; dayNum <= numDaysInMonth; dayNum++) {
-            const dayDate = new Date(year, month, dayNum);
-            const formattedDate = this.getFormattedDate(dayDate);
-            const isToday = formattedDate === todayFormatted;
-            const dayRota = this.rota[formattedDate] || {};
-            const shifts = this.staff.filter(member => {
+          const first = new Date(year, month, 1);
+          const last = new Date(year, month+1,0);
+          const blanks = (first.getDay()+6)%7;
+          const arr = [];
+          for(let i=0;i<blanks;i++) arr.push({ date:null, dayNumber:'', currentMonth:false, isToday:false, shifts:[] });
+          const today = this.getFormattedDate(new Date());
+          for(let d=1;d<=last.getDate();d++){
+            const dt = new Date(year,month,d);
+            const fmt = this.getFormattedDate(dt);
+            const isToday = fmt === today;
+            const dayRota = this.rota[fmt]||{};
+            const shifts = this.staff.filter(m=>{
               if (this.user && !this.isCurrentUserAdmin()) {
-                if (this.user.role === 'FOH' && member.role === 'BOH') return false;
-                if (this.user.role === 'BOH' && member.role === 'FOH') return false;
+                if (this.user.role==='FOH'&&m.role==='BOH') return false;
+                if (this.user.role==='BOH'&&m.role==='FOH') return false;
               }
-              return this.calendarRoleFilter === 'all' || member.role === this.calendarRoleFilter;
-            }).sort((a, b) => a.name.localeCompare(b.name))
-              .map(member => ({ name: member.name, role: member.role, type: dayRota[member.name] || 'Off' }))
-              .filter(s => s.type !== 'Off');
-            days.push({ date: formattedDate, dayNumber: dayNum, currentMonth: true, isToday, shifts });
+              return this.calendarRoleFilter==='all'||m.role===this.calendarRoleFilter;
+            }).sort((a,b)=>a.name.localeCompare(b.name))
+              .map(m=>({ name:m.name, role:m.role, type: dayRota[m.name]||'Off' }))
+              .filter(s=>s.type!=='Off');
+            arr.push({ date:fmt, dayNumber:d, currentMonth:true, isToday, shifts });
           }
-          return days;
+          return arr;
         },
         get workingStaff() {
-          const today = this.getFormattedDate(new Date());
-          const todayRota = this.rota[today] || {};
-          const foh = [], boh = [], admin = [];
-          this.staff.filter(member => {
-            if (this.user && !this.isCurrentUserAdmin()) {
-              if (this.user.role === 'FOH' && member.role === 'BOH') return false;
-              if (this.user.role === 'BOH' && member.role === 'FOH') return false;
+          const fmt = this.getFormattedDate(new Date());
+          const dayRota = this.rota[fmt]||{};
+          const foh=[],boh=[],adm=[];
+          this.staff.filter(m=>{
+            if(this.user && !this.isCurrentUserAdmin()){
+              if(this.user.role==='FOH'&&m.role==='BOH') return false;
+              if(this.user.role==='BOH'&&m.role==='FOH') return false;
             }
             return true;
-          }).forEach(member => {
-            const shift = todayRota[member.name];
-            if (shift && shift !== 'Off') {
-              const data = { name: member.name, role: member.role, icon: member.icon, shift };
-              (member.role === 'FOH' ? foh : member.role === 'BOH' ? boh : admin).push(data);
+          }).forEach(m=>{
+            const sh = dayRota[m.name];
+            if(sh&&sh!=='Off'){
+              const itm = { name:m.name, role:m.role, icon:m.icon, shift:sh };
+              if(m.role==='FOH') foh.push(itm);
+              else if(m.role==='BOH') boh.push(itm);
+              else adm.push(itm);
             }
           });
-          return { foh, boh, admin };
+          return { foh, boh, admin:adm };
         },
 
-        // --- Utility Methods ---
-        loadData(key) { try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : null; } catch { return null; } },
-        saveData(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { alert("LocalStorage full."); } },
-        getFormattedDate(date) { const y = date.getFullYear(); const m = (date.getMonth()+1).toString().padStart(2,'0'); const d = date.getDate().toString().padStart(2,'0'); return `${y}-${m}-${d}`; },
-        formatTimestampToTime(ts) { return ts ? new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'N/A'; },
-        getDisplayDate(date) { return date.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}); },
-        addDays(d, n) { const dt = new Date(d); dt.setDate(dt.getDate()+n); return dt; },
-        isPastEndOfDay(str) { const chk = new Date(str); chk.setHours(23,59,59,999); const now = new Date(); now.setHours(0,0,0,0); return chk < now; },
-        isCurrentUserAdmin() { return this.user?.role === 'Admin'; },
-        getWeekDays(start) { const ms = start.getTime(); const day = start.getDay(); const mon = new Date(ms - ((day+6)%7)*86400000); return Array.from({length:7}, (_,i)=>new Date(mon.getTime()+i*86400000)); },
-        cleanupOldData() { const cutoff = Date.now() - 86400000; this.messageBoard = this.messageBoard.filter(m=>m.timestamp>cutoff); this.saveData('messageBoard',this.messageBoard); const ct = {}; for(const date in this.completedTasks){ if(this.isPastEndOfDay(date)){ const perDay = {}; for(const user in this.completedTasks[date]){ const keep = {}; for(const t in this.completedTasks[date][user]){ const ts = typeof this.completedTasks[date][user][t]==='object'?this.completedTasks[date][user][t].timestamp:this.completedTasks[date][user][t]; if(ts>cutoff) keep[t]=this.completedTasks[date][user][t]; } if(Object.keys(keep).length) perDay[user]=keep; } if(Object.keys(perDay).length) ct[date]=perDay; } else ct[date]=this.completedTasks[date]; } this.completedTasks=ct; this.saveData('completedTasks',this.completedTasks); },
+        loadData(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
+        saveData(k,d){try{localStorage.setItem(k,JSON.stringify(d))}catch{alert('LocalStorage full');}},
+        getFormattedDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${da}`;},
+        formatTimestampToTime(ts){return ts?new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'N/A';},
+        getDisplayDate(d){return d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})},
+        addDays(d,n){const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt},
+        isPastEndOfDay(s){const d=new Date(s);d.setHours(23,59,59,999);const now=new Date();now.setHours(0,0,0,0);return d<now},
+        isCurrentUserAdmin(){return this.user?.role==='Admin'},
+        getWeekDays(start){const day=start.getDay(),mon=new Date(start.getTime()-((day+6)%7)*86400000);return Array.from({length:7},(_,i)=>new Date(mon.getTime()+i*86400000));},
+        cleanupOldData(){const cutoff=Date.now()-86400000;this.messageBoard=this.messageBoard.filter(m=>m.timestamp>cutoff);this.saveData('messageBoard',this.messageBoard);const ct={};for(const date in this.completedTasks){if(this.isPastEndOfDay(date)){const pd={};for(const u in this.completedTasks[date]){const keep={};for(const t in this.completedTasks[date][u]){const ts= typeof this.completedTasks[date][u][t]==='object'?this.completedTasks[date][u][t].timestamp:this.completedTasks[date][u][t];if(ts>cutoff) keep[t]=this.completedTasks[date][u][t];}if(Object.keys(keep).length)pd[u]=keep;}if(Object.keys(pd).length)ct[date]=pd;}else ct[date]=this.completedTasks[date];}this.completedTasks=ct;this.saveData('completedTasks',this.completedTasks);},
 
-        // --- Initialization ---
-        initializeAlpineApp() {
+        initializeAlpineApp(){
           this.staff = this.loadData('staffMembers') || [
-            {name:'Jill',role:'FOH',icon:'💁‍♀️'},
-            {name:'Alice',role:'FOH',icon:'💁‍♀️'},
-            {name:'Callum',role:'FOH',icon:'💁‍♀️'},
-            {name:'Jess',role:'FOH',icon:'💁‍♀️'},
-            {name:'Danny',role:'BOH',icon:'👩‍🍳'},
-            {name:'Neil',role:'BOH',icon:'👩‍🍳'},
-            {name:'Terry',role:'BOH',icon:'👴'},
-            {name:'Richard',role:'BOH',icon:'👩‍🍳'},
-            {name:'Johnny',role:'Admin',icon:'🤵'},
-            {name:'Lyndsey',role:'Admin',icon:'🤵'},
-            {name:'Collin',role:'Admin',icon:'🤵'}
+            {name:'Jill',role:'FOH',icon:'💁‍♀️'},{name:'Alice',role:'FOH',icon:'💁‍♀️'},{name:'Callum',role:'FOH',icon:'💁‍♀️'},{name:'Jess',role:'FOH',icon:'💁‍♀️'},
+            {name:'Danny',role:'BOH',icon:'👩‍🍳'},{name:'Neil',role:'BOH',icon:'👩‍🍳'},{name:'Terry',role:'BOH',icon:'👴'},{name:'Richard',role:'BOH',icon:'👩‍🍳'},
+            {name:'Johnny',role:'Admin',icon:'🤵'},{name:'Lyndsey',role:'Admin',icon:'🤵'},{name:'Collin',role:'Admin',icon:'🤵'}
           ];
           this.rota = this.loadData('rota')||{};
           this.dailyTasks = this.loadData('dailyTasks')||{};
@@ -195,53 +165,62 @@
 
           const uName = this.loadData('currentUserName');
           const uRole = this.loadData('currentUserRole');
-          if(uName&&uRole){ this.user = this.staff.find(s=>s.name===uName&&s.role===uRole)||null; if(this.user.role==='Admin') this.isAdminMode = this.loadData('isAdminMode')||false; }
+          if(uName&&uRole){this.user=this.staff.find(s=>s.name===uName&&s.role===uRole)||null; if(this.user.role==='Admin')this.isAdminMode=this.loadData('isAdminMode')||false;}
 
-          if(this.user){ this.view='home'; this.cleanupOldData(); } else { this.user=null; this.view='landing'; }
+          if(this.user){this.view='home';this.cleanupOldData();}else{this.user=null;this.view='landing';}
 
-          const today = this.getFormattedDate(new Date());
-          ['shiftForm.date','taskForm.date','assignedShiftsView.date','assignedTasksView.date','attendanceView.date','taskOverviewView.date']
-            .forEach(k=>{ const parts=k.split('.'); this[parts[0]][parts[1]] = today; });
-
-          this.shiftForm.staffName = this.user?.name||this.staff[0].name;
-          this.taskForm.staffName  = this.user?.name||this.staff[0].name;
-          this.assignedShiftsView.staffName  = this.user?.name||this.staff[0].name;
-          this.assignedTasksView.staffName  = this.user?.name||this.staff[0].name;
-
-          document.querySelector('footer span').textContent = new Date().getFullYear();
+          const today=this.getFormattedDate(new Date());
+          this.shiftForm.date=this.taskForm.date=this.assignedShiftsView.date=this.assignedTasksView.date=this.attendanceView.date=this.taskOverviewView.date=today;
+          this.shiftForm.staffName=this.taskForm.staffName=this.assignedShiftsView.staffName=this.assignedTasksView.staffName=this.user?.name||this.staff[0].name;
         },
 
-        // --- Auth ---
-        login(member) { this.user=member; this.saveData('currentUserName',member.name); this.saveData('currentUserRole',member.role); this.isAdminMode=false; this.saveData('isAdminMode',false); this.view='home'; this.cleanupOldData(); },
-        logout() { this.user=null; this.isAdminMode=false; this.saveData('currentUserName',null); this.saveData('currentUserRole',null); this.saveData('isAdminMode',false); },
-        toggleAdminMode() { if(!this.isCurrentUserAdmin()){ alert('No permission'); return; } this.isAdminMode=!this.isAdminMode; this.saveData('isAdminMode',this.isAdminMode); this.view = this.isAdminMode?'admin':'home'; },
-
-        // Other methods (render, assign, delete, toggleClockStatus, sendMessage, toggleTaskCompletion, attachImageToTask, etc.) go here unchanged...
-
-      }
+        login(m){this.user=m;this.saveData('currentUserName',m.name);this.saveData('currentUserRole',m.role);this.isAdminMode=false;this.saveData('isAdminMode',false);this.view='home';this.cleanupOldData();},
+        logout(){this.user=null;this.isAdminMode=false;this.saveData('currentUserName',null);this.saveData('currentUserRole',null);this.saveData('isAdminMode',false);},
+        toggleAdminMode(){if(!this.isCurrentUserAdmin()){alert('Permission denied');return;}this.isAdminMode=!this.isAdminMode;this.saveData('isAdminMode',this.isAdminMode);this.view=this.isAdminMode?'admin':'home';},
+        // Additional methods omitted for brevity
+      };
     }
 
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('app', app)
-    })
+    document.addEventListener('alpine:init',()=>{
+      Alpine.data('app',app);
+    });
   </script>
 
   <style>
-    /* Your entire CSS block unchanged */
     [x-cloak] { display: none !important; }
-    /* ... rest of your styles ... */
+    /* All existing custom styles here unchanged... */
   </style>
 </head>
-
 <body class="bg-gray-100 text-gray-800 font-sans">
-  <!-- Landing Screen -->
-  <div x-show="!user" x-transition class="min-h-screen flex flex-col items-center justify-center px-4" id="landing-page">
-    <!-- ... landing markup ... -->
+  <!-- Landing -->
+  <div x-show="!user" x-cloak class="min-h-screen flex items-center justify-center">
+    <h1>Welcome, Staff!</h1>
+    <!-- Landing content -->
   </div>
-
   <!-- App Container -->
-  <div x-show="user" x-transition class="min-h-screen flex flex-col" id="app-container">
-    <!-- Header, Nav, Main, Footer markup unchanged -->
+  <div x-show="user" x-cloak class="min-h-screen flex flex-col">
+    <header class="p-4 bg-gray-900 text-white flex justify-between items-center">
+      <h2 class="text-xl">Staff Rota & Tasks</h2>
+      <div>
+        <span x-text="user.name + ' (' + user.role + ')'" class="mr-4"></span>
+        <button @click="logout()">Sign Out</button>
+      </div>
+    </header>
+    <nav class="bg-gray-800 p-2 text-white flex space-x-2">
+      <button @click="view='home'" :class="view==='home'? 'bg-purple-600':''">Home</button>
+      <button @click="view='tasks'" :class="view==='tasks'? 'bg-purple-600':''">My Tasks</button>
+      <button @click="view='rota'" :class="view==='rota'? 'bg-purple-600':''">Weekly Rota</button>
+      <button @click="view='calendar'" :class="view==='calendar'? 'bg-purple-600':''">Calendar</button>
+      <template x-if="isCurrentUserAdmin()">
+        <button @click="view='admin'" :class="view==='admin'? 'bg-purple-600':''">Admin</button>
+      </template>
+    </nav>
+    <main class="flex-1 overflow-auto p-6">
+      <!-- Sections for each view using x-show and Alpine reactivity -->
+    </main>
+    <footer class="p-4 bg-gray-200 text-center text-gray-700">
+      &copy; <span x-text="new Date().getFullYear()"></span> Staff Rota & Tasks
+    </footer>
   </div>
 </body>
 </html>
