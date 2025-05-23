@@ -1,12 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" x-data="app()" x-cloak>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Staff Rota & Task Checklist</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Staff Rota & Tasks</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js for interactivity -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
+    /* Prevent FOUC (Flash Of Unstyled Content) with x-cloak */
+    [x-cloak] { display: none !important; }
+
     /*
-     * CSS Styles
+     * Custom CSS Styles
      * Modern, minimalist design with mobile-first responsiveness.
      * Color scheme: Black, white, dark grey, purple highlights.
      */
@@ -1001,532 +1008,745 @@
     }
   </style>
 </head>
-<body>
-    <!-- Landing Page -->
-    <div id="landing-page">
-        <h1>Welcome, Staff!</h1>
-        <p>Please select your profile to continue:</p>
-        <div id="staff-icons-container">
-            <!-- Staff icons populated by JS -->
-        </div>
-        <!-- instant-login on icon click; no Enter App button anymore -->
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+  <!-- Landing Screen -->
+  <div x-show="!user" x-transition class="min-h-screen flex flex-col items-center justify-center px-4" id="landing-page">
+    <h1 class="text-3xl font-bold text-purple-600 mb-4">Welcome, Staff!</h1>
+    <p class="mb-6 text-gray-600">Select your profile to continue:</p>
+    <div id="staff-icons-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+      <template x-for="member in staff" :key="member.name">
+        <button
+          @click="login(member)"
+          class="staff-icon" :class="member.role.toLowerCase()"
+        >
+          <div class="icon-placeholder" x-text="member.icon"></div>
+          <div class="staff-name" x-text="member.name"></div>
+          <div class="staff-role" x-text="member.role"></div>
+        </button>
+      </template>
     </div>
+  </div>
 
-    <!-- Main App Container -->
-    <div id="app-container">
-        <header>
-            <h1>Staff Rota & Tasks</h1>
-            <div class="top-controls">
-                <span id="user-info"></span>
-                <button id="admin-toggle-btn">Admin Mode</button>
-                <button id="sign-out-btn">Sign Out</button>
+  <!-- App Container -->
+  <div x-show="user" x-transition class="min-h-screen flex flex-col" id="app-container">
+
+    <!-- Header -->
+    <header class="bg-gray-900 shadow p-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
+      <div class="flex items-center space-x-4 mb-3 sm:mb-0">
+        <h2 class="text-xl font-bold text-purple-400">Staff Rota & Tasks</h2>
+        <span class="px-3 py-1 bg-purple-700 text-white rounded-full text-sm" x-text="user.name + ' (' + user.role + ')'"></span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <template x-if="user.role === 'Admin'">
+          <button
+            @click="toggleAdminMode()"
+            :class="isAdminMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'"
+            class="px-4 py-2 text-white rounded transition"
+            x-text="isAdminMode ? 'Exit Admin' : 'Admin Mode'"
+          ></button>
+        </template>
+        <button
+          @click="logout()"
+          class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+        >Sign Out</button>
+      </div>
+    </header>
+
+    <!-- Nav -->
+    <nav class="bg-gray-800 p-2 flex space-x-2 overflow-x-auto justify-center">
+      <button
+        @click="view='home'"
+        :class="view==='home' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+        class="px-4 py-2 rounded transition whitespace-nowrap"
+      >Home</button>
+      <button
+        @click="view='tasks'"
+        :class="view==='tasks' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+        class="px-4 py-2 rounded transition whitespace-nowrap"
+      >My Tasks</button>
+      <button
+        @click="view='rota'"
+        :class="view==='rota' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+        class="px-4 py-2 rounded transition whitespace-nowrap"
+      >Weekly Rota</button>
+      <button
+        @click="view='calendar'"
+        :class="view==='calendar' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+        class="px-4 py-2 rounded transition whitespace-nowrap"
+      >Calendar</button>
+      <template x-if="user.role==='Admin'">
+        <button
+          @click="view='admin'"
+          :class="view==='admin' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+          class="px-4 py-2 rounded transition whitespace-nowrap"
+        >Admin</button>
+      </template>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto p-6 space-y-6">
+
+      <!-- Home View -->
+      <section x-show="view==='home'" x-transition class="home-view active">
+        <div class="bg-white rounded-lg shadow p-4 flex flex-col md:flex-row items-center justify-between"
+             :class="{'bg-green-100 border-green-400': isClockedIn, 'bg-red-100 border-red-400': !isClockedIn}">
+          <span class="text-gray-700 font-semibold mb-2 md:mb-0" x-text="clockStatusMessage">Loading clock status...</span>
+          <button @click="toggleClockStatus()" class="px-4 py-2 rounded transition"
+                  :class="isClockedIn ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'">
+            <span x-text="clockButtonText">Toggle Clock</span>
+          </button>
+        </div>
+
+        <h2 class="text-2xl font-semibold mb-4 text-purple-600">Who's Working Today?</h2>
+        <div class="who-is-working-grid">
+            <div class="working-staff-column">
+                <strong class="text-purple-600">FOH</strong>
+                <template x-if="workingStaff.foh.length > 0">
+                    <template x-for="member in workingStaff.foh" :key="member.name">
+                        <div class="staff-icon bg-white shadow p-2 mb-2" :class="member.role.toLowerCase()">
+                            <div class="icon-placeholder text-3xl" x-text="member.icon"></div>
+                            <div class="staff-name text-sm" x-text="member.name"></div>
+                            <div class="staff-role text-xs text-gray-500" x-text="member.shift"></div>
+                        </div>
+                    </template>
+                </template>
+                <template x-if="workingStaff.foh.length === 0">
+                    <p class="text-sm text-gray-500 italic p-2">No FOH staff working.</p>
+                </template>
             </div>
-            <nav class="nav-buttons">
-                <button id="nav-home" class="active">Home</button> <!-- New Home button -->
-                <button id="nav-my-tasks">My Tasks</button>
-                <button id="nav-weekly-rota">Weekly Rota</button>
-                <button id="nav-calendar">Calendar View</button>
-            </nav>
-        </header>
+            <div class="working-staff-column">
+                <strong class="text-purple-600">BOH</strong>
+                <template x-if="workingStaff.boh.length > 0">
+                    <template x-for="member in workingStaff.boh" :key="member.name">
+                        <div class="staff-icon bg-white shadow p-2 mb-2" :class="member.role.toLowerCase()">
+                            <div class="icon-placeholder text-3xl" x-text="member.icon"></div>
+                            <div class="staff-name text-sm" x-text="member.name"></div>
+                            <div class="staff-role text-xs text-gray-500" x-text="member.shift"></div>
+                        </div>
+                    </template>
+                </template>
+                <template x-if="workingStaff.boh.length === 0">
+                    <p class="text-sm text-gray-500 italic p-2">No BOH staff working.</p>
+                </template>
+            </div>
+            <div class="working-staff-column">
+                <strong class="text-purple-600">Admin</strong>
+                <template x-if="workingStaff.admin.length > 0">
+                    <template x-for="member in workingStaff.admin" :key="member.name">
+                        <div class="staff-icon bg-white shadow p-2 mb-2" :class="member.role.toLowerCase()">
+                            <div class="icon-placeholder text-3xl" x-text="member.icon"></div>
+                            <div class="staff-name text-sm" x-text="member.name"></div>
+                            <div class="staff-role text-xs text-gray-500" x-text="member.shift"></div>
+                        </div>
+                    </template>
+                </template>
+                <template x-if="workingStaff.admin.length === 0">
+                    <p class="text-sm text-gray-500 italic p-2">No Admin staff working.</p>
+                </template>
+            </div>
+        </div>
 
-        <main>
-            <!-- Home View (New Default Page) -->
-            <section id="home-view" class="active">
-                <div id="clock-status-banner-home" class="status-banner">
-                    <span id="clock-status-text-home">Loading clock status...</span>
-                    <button id="clock-in-out-btn-home">Toggle Clock</button>
-                </div>
-
-                <h2>Who's Working Today?</h2>
-                <div class="who-is-working-grid">
-                    <div class="working-staff-column">
-                        <strong>FOH</strong>
-                        <ul id="foh-working-list">
-                            <li class="no-data">No FOH staff working.</li>
-                        </ul>
-                    </div>
-                    <div class="working-staff-column">
-                        <strong>BOH</strong>
-                        <ul id="boh-working-list">
-                            <li class="no-data">No BOH staff working.</li>
-                        </ul>
-                    </div>
-                    <div class="working-staff-column">
-                        <strong>Admin</strong>
-                        <ul id="admin-working-list">
-                            <li class="no-data">No Admin staff working.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <h2 id="my-tasks-for-home">Your Tasks for Today</h2>
-                <ul id="home-task-list">
-                    <li class="no-tasks">No tasks assigned for today.</li>
+        <h2 class="text-2xl font-semibold mb-4 text-purple-600">Your Tasks for Today</h2>
+        <div class="bg-white rounded-lg shadow p-4">
+            <template x-if="homeTasks.length > 0">
+                <ul class="list-none p-0">
+                    <template x-for="task in homeTasks" :key="task.name">
+                        <li class="p-2 border-b last:border-b-0" :class="task.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-800'">
+                            <span x-text="task.name"></span> (<span x-text="task.status"></span>)
+                        </li>
+                    </template>
                 </ul>
+            </template>
+            <template x-if="homeTasks.length === 0">
+                <p class="text-gray-500 italic">No tasks assigned for you today.</p>
+            </template>
+        </div>
 
-                <h2 id="message-board">Message Board</h2>
-                <div class="message-list-container">
-                    <ul id="message-list">
-                        <li class="no-data">No messages yet.</li>
+        <h2 class="text-2xl font-semibold mb-4 text-purple-600 mt-6">Message Board</h2>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="message-list-container">
+                <ul class="message-list mb-4">
+                    <template x-for="message in messageBoard" :key="message.timestamp">
+                        <li class="p-2 border-b last:border-b-0">
+                            <span class="message-sender" x-text="message.sender + ':'"></span>
+                            <span class="message-text" x-text="message.text"></span>
+                            <span class="message-timestamp ml-2" x-text="'(' + new Date(message.timestamp).toLocaleString() + ')'"></span>
+                        </li>
+                    </template>
+                    <template x-if="messageBoard.length === 0">
+                        <li class="text-gray-500 italic p-2">No messages yet.</li>
+                    </template>
+                </ul>
+                <form @submit.prevent="sendMessage()" class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <textarea x-model="newMessageText" placeholder="Write a message..." rows="3" class="flex-1 p-2 border rounded resize-y"></textarea>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition">Send</button>
+                </form>
+            </div>
+        </div>
+      </section>
+
+      <!-- My Tasks -->
+      <section x-show="view==='tasks'" x-transition class="my-tasks-view">
+        <h3 class="text-2xl font-semibold mb-4 text-purple-600">My Tasks for <span x-text="currentDayInfo"></span></h3>
+        <div class="bg-white rounded-lg shadow p-4">
+            <template x-if="myTasks.length > 0">
+                <ul class="list-none p-0">
+                    <template x-for="task in myTasks" :key="task.name">
+                        <li class="task-item" :class="{'completed': task.status === 'completed', 'incomplete': task.status === 'incomplete'}">
+                            <span x-text="task.name" class="flex-grow"></span>
+                            <div class="task-item-controls flex items-center space-x-2">
+                                <input type="checkbox" class="form-checkbox h-5 w-5 text-purple-600"
+                                    :checked="task.status === 'completed'"
+                                    @change="toggleTaskCompletion(task.name, $event.target.checked)">
+                                <button type="button" class="upload-image-btn"
+                                    @click="$refs['fileInput_' + task.name].click()"
+                                    x-show="task.status !== 'completed'">
+                                    Attach Image
+                                </button>
+                                <input type="file" :ref="'fileInput_' + task.name" accept="image/*" class="hidden"
+                                    @change="attachImageToTask(task.name, $event.target.files[0])">
+                            </div>
+                            <span class="timestamp text-gray-500 text-sm" x-text="task.timestampDisplay"></span>
+                            <template x-if="task.imageName">
+                                <span class="attached-image-info text-right w-full" x-text="'Image: ' + task.imageName + ' attached.'"></span>
+                            </template>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+            <template x-if="myTasks.length === 0">
+                <p class="text-gray-500 italic p-2">No tasks assigned for you today.</p>
+            </template>
+        </div>
+      </section>
+
+      <!-- Weekly Rota -->
+      <section x-show="view==='rota'" x-transition class="weekly-rota-view">
+        <h3 class="text-2xl font-semibold mb-4 text-purple-600">Weekly Rota</h3>
+        <div class="bg-white rounded-lg shadow p-4 overflow-x-auto rota-grid-container">
+          <div class="rota-grid">
+            <template x-for="day in weeklyRota" :key="day.date">
+                <div class="rota-day-column bg-gray-100 rounded-lg p-3 text-center shadow-sm">
+                    <strong class="block mb-2 text-purple-600" x-text="day.displayDate"></strong>
+                    <ul class="list-none p-0 w-full">
+                        <template x-for="staffShift in day.shifts" :key="staffShift.name">
+                            <li class="bg-white p-2 mb-1 rounded text-sm text-left shadow-sm" :class="staffShift.role.toLowerCase()"
+                                x-text="staffShift.name + ': ' + staffShift.shift"></li>
+                        </template>
                     </ul>
-                    <form id="message-input-form">
-                        <textarea id="message-text" placeholder="Write a message..." rows="3" required></textarea>
-                        <button type="submit">Send</button>
-                    </form>
                 </div>
-            </section>
+            </template>
+          </div>
+        </div>
+      </section>
 
-            <!-- My Tasks View -->
-            <section id="my-tasks-view">
-                <div class="info-banner">Your tasks for <span id="current-day-info">Today</span></div>
-                <ul id="task-list">
-                    <li class="no-tasks">No tasks assigned for today.</li>
-                </ul>
-            </section>
-
-            <!-- Weekly Rota View -->
-            <section id="weekly-rota-view">
-                <h2>Weekly Rota</h2>
-                <div class="rota-grid-container">
-                    <div class="rota-grid">
-                        <!-- Rota columns populated by JS -->
+      <!-- Calendar View -->
+      <section x-show="view==='calendar'" x-transition class="calendar-view">
+        <h3 class="text-2xl font-semibold mb-4 text-purple-600">Monthly Calendar</h3>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex justify-between items-center mb-4 calendar-controls">
+                <button @click="goToPrevMonth()" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition">&larr; Prev</button>
+                <h4 class="text-lg font-semibold text-purple-600" x-text="currentCalendarMonthYear"></h4>
+                <button @click="goToNextMonth()" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition">Next &rarr;</button>
+                <select x-model="calendarRoleFilter" @change="renderCalendar()"
+                        class="p-2 border rounded text-sm"
+                        :disabled="!isCurrentUserAdmin()">
+                    <option value="all">All Staff</option>
+                    <option value="FOH" :disabled="user.role !== 'Admin' && user.role !== 'FOH'">Front of House</option>
+                    <option value="BOH" :disabled="user.role !== 'Admin' && user.role !== 'BOH'">Back of House</option>
+                    <option value="Admin" :disabled="user.role !== 'Admin'">Admin</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-7 gap-2 text-center calendar-grid">
+                <div class="font-semibold text-gray-600 text-sm">Mon</div>
+                <div class="font-semibold text-gray-600 text-sm">Tue</div>
+                <div class="font-semibold text-gray-600 text-sm">Wed</div>
+                <div class="font-semibold text-gray-600 text-sm">Thu</div>
+                <div class="font-semibold text-gray-600 text-sm">Fri</div>
+                <div class="font-semibold text-gray-600 text-sm">Sat</div>
+                <div class="font-semibold text-gray-600 text-sm">Sun</div>
+                <template x-for="day in calendarDays" :key="day.date">
+                    <div class="border p-2 rounded text-sm h-28 overflow-hidden relative"
+                         :class="{'bg-gray-50': !day.currentMonth, 'bg-white': day.currentMonth, 'border-purple-500 border-2': day.isToday, 'text-gray-400': !day.currentMonth}">
+                        <div class="font-bold text-right" :class="{'text-purple-600': day.currentMonth && !day.isToday, 'text-purple-800': day.isToday}" x-text="day.dayNumber"></div>
+                        <ul class="list-none p-0 mt-1 space-y-0.5 max-h-16 overflow-y-auto">
+                            <template x-for="shift in day.shifts" :key="shift.name + shift.type">
+                                <li class="px-1 py-0.5 rounded text-xs truncate"
+                                    :class="{'bg-blue-100 text-blue-700': shift.role === 'FOH', 'bg-green-100 text-green-700': shift.role === 'BOH', 'bg-gray-100 text-gray-700': shift.role === 'Admin'}"
+                                    x-text="shift.name + ': ' + shift.type"></li>
+                            </template>
+                        </ul>
                     </div>
-                </div>
-            </section>
+                </template>
+            </div>
+        </div>
+      </section>
 
-            <!-- Calendar View -->
-            <section id="calendar-view">
-                <h2>Monthly Rota Calendar</h2>
-                <div class="calendar-controls">
-                    <button id="prev-month-btn">&larr; Prev Month</button>
-                    <h3 id="current-month-year"></h3>
-                    <button id="next-month-btn">Next Month &rarr;</button>
-                    <select id="calendar-role-filter">
-                        <option value="all">All Staff</option>
-                        <option value="FOH">Front of House</option>
-                        <option value="BOH">Back of House</option>
-                        <option value="Admin">Admin</option>
+      <!-- Admin Panel -->
+      <section x-show="view==='admin'" x-transition class="admin-view">
+        <h3 class="text-2xl font-semibold mb-4 text-purple-600">Admin Panel</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Assign Shifts -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="font-semibold mb-3">Assign Shifts</h4>
+                <form @submit.prevent="assignShift()" class="space-y-3">
+                    <div>
+                        <label for="shift-user-select" class="block text-sm font-medium text-gray-700">Staff Member:</label>
+                        <select x-model="shiftForm.staffName" id="shift-user-select" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+                                :disabled="!isCurrentUserAdmin()">
+                            <template x-for="member in staff" :key="member.name">
+                                <option :value="member.name" x-text="member.name + ' (' + member.role + ')'"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="shift-date" class="block text-sm font-medium text-gray-700">Date:</label>
+                        <input type="date" x-model="shiftForm.date" id="shift-date" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                               :disabled="!isCurrentUserAdmin()">
+                    </div>
+                    <div>
+                        <label for="shift-type-select" class="block text-sm font-medium text-gray-700">Shift Type:</label>
+                        <select x-model="shiftForm.type" @change="handleShiftTypeChange()" id="shift-type-select" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+                                :disabled="!isCurrentUserAdmin()">
+                            <option value="">Select Shift</option>
+                            <option value="8AM-4PM">8AM-4PM</option>
+                            <option value="12PM-8PM">12PM-8PM</option>
+                            <option value="5PM-Close">5PM-Close</option>
+                            <option value="Off">Off</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div x-show="shiftForm.type === 'custom'" class="transition-all duration-300" id="custom-shift-input-container">
+                        <label for="custom-shift-type" class="block text-sm font-medium text-gray-700">Custom Shift:</label>
+                        <input type="text" x-model="shiftForm.customType" id="custom-shift-type" placeholder="e.g., 9AM-5PM"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                               :required="shiftForm.type === 'custom'"
+                               :disabled="!isCurrentUserAdmin()">
+                    </div>
+                    <div>
+                        <label for="shift-repeat-days" class="block text-sm font-medium text-gray-700">Repeat for (days):</label>
+                        <input type="number" x-model.number="shiftForm.repeatDays" id="shift-repeat-days" min="1" max="7" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                               :disabled="!isCurrentUserAdmin()">
+                    </div>
+                    <button type="submit" class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition"
+                            :disabled="!isCurrentUserAdmin()">Assign Shift</button>
+                </form>
+            </div>
+
+            <!-- Assigned Shifts View -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="font-semibold mb-3">Assigned Shifts</h4>
+                <div class="flex space-x-2 mb-3">
+                    <select x-model="assignedShiftsView.staffName" @change="renderAdminAssignedShifts()"
+                            class="flex-1 p-2 border rounded text-sm"
+                            :disabled="!isCurrentUserAdmin()">
+                        <template x-for="member in staff" :key="member.name">
+                            <option :value="member.name" x-text="member.name + ' (' + member.role + ')'"></option>
+                        </template>
+                    </select>
+                    <input type="date" x-model="assignedShiftsView.date" @change="renderAdminAssignedShifts()"
+                           class="p-2 border rounded text-sm"
+                           :disabled="!isCurrentUserAdmin()">
+                </div>
+                <ul class="space-y-2 max-h-60 overflow-y-auto border rounded p-2 bg-gray-50">
+                    <template x-if="assignedShifts.length > 0">
+                        <template x-for="shift in assignedShifts" :key="shift.name + shift.date">
+                            <li class="flex justify-between items-center bg-white p-2 rounded shadow-sm">
+                                <span x-text="shift.name + ': ' + shift.type + ' on ' + shift.date"></span>
+                                <button @click="deleteAdminItem('shift', shift.name, shift.date)"
+                                        class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition"
+                                        :disabled="!isCurrentUserAdmin()">Delete</button>
+                            </li>
+                        </template>
+                    </template>
+                    <template x-if="assignedShifts.length === 0">
+                        <li class="text-gray-500 italic text-center p-4">No shifts found.</li>
+                    </template>
+                </ul>
+            </div>
+
+            <!-- Assign Tasks -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="font-semibold mb-3">Assign Daily Tasks</h4>
+                <form @submit.prevent="assignTask()" class="space-y-3">
+                    <div>
+                        <label for="task-user-select" class="block text-sm font-medium text-gray-700">Staff Member:</label>
+                        <select x-model="taskForm.staffName" id="task-user-select" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+                                :disabled="!isCurrentUserAdmin()">
+                            <template x-for="member in staff" :key="member.name">
+                                <option :value="member.name" x-text="member.name + ' (' + member.role + ')'"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="task-date" class="block text-sm font-medium text-gray-700">Date:</label>
+                        <input type="date" x-model="taskForm.date" id="task-date" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                               :disabled="!isCurrentUserAdmin()">
+                    </div>
+                    <div>
+                        <label for="task-description-select" class="block text-sm font-medium text-gray-700">Task Description:</label>
+                        <select x-model="taskForm.description" @change="handleTaskDescriptionChange()" id="task-description-select" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+                                :disabled="!isCurrentUserAdmin()">
+                            <option value="">Select Task</option>
+                            <option value="Slicing Lemons">Slicing Lemons</option>
+                            <option value="Rolling Silverware">Rolling Silverware</option>
+                            <option value="Polishing Glasses">Polishing Glasses</option>
+                            <option value="Cleaning Beer Lines">Cleaning Beer Lines</option>
+                            <option value="Cleaning Fridge Seals">Cleaning Fridge Seals</option>
+                            <option value="Cleaning Glasswash">Cleaning Glasswash</option>
+                            <option value="Custom Task">Custom Task</option>
+                        </select>
+                    </div>
+                    <div x-show="taskForm.description === 'Custom Task'" class="transition-all duration-300" id="custom-task-input-container">
+                        <label for="custom-task-description" class="block text-sm font-medium text-gray-700">Custom Task:</label>
+                        <input type="text" x-model="taskForm.customDescription" id="custom-task-description" placeholder="e.g., Organize storage room"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                               :required="taskForm.description === 'Custom Task'"
+                               :disabled="!isCurrentUserAdmin()">
+                    </div>
+                    <div>
+                        <label for="task-repeat-days" class="block text-sm font-medium text-gray-700">Repeat for (days):</label>
+                        <input type="number" x-model.number="taskForm.repeatDays" id="task-repeat-days" min="1" max="7" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                               :disabled="!isCurrentUserAdmin()">
+                    </div>
+                    <button type="submit" class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition"
+                            :disabled="!isCurrentUserAdmin()">Add Task</button>
+                </form>
+            </div>
+
+            <!-- Assigned Tasks View -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="font-semibold mb-3">Assigned Tasks</h4>
+                <div class="flex space-x-2 mb-3">
+                    <select x-model="assignedTasksView.staffName" @change="renderAdminAssignedTasks()"
+                            class="flex-1 p-2 border rounded text-sm"
+                            :disabled="!isCurrentUserAdmin()">
+                        <template x-for="member in staff" :key="member.name">
+                            <option :value="member.name" x-text="member.name + ' (' + member.role + ')'"></option>
+                        </template>
+                    </select>
+                    <input type="date" x-model="assignedTasksView.date" @change="renderAdminAssignedTasks()"
+                           class="p-2 border rounded text-sm"
+                           :disabled="!isCurrentUserAdmin()">
+                </div>
+                <ul class="space-y-2 max-h-60 overflow-y-auto border rounded p-2 bg-gray-50">
+                    <template x-if="assignedTasks.length > 0">
+                        <template x-for="task in assignedTasks" :key="task.name">
+                            <li class="flex justify-between items-center bg-white p-2 rounded shadow-sm">
+                                <span x-text="task.name"></span>
+                                <button @click="deleteAdminItem('task', assignedTasksView.staffName, assignedTasksView.date, task.name)"
+                                        class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition"
+                                        :disabled="!isCurrentUserAdmin()">Delete</button>
+                            </li>
+                        </template>
+                    </template>
+                    <template x-if="assignedTasks.length === 0">
+                        <li class="text-gray-500 italic text-center p-4">No tasks found.</li>
+                    </template>
+                </ul>
+            </div>
+
+            <!-- Shift Attendance -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="font-semibold mb-3">Shift Attendance</h4>
+                <div class="mb-3">
+                    <label for="attendance-date" class="block text-sm font-medium text-gray-700">Date:</label>
+                    <input type="date" x-model="attendanceView.date" @change="renderAdminShiftAttendance()"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                           :disabled="!isCurrentUserAdmin()">
+                </div>
+                <ul class="space-y-2 max-h-60 overflow-y-auto border rounded p-2 bg-gray-50">
+                    <template x-if="attendanceList.length > 0">
+                        <template x-for="record in attendanceList" :key="record.name">
+                            <li class="flex flex-col items-start bg-white p-2 rounded shadow-sm"
+                                :class="{'border-l-4 border-green-500': record.status === 'Clocked In', 'border-l-4 border-red-500': record.status === 'Not Clocked In'}">
+                                <span class="font-semibold" x-text="record.name"></span>
+                                <span class="text-sm text-gray-600" x-text="record.statusText"></span>
+                            </li>
+                        </template>
+                    </template>
+                    <template x-if="attendanceList.length === 0">
+                        <li class="text-gray-500 italic text-center p-4">No attendance records for this date.</li>
+                    </template>
+                </ul>
+            </div>
+
+            <!-- Task Overview -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="font-semibold mb-3">Task Overview</h4>
+                <div class="flex space-x-2 mb-3">
+                    <input type="date" x-model="taskOverviewView.date" @change="renderAdminTaskOverview()"
+                           class="flex-1 p-2 border rounded text-sm"
+                           :disabled="!isCurrentUserAdmin()">
+                    <select x-model="taskOverviewView.statusFilter" @change="renderAdminTaskOverview()"
+                            class="p-2 border rounded text-sm"
+                            :disabled="!isCurrentUserAdmin()">
+                        <option value="all">All</option>
+                        <option value="completed">Completed</option>
+                        <option value="pending">Pending</option>
+                        <option value="overdue">Overdue</option>
                     </select>
                 </div>
-                <div class="calendar-grid">
-                    <div class="day-name">Mon</div>
-                    <div class="day-name">Tue</div>
-                    <div class="day-name">Wed</div>
-                    <div class="day-name">Thu</div>
-                    <div class="day-name">Fri</div>
-                    <div class="day-name">Sat</div>
-                    <div class="day-name">Sun</div>
-                    <!-- Calendar days populated by JS -->
-                </div>
-            </section>
+                <ul class="space-y-2 max-h-60 overflow-y-auto border rounded p-2 bg-gray-50">
+                    <template x-if="taskOverviewList.length > 0">
+                        <template x-for="task in taskOverviewList" :key="task.staffName + task.taskName + task.status">
+                            <li class="flex flex-col items-start bg-white p-2 rounded shadow-sm"
+                                :class="{'border-l-4 border-green-500': task.status === 'completed', 'border-l-4 border-yellow-500': task.status === 'pending', 'border-l-4 border-red-500': task.status === 'overdue'}">
+                                <span class="font-semibold" x-text="task.staffName + ': ' + task.taskName"></span>
+                                <span class="text-sm text-gray-600" x-text="'Status: ' + task.statusText + (task.timestamp ? ' at ' + task.timestamp : '')"></span>
+                                <template x-if="task.imageName">
+                                    <span class="text-xs text-gray-500 italic" x-text="'Image: ' + task.imageName"></span>
+                                </template>
+                            </li>
+                        </template>
+                    </template>
+                    <template x-if="taskOverviewList.length === 0">
+                        <li class="text-gray-500 italic text-center p-4">No tasks found for this date/filter.</li>
+                    </template>
+                </ul>
+            </div>
 
-            <!-- Admin View (hidden by default) -->
-            <section id="admin-view" style="display: none;">
-                <h2>Admin Panel</h2>
+        </div>
+      </section>
 
-                <div class="admin-section">
-                    <h3>Assign Shifts</h3>
-                    <form id="assign-shift-form">
-                        <div>
-                            <label for="shift-user-select">Staff Member:</label>
-                            <select id="shift-user-select" required>
-                                <!-- Populated by JS -->
-                            </select>
-                        </div>
-                        <div>
-                            <label for="shift-date">Date:</label>
-                            <input type="date" id="shift-date" required>
-                        </div>
-                        <div>
-                            <label for="shift-type-select">Shift Type:</label>
-                            <select id="shift-type-select" required>
-                                <option value="">Select Shift</option>
-                                <option value="8AM-4PM">8AM-4PM</option>
-                                <option value="12PM-8PM">12PM-8PM</option>
-                                <option value="5PM-Close">5PM-Close</option>
-                                <option value="Off">Off</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
-                        <div id="custom-shift-input-container" style="display: none;">
-                            <label for="custom-shift-type">Custom Shift:</label>
-                            <input type="text" id="custom-shift-type" placeholder="e.g., 9AM-5PM">
-                        </div>
-                        <div>
-                            <label for="shift-repeat-days">Repeat for (days):</label>
-                            <input type="number" id="shift-repeat-days" value="1" min="1" max="7">
-                        </div>
-                        <button type="submit">Assign Shift</button>
-                    </form>
-                </div>
+    </main>
+    <footer class="bg-gray-800 text-gray-400 p-4 text-center text-sm">
+      <p>&copy; <span x-text="new Date().getFullYear()"></span> Staff Rota & Tasks. All rights reserved.</p>
+    </footer>
+  </div>
 
-                <div class="admin-section">
-                    <h3>Assigned Shifts (for selected user/date)</h3>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <div>
-                            <label for="view-shift-user-select">Staff:</label>
-                            <select id="view-shift-user-select">
-                                <!-- Populated by JS -->
-                            </select>
-                        </div>
-                        <div>
-                            <label for="view-shift-date">Date:</label>
-                            <input type="date" id="view-shift-date">
-                        </div>
-                    </div>
-                    <ul id="admin-assigned-shifts">
-                        <li class="no-data">Select staff & date to view assigned shifts.</li>
-                    </ul>
-                </div>
+  <script>
+    function app() {
+      return {
+        // --- Data Properties (Reactive) ---
+        staff: [],
+        user: null, // Logged-in user object { name: '', role: '', icon: '' }
+        view: 'home', // Current active view ('home', 'tasks', 'rota', 'calendar', 'admin', 'landing')
 
-                <div class="admin-section">
-                    <h3>Assign Daily Tasks</h3>
-                    <form id="assign-task-form">
-                        <div>
-                            <label for="task-user-select">Staff Member:</label>
-                            <select id="task-user-select" required>
-                                <!-- Populated by JS -->
-                            </select>
-                        </div>
-                        <div>
-                            <label for="task-date">Date:</label>
-                            <input type="date" id="task-date" required>
-                        </div>
-                        <div>
-                            <label for="task-description-select">Task Description:</label>
-                            <select id="task-description-select" required>
-                                <option value="">Select Task</option>
-                                <option value="Slicing Lemons">Slicing Lemons</option>
-                                <option value="Rolling Silverware">Rolling Silverware</option>
-                                <option value="Polishing Glasses">Polishing Glasses</option>
-                                <option value="Cleaning Beer Lines">Cleaning Beer Lines</option>
-                                <option value="Cleaning Fridge Seals">Cleaning Fridge Seals</option>
-                                <option value="Cleaning Glasswash">Cleaning Glasswash</option>
-                                <option value="Custom Task">Custom Task</option>
-                            </select>
-                        </div>
-                        <div id="custom-task-input-container" style="display: none;">
-                            <label for="custom-task-description">Custom Task:</label>
-                            <input type="text" id="custom-task-description" placeholder="e.g., Organize storage room">
-                        </div>
-                        <div>
-                            <label for="task-repeat-days">Repeat for (days):</label>
-                            <input type="number" id="task-repeat-days" value="1" min="1" max="7">
-                        </div>
-                        <button type="submit">Add Task</button>
-                    </form>
-                </div>
+        // Core App Data (synced with localStorage)
+        rota: {}, // { 'YYYY-MM-DD': { 'Staff Name': 'Shift Type' } }
+        dailyTasks: {}, // { 'YYYY-MM-DD': { 'Staff Name': ['Task 1', 'Task 2'] } }
+        completedTasks: {}, // { 'YYYY-MM-DD': { 'Staff Name': { 'Task Name': {timestamp: ts, imageName: 'file.jpg'} } } }
+        clockIns: {}, // { 'YYYY-MM-DD': { 'Staff Name': { 'in': timestamp, 'out': timestamp | null } } }
+        messageBoard: [], // [{ sender: 'Name', text: 'Message', timestamp: 123456789 }]
 
-                <div class="admin-section">
-                    <h3>Current Daily Tasks (for selected user/date)</h3>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <div>
-                            <label for="view-task-user-select">Staff:</label>
-                            <select id="view-task-user-select">
-                                <!-- Populated by JS -->
-                            </select>
-                        </div>
-                        <div>
-                            <label for="view-task-date">Date:</label>
-                            <input type="date" id="view-task-date">
-                        </div>
-                    </div>
-                    <ul id="admin-assigned-tasks">
-                        <li class="no-data">Select staff & date to view assigned tasks.</li>
-                    </ul>
-                </div>
+        // UI State for Forms/Views
+        isAdminMode: false,
+        currentCalendarDate: new Date(), // For calendar view
+        calendarRoleFilter: 'all', // Filter for calendar view
 
-                <div class="admin-section">
-                    <h3>Shift Attendance</h3>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <div>
-                            <label for="attendance-date">Date:</label>
-                            <input type="date" id="attendance-date">
-                        </div>
-                    </div>
-                    <ul id="admin-attendance-list">
-                        <li class="no-data">Select date to view attendance.</li>
-                    </ul>
-                </div>
-
-                <div class="admin-section">
-                    <h3>Task Overview</h3>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <div>
-                            <label for="task-overview-date">Date:</label>
-                            <input type="date" id="task-overview-date">
-                        </div>
-                        <div>
-                            <label for="task-status-filter">Status:</label>
-                            <select id="task-status-filter">
-                                <option value="all">All</option>
-                                <option value="completed">Completed</option>
-                                <option value="pending">Pending</option>
-                                <option value="overdue">Overdue</option>
-                            </select>
-                        </div>
-                    </div>
-                    <ul id="admin-task-overview-list">
-                        <li class="no-data">Select date and filter to view tasks.</li>
-                    </ul>
-                </div>
-
-            </section>
-        </main>
-
-        <footer>
-            <p>&copy; <span id="current-year"></span> Staff Rota & Task Checklist. All rights reserved.</p>
-        </footer>
-    </div>
-
-    <script>
-        /*
-        * JavaScript Logic
-        * Handles data storage, rendering, and user interactions.
-        * Uses localStorage for persistence.
-        */
-
-        // --- DOM Elements ---
-        const landingPage = document.getElementById('landing-page');
-        const staffIconsContainer = document.getElementById('staff-icons-container');
-        const appContainer = document.getElementById('app-container');
-
-        const userInfoSpan = document.getElementById('user-info');
-        const adminToggleButton = document.getElementById('admin-toggle-btn');
-        const signOutButton = document.getElementById('sign-out-btn'); // New sign-out button
-        const navButtons = document.querySelectorAll('.nav-buttons button');
-        const mainSections = document.querySelectorAll('main section');
-
-        // Home View elements
-        const homeView = document.getElementById('home-view'); // New Home View
-        const clockStatusBannerHome = document.getElementById('clock-status-banner-home');
-        const clockStatusTextHome = document.getElementById('clock-status-text-home');
-        const clockInOutBtnHome = document.getElementById('clock-in-out-btn-home');
-        const fohWorkingList = document.getElementById('foh-working-list');
-        const bohWorkingList = document.getElementById('boh-working-list');
-        const adminWorkingList = document.getElementById('admin-working-list');
-        const homeTaskList = document.getElementById('home-task-list'); // Tasks list on home page
-        const messageList = document.getElementById('message-list');
-        const messageInputForm = document.getElementById('message-input-form');
-        const messageTextarea = document.getElementById('message-text');
-
-        // My Tasks View elements
-        const myTasksView = document.getElementById('my-tasks-view');
-        const currentDayInfo = document.getElementById('current-day-info');
-        const taskList = document.getElementById('task-list');
-
-        // Weekly Rota View elements
-        const weeklyRotaView = document.getElementById('weekly-rota-view');
-        const rotaGrid = document.querySelector('#weekly-rota-view .rota-grid');
-
-        // Calendar View elements
-        const calendarView = document.getElementById('calendar-view');
-        const prevMonthBtn = document.getElementById('prev-month-btn');
-        const nextMonthBtn = document.getElementById('next-month-btn');
-        const currentMonthYearDisplay = document.getElementById('current-month-year');
-        const calendarGrid = document.querySelector('#calendar-view .calendar-grid');
-        const calendarRoleFilter = document.getElementById('calendar-role-filter');
-
-        // Admin View elements
-        const adminView = document.getElementById('admin-view');
-
-        // Admin Assign Shift elements
-        const assignShiftForm = document.getElementById('assign-shift-form');
-        const shiftUserSelect = document.getElementById('shift-user-select');
-        const shiftDateInput = document.getElementById('shift-date');
-        const shiftTypeSelect = document.getElementById('shift-type-select'); // Changed to select
-        const customShiftInputContainer = document.getElementById('custom-shift-input-container'); // Container for custom shift
-        const customShiftTypeInput = document.getElementById('custom-shift-type'); // Custom shift input
-        const shiftRepeatDaysInput = document.getElementById('shift-repeat-days'); // Repeat days for shift
-
-        // Admin View Assigned Shifts elements
-        const viewShiftUserSelect = document.getElementById('view-shift-user-select');
-        const viewShiftDateInput = document.getElementById('view-shift-date');
-        const adminAssignedShiftsList = document.getElementById('admin-assigned-shifts');
-
-        // Admin Assign Task elements
-        const assignTaskForm = document.getElementById('assign-task-form');
-        const taskUserSelect = document.getElementById('task-user-select');
-        const taskDateInput = document.getElementById('task-date');
-        const taskDescriptionSelect = document.getElementById('task-description-select'); // Changed to select
-        const customTaskInputContainer = document.getElementById('custom-task-input-container'); // Container for custom task
-        const customTaskDescriptionInput = document.getElementById('custom-task-description'); // Custom task input
-        const taskRepeatDaysInput = document.getElementById('task-repeat-days'); // Repeat days for task
-
-        // Admin View Current Daily Tasks elements
-        const viewTaskUserSelect = document.getElementById('view-task-user-select');
-        const viewTaskDateInput = document.getElementById('view-task-date'); // Corrected typo
-        const adminAssignedTasksList = document.getElementById('admin-assigned-tasks');
-
-        // Admin Shift Attendance elements
-        const attendanceDateInput = document.getElementById('attendance-date');
-        const adminAttendanceList = document.getElementById('admin-attendance-list');
-
-        // Admin Task Overview elements
-        const taskOverviewDateInput = document.getElementById('task-overview-date');
-        const taskStatusFilter = document.getElementById('task-status-filter');
-        const adminTaskOverviewList = document.getElementById('admin-task-overview-list');
+        // Form data for Admin Panel
+        shiftForm: {
+            staffName: '',
+            date: '',
+            type: '',
+            customType: '',
+            repeatDays: 1,
+        },
+        taskForm: {
+            staffName: '',
+            date: '',
+            description: '',
+            customDescription: '',
+            repeatDays: 1,
+        },
+        // Data for admin view lists
+        assignedShiftsView: { staffName: '', date: '' },
+        assignedShifts: [],
+        assignedTasksView: { staffName: '', date: '' },
+        assignedTasks: [],
+        attendanceView: { date: '' },
+        attendanceList: [],
+        taskOverviewView: { date: '', statusFilter: 'all' },
+        taskOverviewList: [],
+        newMessageText: '', // For message board input
 
 
-        // --- Local Storage Keys ---
-        const LS_KEYS = {
-            STAFF_MEMBERS: 'staffMembers',
-            ROTA: 'rota',
-            DAILY_TASKS: 'dailyTasks',
-            COMPLETED_TASKS: 'completedTasks',
-            CLOCK_INS: 'clockIns', // New key for clock-in/out data
-            MESSAGE_BOARD: 'messageBoard', // New key for message board
-            CURRENT_USER_NAME: 'currentUserName',
-            CURRENT_USER_ROLE: 'currentUserRole',
-            IS_ADMIN_MODE: 'isAdminMode',
-            LAST_ACTIVE_VIEW: 'lastActiveView'
-        };
-
-        // --- Data Defaults ---
-        let staffMembers = [];
-        let rota = {};
-        let dailyTasks = {};
-        let completedTasks = {};
-        let clockIns = {}; // { 'YYYY-MM-DD': { 'Staff Name': { 'in': timestamp, 'out': timestamp | null } } }
-        let messageBoard = []; // [{ sender: 'Name', text: 'Message', timestamp: 123456789 }]
-        let currentUserName = '';
-        let currentUserRole = '';
-        let isAdminMode = false;
-        let currentCalendarDate = new Date(); // Tracks month/year for calendar view
-        let activeViewId = 'home-view'; // Default active view in app, changed to 'home-view'
-
-        // --- Utility Functions ---
-
-        /**
-         * Loads data from localStorage.
-         * @param {string} key - The localStorage key.
-         * @returns {any} Parsed data or null if not found.
-         */
-        function loadData(key) {
-            const data = localStorage.getItem(key);
-            try {
-                return data ? JSON.parse(data) : null;
-            } catch (e) {
-                console.error(`Error parsing data from localStorage for key "${key}": ${e.message}`, e);
-                return null;
+        // --- Computed Properties ---
+        get todayFormatted() {
+            return this.getFormattedDate(new Date());
+        },
+        get currentDayInfo() {
+            return this.getDisplayDate(new Date());
+        },
+        get currentCalendarMonthYear() {
+            return this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        },
+        get isClockedIn() {
+            const data = this.clockIns[this.todayFormatted]?.[this.user?.name];
+            return data && data.in && !data.out;
+        },
+        get clockStatusMessage() {
+            if (!this.user) return 'Please log in.';
+            const data = this.clockIns[this.todayFormatted]?.[this.user.name];
+            if (data?.in && !data.out) {
+                return `You are clocked in since ${this.formatTimestampToTime(data.in)}`;
+            } else if (data?.in && data.out) {
+                return `Clocked in: ${this.formatTimestampToTime(data.in)}, Clocked out: ${this.formatTimestampToTime(data.out)}`;
+            } else {
+                return 'You are not clocked in for today.';
             }
-        }
+        },
+        get clockButtonText() {
+            return this.isClockedIn ? 'Clock Out' : 'Clock In';
+        },
+        get homeTasks() {
+            if (!this.user) return [];
+            const tasks = this.dailyTasks[this.todayFormatted]?.[this.user.name] || [];
+            const completed = this.completedTasks[this.todayFormatted]?.[this.user.name] || {};
+            return tasks.map(task => ({
+                name: task,
+                status: completed[task] ? 'completed' : 'pending'
+            }));
+        },
+        get myTasks() { // This is for the "My Tasks" page, more detailed
+            if (!this.user) return [];
+            const tasks = this.dailyTasks[this.todayFormatted]?.[this.user.name] || [];
+            const completed = this.completedTasks[this.todayFormatted]?.[this.user.name] || {};
 
-        /**
-         * Saves data to localStorage.
-         * @param {string} key - The localStorage key.
-         * @param {any} data - The data to save.
-         */
-        function saveData(key, data) {
-            localStorage.setItem(key, JSON.stringify(data));
-        }
+            return tasks.map(taskName => {
+                const completionData = completed[taskName];
+                const isCompleted = !!completionData;
+                const timestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
+                const imageName = typeof completionData === 'object' ? completionData.imageName : null;
+                const status = isCompleted ? 'completed' : (this.isPastEndOfDay(this.todayFormatted) ? 'incomplete' : 'pending');
 
-        /**
-         * Formats a Date object into 'YYYY-MM-DD' string.
-         * @param {Date} date - The date object.
-         * @returns {string} Formatted date string.
-         */
-        function getFormattedDate(date) {
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
+                return {
+                    name: taskName,
+                    status: status,
+                    timestamp: timestamp,
+                    timestampDisplay: timestamp ? this.formatTimestampToTime(timestamp) : '',
+                    imageName: imageName
+                };
+            });
+        },
+        get weeklyRota() {
+            const weekDays = this.getWeekDays(new Date());
+            return weekDays.map(day => {
+                const formattedDate = this.getFormattedDate(day);
+                const dayRota = this.rota[formattedDate] || {};
+                
+                const shifts = this.staff.filter(member => {
+                    // Apply current user's role restrictions for read-only access
+                    if (this.user && this.user.role !== 'Admin') {
+                        if (this.user.role === 'FOH' && member.role === 'BOH') return false;
+                        if (this.user.role === 'BOH' && member.role === 'FOH') return false;
+                    }
+                    return true;
+                }).sort((a, b) => {
+                    const roleOrder = { 'FOH': 1, 'BOH': 2, 'Admin': 3 };
+                    if (roleOrder[a.role] !== roleOrder[b.role]) {
+                        return roleOrder[a.role] - roleOrder[b.role];
+                    }
+                    return a.name.localeCompare(b.name);
+                }).map(member => ({
+                    name: member.name,
+                    role: member.role,
+                    shift: dayRota[member.name] || 'Off'
+                }));
 
-        /**
-         * Adds days to a given date.
-         * @param {Date} date - The initial date object.
-         * @param {number} days - Number of days to add.
-         * @returns {Date} A new Date object with the added days.
-         */
-        function addDays(date, days) {
-            const newDate = new Date(date);
-            newDate.setDate(date.getDate() + days);
-            return newDate;
-        }
+                return {
+                    date: formattedDate,
+                    displayDate: this.getDisplayDate(day),
+                    shifts: shifts
+                };
+            });
+        },
+        get calendarDays() {
+            const year = this.currentCalendarDate.getFullYear();
+            const month = this.currentCalendarDate.getMonth();
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const numDaysInMonth = lastDayOfMonth.getDate();
+            const firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7; // Monday = 0
 
-        /**
-         * Formats a timestamp into a user-friendly time string.
-         * @param {number} timestamp - The timestamp.
-         * @returns {string} Formatted time string.
-         */
-        function formatTimestampToTime(timestamp) {
-            if (!timestamp) return 'N/A'; // Handle null/undefined timestamps
-            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        /**
-         * Gets a user-friendly date string (e.g., "Monday, Oct 26").
-         * @param {Date} date - The date object.
-         * @returns {string} User-friendly date string.
-         */
-        function getDisplayDate(date) {
-            return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-        }
-
-        /**
-         * Gets the dates for the current week (Monday to Sunday).
-         * @param {Date} startDate - A date within the desired week.
-         * @returns {Date[]} An array of 7 Date objects for the week.
-         */
-        function getWeekDays(startDate) {
-            const weekDays = [];
-            const date = new Date(startDate);
-            date.setHours(0, 0, 0, 0); // Normalize to start of day
-
-            // Find Monday of the current week (Monday = 1, Sunday = 0)
-            const dayOfWeek = date.getDay(); // 0 (Sunday) to 6 (Saturday)
-            const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday
-            date.setDate(diff);
-
-            for (let i = 0; i < 7; i++) {
-                weekDays.push(new Date(date));
-                date.setDate(date.getDate() + 1);
+            let days = [];
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                days.push({ date: null, dayNumber: '', currentMonth: false, isToday: false, shifts: [] });
             }
-            return weekDays;
-        }
 
-        /**
-         * Checks if a given date string is in the past relative to the current day (end of day).
-         * @param {string} dateString - The date string in 'YYYY-MM-DD' format.
-         * @returns {boolean} True if the date is in the past (i.e., its end of day has passed).
-         */
-        function isPastEndOfDay(dateString) {
-            const checkDate = new Date(dateString);
+            const todayFormatted = this.getFormattedDate(new Date());
+
+            for (let dayNum = 1; dayNum <= numDaysInMonth; dayNum++) {
+                const dayDate = new Date(year, month, dayNum);
+                const formattedDate = this.getFormattedDate(dayDate);
+                const isToday = formattedDate === todayFormatted;
+                const dayRota = this.rota[formattedDate] || {};
+
+                const filteredShifts = this.staff.filter(member => {
+                    // Apply user's role visibility and selected filter from dropdown
+                    if (this.user && this.user.role !== 'Admin') {
+                        if (this.user.role === 'FOH' && member.role === 'BOH') return false;
+                        if (this.user.role === 'BOH' && member.role === 'FOH') return false;
+                        // Admins can be seen by FOH/BOH, so no explicit filter there unless calendar filter is specific
+                    }
+                    
+                    if (this.calendarRoleFilter === 'all') {
+                        return true;
+                    } else {
+                        return member.role === this.calendarRoleFilter;
+                    }
+                }).sort((a, b) => a.name.localeCompare(b.name))
+                  .map(member => ({
+                    name: member.name,
+                    role: member.role,
+                    type: dayRota[member.name] || 'Off'
+                }));
+
+                days.push({
+                    date: formattedDate,
+                    dayNumber: dayNum,
+                    currentMonth: true,
+                    isToday: isToday,
+                    shifts: filteredShifts.filter(s => s.type !== 'Off') // Only show actual shifts
+                });
+            }
+            return days;
+        },
+        get workingStaff() {
             const today = new Date();
+            const formattedToday = this.getFormattedDate(today);
+            const todayRota = this.rota[formattedToday] || {};
 
-            checkDate.setHours(23, 59, 59, 999);
-            today.setHours(0, 0, 0, 0);
+            let foh = [];
+            let boh = [];
+            let admin = [];
 
-            return checkDate < today;
-        }
+            this.staff.filter(member => {
+                // Apply current user's role restrictions for display on homepage
+                if (this.user && this.user.role !== 'Admin') {
+                    if (this.user.role === 'FOH' && member.role === 'BOH') return false;
+                    if (this.user.role === 'BOH' && member.role === 'FOH') return false;
+                }
+                return true;
+            }).forEach(member => {
+                const shift = todayRota[member.name];
+                if (shift && shift !== 'Off') {
+                    const staffData = { name: member.name, role: member.role, icon: member.icon, shift: shift };
+                    if (member.role === 'FOH') foh.push(staffData);
+                    else if (member.role === 'BOH') boh.push(staffData);
+                    else if (member.role === 'Admin') admin.push(staffData);
+                }
+            });
+            return { foh, boh, admin };
+        },
 
-        /**
-         * Gets a staff member object by name.
-         * @param {string} name - The staff member's name.
-         * @returns {object|undefined} The staff object or undefined.
-         */
-        function getStaffMember(name) {
-            return staffMembers.find(s => s.name === name);
-        }
-
-        /**
-         * Checks if the current user has Admin role.
-         * @returns {boolean} True if current user is an Admin.
-         */
-        function isCurrentUserAdmin() {
-            return currentUserRole === 'Admin';
-        }
-
-        // --- Data Initialization & Default Setup ---
-
-        /**
-         * Initializes data from localStorage or sets defaults if empty.
-         */
-        function initializeData() {
+        // --- Initialization Logic ---
+        init() {
             try {
-                // Default staff members with roles and emoji icons
-                staffMembers = loadData(LS_KEYS.STAFF_MEMBERS) || [
+                // Load all data from localStorage
+                this.staff = this.loadData('staffMembers') || [
                     { name: 'Jill',    role: 'FOH',  icon: '💁‍♀️' },
                     { name: 'Alice',   role: 'FOH',  icon: '💁‍♀️' },
                     { name: 'Callum',  role: 'FOH',  icon: '💁‍♀️' },
@@ -1539,1116 +1759,570 @@
                     { name: 'Lyndsey', role: 'Admin',icon: '🤵'  },
                     { name: 'Collin',  role: 'Admin',icon: '🤵'  }
                 ];
-                rota = loadData(LS_KEYS.ROTA) || {};
-                dailyTasks = loadData(LS_KEYS.DAILY_TASKS) || {};
-                completedTasks = loadData(LS_KEYS.COMPLETED_TASKS) || {};
-                clockIns = loadData(LS_KEYS.CLOCK_INS) || {};
-                messageBoard = loadData(LS_KEYS.MESSAGE_BOARD) || [];
-                currentUserName = loadData(LS_KEYS.CURRENT_USER_NAME) || '';
-                currentUserRole = loadData(LS_KEYS.CURRENT_USER_ROLE) || '';
-                isAdminMode = loadData(LS_KEYS.IS_ADMIN_MODE) || false;
-                activeViewId = loadData(LS_KEYS.LAST_ACTIVE_VIEW) || 'home-view';
+                this.rota = this.loadData('rota') || {};
+                this.dailyTasks = this.loadData('dailyTasks') || {};
+                this.completedTasks = this.loadData('completedTasks') || {};
+                this.clockIns = this.loadData('clockIns') || {};
+                this.messageBoard = this.loadData('messageBoard') || [];
 
-                // Save defaults if they were just created
-                saveData(LS_KEYS.STAFF_MEMBERS, staffMembers);
-                saveData(LS_KEYS.ROTA, rota);
-                saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
-                saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-                saveData(LS_KEYS.CLOCK_INS, clockIns);
-                saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
-                saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName);
-                saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole);
-                saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
-                saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
-            } catch (e) {
-                console.error(`Error during initializeData: ${e.message}`, e);
-                alert("An error occurred during data initialization. Your browser's localStorage might be corrupted or full. Check console for details.");
-            }
-        }
-
-        // --- View Control Functions ---
-
-        /**
-         * Controls which main section is visible.
-         * @param {string} viewId - The ID of the section to show (e.g., 'home-view').
-         */
-        function showView(viewId) {
-            mainSections.forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(viewId).classList.add('active');
-            activeViewId = viewId;
-            saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
-
-            // Update active state of navigation buttons
-            navButtons.forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.id === `nav-${viewId.replace('-view', '')}`) {
-                    btn.classList.add('active');
-                }
-            });
-
-            // Re-render content specific to the activated view
-            if (viewId === 'home-view') {
-                renderHomePage();
-            } else if (viewId === 'my-tasks-view') {
-                renderMyTasks();
-            } else if (viewId === 'weekly-rota-view') {
-                renderWeeklyRota();
-            } else if (viewId === 'calendar-view') {
-                renderCalendar();
-            } else if (viewId === 'admin-view') {
-                adminView.style.display = 'flex'; // Ensure it's flex if active view
-                renderAdminForms();
-            }
-        }
-
-        // --- Landing Page Rendering ---
-
-        /**
-         * Renders the staff list on the landing page as clickable icons.
-         */
-        function renderLandingPage() {
-            staffIconsContainer.innerHTML = '';
-
-            staffMembers.forEach(member => {
-                const iconDiv = document.createElement('div');
-                iconDiv.className = `staff-icon ${member.role.toLowerCase()}`;
-                // Data attributes for direct access in login
-                iconDiv.dataset.name = member.name;
-                iconDiv.dataset.role = member.role;
-
-                iconDiv.innerHTML = `
-                    <span class="icon-placeholder">${member.icon}</span>
-                    <div class="staff-name">${member.name}</div>
-                    <div class="staff-role">${member.role}</div>
-                `;
-
-                // instantly log in:
-                iconDiv.addEventListener('click', () => {
-                    handleUserLogin(member.name, member.role);
-                });
-                staffIconsContainer.appendChild(iconDiv);
-            });
-        }
-
-        /**
-         * Handles user login from the landing page.
-         * @param {string} userName - The name of the selected staff member.
-         * @param {string} userRole - The role of the selected staff member.
-         */
-        function handleUserLogin(userName, userRole) {
-            currentUserName = userName;
-            currentUserRole = userRole;
-            localStorage.setItem(LS_KEYS.CURRENT_USER_NAME, JSON.stringify(userName)); // Storing as JSON string
-            localStorage.setItem(LS_KEYS.CURRENT_USER_ROLE, JSON.stringify(userRole)); // Storing as JSON string
-
-            // Force home view on *any* new login and reset admin mode state
-            isAdminMode = false; // Ensure admin mode is off by default for a fresh login
-            saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
-            activeViewId = 'home-view'; // Always direct to home view on fresh login
-            saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
-
-
-            landingPage.style.display = 'none';
-            appContainer.style.display = 'flex';
-            appContainer.style.animation = 'fadeIn 0.5s ease-out'; // Apply animation for smooth transition
-
-            initApp(); // Call the main app initialization
-        }
-
-        // --- App Header & Navigation ---
-
-        /**
-         * Updates the user information display in the app header.
-         */
-        function updateHeaderUserInfo() {
-            userInfoSpan.textContent = `${currentUserName} (${currentUserRole})`;
-        }
-
-        /**
-         * Handles user sign out.
-         */
-        function handleSignOut() {
-            // Clear current user data from localStorage
-            localStorage.removeItem(LS_KEYS.CURRENT_USER_NAME);
-            localStorage.removeItem(LS_KEYS.CURRENT_USER_ROLE);
-            
-            // Crucial: Ensure isAdminMode is explicitly set to false and saved on sign out
-            localStorage.setItem(LS_KEYS.IS_ADMIN_MODE, JSON.stringify(false)); 
-            
-            // Reset current user state variables
-            currentUserName = '';
-            currentUserRole = '';
-            isAdminMode = false; // Reset JS variable too
-
-            // Hide app container and show landing page
-            appContainer.style.display = 'none';
-            landingPage.style.display = 'flex';
-            renderLandingPage(); // Re-render staff icons for new login
-        }
-
-        /**
-         * Controls the visibility and text of the Admin Mode toggle button and nav button states.
-         */
-        function renderAdminToggleButton() {
-            if (isCurrentUserAdmin()) {
-                adminToggleButton.style.display = 'inline-block';
-                adminToggleButton.textContent = isAdminMode ? 'Exit Admin' : 'Admin Mode';
-            } else {
-                adminToggleButton.style.display = 'none';
-            }
-
-            // Disable nav buttons if in admin mode, unless user is Admin.
-            // When in Admin Mode, nav buttons are hidden anyway.
-            // This is primarily for non-admins to ensure they don't click if isAdminMode somehow changes.
-            if (!isCurrentUserAdmin() && isAdminMode) {
-                 navButtons.forEach(btn => btn.disabled = true);
-            } else {
-                navButtons.forEach(btn => btn.disabled = false);
-            }
-        }
-
-        /**
-         * Populates the staff dropdowns within the main app forms.
-         */
-        function renderUserDropdownsInApp() {
-            // Combine all select elements that need staff members
-            const allStaffSelects = [
-                shiftUserSelect, taskUserSelect,
-                viewShiftUserSelect, viewTaskUserSelect
-            ];
-
-            allStaffSelects.forEach(select => {
-                select.innerHTML = '';
-                if (staffMembers.length === 0) {
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = '';
-                    defaultOption.textContent = 'No Staff Added';
-                    defaultOption.disabled = true;
-                    defaultOption.selected = true;
-                    select.appendChild(defaultOption);
+                // Attempt to restore user session
+                const savedUserName = this.loadData('currentUserName');
+                const savedUserRole = this.loadData('currentUserRole');
+                if (savedUserName && savedUserRole) {
+                    this.user = this.staff.find(s => s.name === savedUserName && s.role === savedUserRole) || null;
+                    // If user restored, also restore admin mode status (if they are admin)
+                    if (this.user && this.user.role === 'Admin') {
+                        this.isAdminMode = this.loadData('isAdminMode') || false;
+                    } else {
+                        this.isAdminMode = false; // Force non-admin to not be in admin mode
+                    }
                 } else {
-                    staffMembers.forEach(member => {
-                        const option = document.createElement('option');
-                        option.value = member.name;
-                        option.textContent = `${member.name} (${member.role})`;
-                        select.appendChild(option);
-                    });
-                    // Set selected user to current user by default if available
-                    if (currentUserName && staffMembers.some(s => s.name === currentUserName)) {
-                        select.value = currentUserName;
-                    } else if (staffMembers.length > 0) {
-                        select.value = staffMembers[0].name;
-                    }
+                    this.user = null; // No saved user, ensure user is null
+                    this.isAdminMode = false;
                 }
-            });
-        }
 
-        // --- Main Content View Renders ---
+                // Initial view setup
+                if (this.user) {
+                    this.view = 'home'; // Always start at home if logged in
+                    this.cleanupOldData(); // Clean up data on app load
+                } else {
+                    this.view = 'landing'; // Show landing page
+                }
 
-        /**
-         * Renders the home page content: clock status, who's working, and personal tasks.
-         */
-        function renderHomePage() {
+                // Initialize form dates to today
+                const today = this.getFormattedDate(new Date());
+                this.shiftForm.date = today;
+                this.taskForm.date = today;
+                this.assignedShiftsView.date = today;
+                this.assignedTasksView.date = today;
+                this.attendanceView.date = today;
+                this.taskOverviewView.date = today;
+
+                // Initial renders for admin lists (since they depend on initial selected values)
+                this.renderAdminAssignedShifts();
+                this.renderAdminAssignedTasks();
+                this.renderAdminShiftAttendance();
+                this.renderAdminTaskOverview();
+
+            } catch (e) {
+                console.error(`Error during app initialization: ${e.message}`, e);
+                alert("An error occurred during app initialization. Please check the console for details.");
+            }
+        },
+
+        // --- Utility Methods (moved from global scope into app function) ---
+        loadData(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.warn(`Could not load data for key "${key}" from localStorage.`, e);
+                return null;
+            }
+        },
+        saveData(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error(`Could not save data for key "${key}" to localStorage.`, e);
+                alert("Error saving data. Local storage might be full.");
+            }
+        },
+        getFormattedDate(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        },
+        formatTimestampToTime(timestamp) {
+            if (!timestamp) return 'N/A';
+            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        },
+        getDisplayDate(date) {
+            return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        },
+        addDays(date, days) {
+            const newDate = new Date(date);
+            newDate.setDate(date.getDate() + days);
+            return newDate;
+        },
+        isPastEndOfDay(dateString) {
+            const checkDate = new Date(dateString);
             const today = new Date();
-            const formattedToday = getFormattedDate(today);
-
-            // Render Clock-in/out status (re-using logic from renderMyTasks)
-            const userClockData = (clockIns[formattedToday] && clockIns[formattedToday][currentUserName]) || {};
-            let clockStatusMessage = '';
-            let clockButtonText = 'Clock In';
-            clockStatusBannerHome.classList.remove('clocked-in', 'clocked-out');
-
-            if (userClockData.in && !userClockData.out) {
-                clockStatusMessage = `You are clocked in since ${formatTimestampToTime(userClockData.in)}`;
-                clockButtonText = 'Clock Out';
-                clockStatusBannerHome.classList.add('clocked-in');
-            } else if (userClockData.in && userClockData.out) {
-                clockStatusMessage = `Clocked in: ${formatTimestampToTime(userClockData.in)}, Clocked out: ${formatTimestampToTime(userClockData.out)}`;
-                clockButtonText = 'Clock In'; // Allow re-clocking in for same day if needed
-                clockStatusBannerHome.classList.add('clocked-out');
-            } else {
-                clockStatusMessage = 'You are not clocked in for today.';
-                clockButtonText = 'Clock In';
-                clockStatusBannerHome.classList.add('clocked-out');
-            }
-            clockStatusTextHome.textContent = clockStatusMessage;
-            clockInOutBtnHome.textContent = clockButtonText;
-
-
-            // Render Who's Working Today (using profile icons)
-            fohWorkingList.innerHTML = '';
-            bohWorkingList.innerHTML = '';
-            adminWorkingList.innerHTML = '';
-
-            const todayRota = rota[formattedToday] || {};
-            let fohCount = 0;
-            let bohCount = 0;
-            let adminCount = 0;
-
-            // Filter staff based on current user's role for display
-            const staffForWorkingToday = staffMembers.filter(member => {
-                if (!isCurrentUserAdmin()) {
-                    if (currentUserRole === 'FOH' && member.role === 'BOH') return false;
-                    if (currentUserRole === 'BOH' && member.role === 'FOH') return false;
-                }
-                return true;
-            });
-
-
-            staffForWorkingToday.forEach(member => {
-                const shift = todayRota[member.name];
-                if (shift && shift !== 'Off') {
-                    const iconDiv = document.createElement('div');
-                    iconDiv.classList.add('staff-icon', member.role.toLowerCase());
-                    iconDiv.innerHTML = `
-                        <span class="icon-placeholder">${member.icon}</span>
-                        <div class="staff-name">${member.name}</div>
-                        <div class="staff-role">${shift}</div> <!-- Display shift as role for this context -->
-                    `;
-                    if (member.role === 'FOH') {
-                        fohWorkingList.appendChild(iconDiv);
-                        fohCount++;
-                    } else if (member.role === 'BOH') {
-                        bohWorkingList.appendChild(iconDiv);
-                        bohCount++;
-                    } else if (member.role === 'Admin') {
-                        adminWorkingList.appendChild(iconDiv);
-                        adminCount++;
-                    }
-                }
-            });
-
-            if (fohCount === 0) fohWorkingList.innerHTML = '<li class="no-data">No FOH staff working.</li>';
-            if (bohCount === 0) bohWorkingList.innerHTML = '<li class="no-data">No BOH staff working.</li>';
-            if (adminCount === 0) adminWorkingList.innerHTML = '<li class="no-data">No Admin staff working.</li>';
-
-
-            // Render My Tasks for Home Page (simplified display)
-            homeTaskList.innerHTML = '';
-            const tasksForToday = (dailyTasks[formattedToday] && dailyTasks[formattedToday][currentUserName]) || [];
-            const completedTasksForToday = (completedTasks[formattedToday] && completedTasks[formattedToday][currentUserName]) || {};
-
-            if (tasksForToday.length === 0) {
-                homeTaskList.innerHTML = '<li class="no-tasks">No tasks assigned for today.</li>';
-            } else {
-                tasksForToday.forEach(task => {
-                    const li = document.createElement('li');
-                    const isCompleted = completedTasksForToday[task];
-                    li.textContent = `${task} ${isCompleted ? '(Completed)' : '(Pending)'}`;
-                    li.classList.add('task-item', isCompleted ? 'completed' : 'pending');
-                    homeTaskList.appendChild(li);
-                });
-            }
-
-            // Clean up old messages and render message board
-            cleanupMessages();
-            renderMessageBoard();
-        }
-
-        /**
-         * Handles the clock in/out toggle for the current user (used on Home and My Tasks).
-         */
-        function toggleClockStatus() {
-            const today = new Date();
-            const formattedToday = getFormattedDate(today);
-            const now = Date.now();
-
-            clockIns[formattedToday] = clockIns[formattedToday] || {};
-            clockIns[formattedToday][currentUserName] = clockIns[formattedToday][currentUserName] || {};
-
-            const userClockData = clockIns[formattedToday][currentUserName];
-
-            if (!userClockData.in) {
-                // Clock In
-                userClockData.in = now;
-                userClockData.out = null; // Clear any old out time if re-clocking
-                alert(`${currentUserName} clocked in at ${formatTimestampToTime(now)}.`);
-            } else if (userClockData.in && !userClockData.out) {
-                // Clock Out
-                userClockData.out = now;
-                alert(`${currentUserName} clocked out at ${formatTimestampToTime(now)}.`);
-            } else if (userClockData.in && userClockData.out) {
-                // Already clocked out, re-clock in for a new shift that day
-                userClockData.in = now;
-                userClockData.out = null;
-                alert(`${currentUserName} re-clocked in at ${formatTimestampToTime(now)}.`);
-            }
-            saveData(LS_KEYS.CLOCK_INS, clockIns);
-            renderHomePage(); // Update home page status
-            renderMyTasks(); // Update my tasks page status
-            if (isAdminMode) { // If admin panel is open, update attendance there too
-                renderAdminShiftAttendance();
-            }
-        }
-
-        /**
-         * Cleans up messages older than 24 hours.
-         */
-        function cleanupMessages() {
+            checkDate.setHours(23, 59, 59, 999);
+            today.setHours(0, 0, 0, 0);
+            return checkDate < today;
+        },
+        // Cleans up messages and old task completion records
+        cleanupOldData() {
             const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
-            messageBoard = messageBoard.filter(msg => msg.timestamp > twentyFourHoursAgo);
-            saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
-        }
 
-        /**
-         * Renders the message board.
-         */
-        function renderMessageBoard() {
-            messageList.innerHTML = '';
-            if (messageBoard.length === 0) {
-                messageList.innerHTML = '<li class="no-data">No messages yet.</li>';
+            // Clean up message board
+            this.messageBoard = this.messageBoard.filter(msg => msg.timestamp > twentyFourHoursAgo);
+            this.saveData('messageBoard', this.messageBoard);
+
+            // Clean up old completed task records
+            let cleanedCompletedTasks = {};
+            for (const dateKey in this.completedTasks) {
+                if (!this.isPastEndOfDay(dateKey)) { // Keep current/future dates as-is
+                    cleanedCompletedTasks[dateKey] = this.completedTasks[dateKey];
+                } else { // For past dates, filter out old completed tasks
+                    let tasksForDate = {};
+                    for (const staffName in this.completedTasks[dateKey]) {
+                        let tasksForStaff = {};
+                        for (const taskName in this.completedTasks[dateKey][staffName]) {
+                            const completionData = this.completedTasks[dateKey][staffName][taskName];
+                            const timestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
+                            if (timestamp > twentyFourHoursAgo) {
+                                tasksForStaff[taskName] = completionData;
+                            }
+                        }
+                        if (Object.keys(tasksForStaff).length > 0) {
+                            tasksForDate[staffName] = tasksForStaff;
+                        }
+                    }
+                    if (Object.keys(tasksForDate).length > 0) {
+                        cleanedCompletedTasks[dateKey] = tasksForDate;
+                    }
+                }
+            }
+            this.completedTasks = cleanedCompletedTasks;
+            this.saveData('completedTasks', this.completedTasks);
+        },
+
+        // --- Authentication Methods ---
+        login(member) {
+            this.user = member;
+            this.saveData('currentUserName', member.name);
+            this.saveData('currentUserRole', member.role);
+            this.isAdminMode = false; // Always reset admin mode on new login
+            this.saveData('isAdminMode', false);
+            this.view = 'home'; // Always navigate to home after login
+            this.cleanupOldData(); // Clean up data after login
+        },
+        logout() {
+            this.user = null;
+            this.isAdminMode = false; // Ensure admin mode is off
+            this.saveData('currentUserName', null);
+            this.saveData('currentUserRole', null);
+            this.saveData('isAdminMode', false);
+            this.view = 'landing'; // Navigate to landing page
+        },
+        toggleAdminMode() {
+            if (!this.user || this.user.role !== 'Admin') {
+                alert('You do not have permission to access Admin Mode.');
                 return;
             }
+            this.isAdminMode = !this.isAdminMode;
+            this.saveData('isAdminMode', this.isAdminMode);
+            this.view = this.isAdminMode ? 'admin' : 'home'; // Go to admin or back to home
+        },
 
-            // Display messages in reverse chronological order
-            [...messageBoard].reverse().forEach(message => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span class="message-sender">${message.sender}:</span>
-                    <span class="message-text">${message.text}</span>
-                    <span class="message-timestamp">(${new Date(message.timestamp).toLocaleString()})</span>
-                `;
-                messageList.appendChild(li);
-            });
-        }
+        // --- Home View Specific Methods ---
+        renderHomePage() {
+            // Re-render clock status and message board, who's working
+            this.isClockedIn; // Re-evaluate computed property
+            this.clockStatusMessage; // Re-evaluate computed property
+            this.clockButtonText; // Re-evaluate computed property
+            this.workingStaff; // Re-evaluate computed property
+            this.homeTasks; // Re-evaluate computed property
+            this.cleanupOldData(); // Ensure cleanup runs when home is viewed
+        },
+        toggleClockStatus() {
+            const now = Date.now();
+            const userData = this.clockIns[this.todayFormatted] = this.clockIns[this.todayFormatted] || {};
+            userData[this.user.name] = userData[this.user.name] || {};
 
-        /**
-         * Handles sending a new message.
-         * @param {Event} event - The form submit event.
-         */
-        function handleSendMessage(event) {
-            event.preventDefault();
-            const messageText = messageTextarea.value.trim();
+            const userClockRecord = userData[this.user.name];
 
-            if (!messageText) {
+            if (!userClockRecord.in) {
+                userClockRecord.in = now;
+                userClockRecord.out = null;
+                alert(`${this.user.name} clocked in at ${this.formatTimestampToTime(now)}.`);
+            } else if (userClockRecord.in && !userClockRecord.out) {
+                userClockRecord.out = now;
+                alert(`${this.user.name} clocked out at ${this.formatTimestampToTime(now)}.`);
+            } else { // User was clocked out, clock them back in for a new shift
+                userClockRecord.in = now;
+                userClockRecord.out = null;
+                alert(`${this.user.name} re-clocked in at ${this.formatTimestampToTime(now)}.`);
+            }
+            this.saveData('clockIns', this.clockIns);
+            // Alpine reactivity will update computed properties automatically
+            this.renderHomePage(); // Force full re-render of homepage for consistency
+        },
+        sendMessage() {
+            if (this.newMessageText.trim() === '') {
                 alert('Message cannot be empty.');
                 return;
             }
-
-            if (!currentUserName) {
+            if (!this.user) {
                 alert('Please log in to send a message.');
                 return;
             }
 
-            const newMessage = {
-                sender: currentUserName,
-                text: messageText,
+            this.messageBoard.push({
+                sender: this.user.name,
+                text: this.newMessageText,
                 timestamp: Date.now()
+            });
+            this.saveData('messageBoard', this.messageBoard);
+            this.newMessageText = ''; // Clear input
+            this.renderHomePage(); // Re-render message board (computed property will update)
+        },
+
+        // --- My Tasks View Specific Methods ---
+        toggleTaskCompletion(taskName, isChecked) {
+            const taskDate = this.todayFormatted; // Always current day for My Tasks
+            const staffName = this.user.name;
+
+            this.completedTasks[taskDate] = this.completedTasks[taskDate] || {};
+            this.completedTasks[taskDate][staffName] = this.completedTasks[taskDate][staffName] || {};
+
+            const existingCompletionData = this.completedTasks[taskDate][staffName][taskName];
+            const currentImageName = (typeof existingCompletionData === 'object' && existingCompletionData !== null) ? existingCompletionData.imageName : null;
+
+            if (isChecked) {
+                this.completedTasks[taskDate][staffName][taskName] = {
+                    timestamp: Date.now(),
+                    imageName: currentImageName // Preserve existing image info
+                };
+            } else {
+                delete this.completedTasks[taskDate][staffName][taskName];
+                if (Object.keys(this.completedTasks[taskDate][staffName]).length === 0) {
+                    delete this.completedTasks[taskDate][staffName];
+                }
+            }
+            this.saveData('completedTasks', this.completedTasks);
+            // Alpine reactivity will update `myTasks` computed property
+            this.renderHomePage(); // Update home view
+            if (this.isAdminMode) this.renderAdminTaskOverview(); // Update admin view if open
+        },
+        attachImageToTask(taskName, file) {
+            if (!file) return;
+            const taskDate = this.todayFormatted;
+            const staffName = this.user.name;
+
+            this.completedTasks[taskDate] = this.completedTasks[taskDate] || {};
+            this.completedTasks[taskDate][staffName] = this.completedTasks[taskDate][staffName] || {};
+
+            const currentCompletion = this.completedTasks[taskDate][staffName][taskName];
+            const existingTimestamp = (typeof currentCompletion === 'object' && currentCompletion !== null) ? currentCompletion.timestamp : currentCompletion;
+
+            // Store only the file name
+            this.completedTasks[taskDate][staffName][taskName] = {
+                timestamp: existingTimestamp || Date.now(),
+                imageName: file.name
             };
 
-            messageBoard.push(newMessage);
-            saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
-            messageTextarea.value = ''; // Clear textarea
-            renderMessageBoard(); // Re-render to show new message
-        }
-
-        /**
-         * Renders the weekly rota grid.
-         */
-        function renderWeeklyRota() {
-            rotaGrid.innerHTML = '';
-            const today = new Date();
-            const weekDays = getWeekDays(today);
-
-            weekDays.forEach(day => {
-                const formattedDate = getFormattedDate(day);
-                const dayColumn = document.createElement('div');
-                dayColumn.classList.add('rota-day-column');
-                dayColumn.innerHTML = `
-                    <strong>${getDisplayDate(day)}</strong>
-                    <ul></ul>
-                `;
-                const ul = dayColumn.querySelector('ul');
-
-                const dayRota = rota[formattedDate] || {};
-
-                const staffForDisplay = staffMembers.filter(member => {
-                    // Apply current user's role restrictions for read-only access
-                    if (!isCurrentUserAdmin()) {
-                        if (currentUserRole === 'FOH' && member.role === 'BOH') return false;
-                        if (currentUserRole === 'BOH' && member.role === 'FOH') return false;
-                        // FOH/BOH can see Admin roles for shifts, so no filter there
-                    }
-                    return true;
-                }).sort((a, b) => {
-                    const roleOrder = { 'FOH': 1, 'BOH': 2, 'Admin': 3 };
-                    if (roleOrder[a.role] !== roleOrder[b.role]) {
-                        return roleOrder[a.role] - roleOrder[b.role];
-                    }
-                    return a.name.localeCompare(b.name);
-                });
-
-                staffForDisplay.forEach(member => {
-                    const shift = dayRota[member.name] || 'Off';
-                    const li = document.createElement('li');
-                    li.textContent = `${member.name}: ${shift}`;
-                    li.classList.add(member.role.toLowerCase()); // Add class for FOH/BOH/Admin styling
-                    ul.appendChild(li);
-                });
-
-                rotaGrid.appendChild(dayColumn);
-            });
-        }
-
-        /**
-         * Renders the current user's tasks for the current day.
-         */
-        function renderMyTasks() {
-            taskList.innerHTML = '';
-            const today = new Date();
-            const formattedToday = getFormattedDate(today);
-
-            currentDayInfo.textContent = getDisplayDate(today);
-
-            if (!currentUserName) {
-                taskList.innerHTML = '<li class="no-tasks">Please log in to see your tasks.</li>';
-                return;
-            }
-
-            const tasksForToday = (dailyTasks[formattedToday] && dailyTasks[formattedToday][currentUserName]) || [];
-            const completedTasksForToday = (completedTasks[formattedToday] && completedTasks[formattedToday][currentUserName]) || {};
-
-            if (tasksForToday.length === 0) {
-                taskList.innerHTML = '<li class="no-tasks">No tasks assigned for today.</li>';
-                return;
-            }
-
-            // Clean up old task completion data (including image filename references)
-            const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
-            for (const dateKey in completedTasks) {
-                // Only process if the date is in the past
-                if (isPastEndOfDay(dateKey)) {
-                    if (completedTasks[dateKey][currentUserName]) { // Check for current user's tasks
-                        for (const taskKey in completedTasks[dateKey][currentUserName]) {
-                            const completionData = completedTasks[dateKey][currentUserName][taskKey];
-                            const timestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
-                            if (timestamp < twentyFourHoursAgo) {
-                                delete completedTasks[dateKey][currentUserName][taskKey];
-                            }
-                        }
-                        // Clean up empty staff entry for that day
-                        if (Object.keys(completedTasks[dateKey][currentUserName]).length === 0) {
-                            delete completedTasks[dateKey][currentUserName];
-                        }
-                    }
-                    // Clean up empty date entry
-                    if (Object.keys(completedTasks[dateKey]).length === 0) {
-                        delete completedTasks[dateKey];
-                    }
-                }
-            }
-            saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-
-
-            tasksForToday.forEach(task => {
-                const li = document.createElement('li');
-                li.classList.add('task-item');
-
-                const taskContent = document.createElement('span');
-                taskContent.textContent = task;
-
-                const taskControls = document.createElement('div');
-                taskControls.classList.add('task-item-controls');
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.dataset.taskName = task;
-                checkbox.dataset.taskDate = formattedToday;
-                checkbox.dataset.staffName = currentUserName;
-
-                const attachImageInput = document.createElement('input');
-                attachImageInput.type = 'file';
-                attachImageInput.accept = 'image/*';
-                attachImageInput.style.display = 'none'; // Hide file input directly
-                attachImageInput.dataset.taskName = task;
-                attachImageInput.dataset.taskDate = formattedToday;
-                attachImageInput.dataset.staffName = currentUserName;
-
-                const attachImageBtn = document.createElement('button');
-                attachImageBtn.textContent = 'Attach Image';
-                attachImageBtn.classList.add('upload-image-btn');
-                attachImageBtn.type = 'button'; // Prevent form submission
-                attachImageBtn.onclick = () => attachImageInput.click(); // Trigger file input click
-
-                const imageInfoSpan = document.createElement('span');
-                imageInfoSpan.classList.add('attached-image-info');
-
-                const completionData = completedTasksForToday[task];
-                const isCompleted = !!completionData;
-                const completionTimestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
-                const imageName = typeof completionData === 'object' ? completionData.imageName : null;
-
-
-                if (isCompleted) {
-                    checkbox.checked = true;
-                    li.classList.add('completed');
-                    attachImageBtn.style.display = 'none'; // Hide attach button if completed
-                    if (imageName) {
-                         imageInfoSpan.textContent = `Image: ${imageName} attached.`;
-                    }
-                } else if (isPastEndOfDay(formattedToday)) {
-                    li.classList.add('incomplete');
-                }
-
-                taskControls.appendChild(checkbox);
-                taskControls.appendChild(attachImageInput);
-                taskControls.appendChild(attachImageBtn);
-
-                li.appendChild(taskContent);
-                li.appendChild(taskControls); // Add controls first
-
-                const timestampSpan = document.createElement('span');
-                timestampSpan.classList.add('timestamp');
-                if (completionTimestamp) {
-                    timestampSpan.textContent = formatTimestampToTime(completionTimestamp);
-                }
-                li.appendChild(timestampSpan);
-                li.appendChild(imageInfoSpan); // Add image info below
-
-                taskList.appendChild(li);
-            });
-        }
-
-        /**
-         * Handles task checkbox changes, including image attachment.
-         * @param {Event} event - The change event from the checkbox or file input.
-         */
-        function handleTaskCompletionOrImageAttach(event) {
-            if (event.target.type === 'checkbox') {
-                const checkbox = event.target;
-                const taskName = checkbox.dataset.taskName;
-                const taskDate = checkbox.dataset.taskDate;
-                const staffName = checkbox.dataset.staffName;
-
-                completedTasks[taskDate] = completedTasks[taskDate] || {};
-                completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
-
-                const existingCompletionData = completedTasks[taskDate][staffName][taskName];
-                const currentImageName = (typeof existingCompletionData === 'object' && existingCompletionData !== null) ? existingCompletionData.imageName : null;
-
-
-                if (checkbox.checked) {
-                    completedTasks[taskDate][staffName][taskName] = {
-                        timestamp: Date.now(),
-                        imageName: currentImageName // Preserve existing image info
-                    };
-                } else {
-                    delete completedTasks[taskDate][staffName][taskName];
-                    if (Object.keys(completedTasks[taskDate][staffName]).length === 0) {
-                        delete completedTasks[date][staffName];
-                    }
-                }
-                saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-                renderHomePage(); // Update tasks on home
-                renderMyTasks(); // Re-render to update UI (e.g., timestamp, styling)
-                if (isAdminMode) { // Update admin task overview if admin mode is active
-                    renderAdminTaskOverview();
-                }
-            } else if (event.target.type === 'file') {
-                const fileInput = event.target;
-                const taskName = fileInput.dataset.taskName;
-                const taskDate = fileInput.dataset.taskDate;
-                const staffName = fileInput.dataset.staffName;
-                const file = fileInput.files[0];
-
-                if (file) {
-                    completedTasks[taskDate] = completedTasks[taskDate] || {};
-                    completedTasks[date][staffName] = completedTasks[taskDate][staffName] || {};
-
-                    const currentCompletion = completedTasks[taskDate][staffName][taskName];
-                    const existingTimestamp = (typeof currentCompletion === 'object' && currentCompletion !== null) ? currentCompletion.timestamp : currentCompletion;
-
-                    // Store only the file name, not the actual image data in localStorage
-                    completedTasks[taskDate][staffName][taskName] = {
-                        timestamp: existingTimestamp || Date.now(), // Ensure a timestamp is set if not already
-                        imageName: file.name
-                    };
-
-                    saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-                    alert(`Image "${file.name}" attached to "${taskName}". (Note: Image data is NOT stored in this demo.)`);
-                    renderHomePage(); // Update tasks on home
-                    renderMyTasks(); // Re-render to show image info
-                    if (isAdminMode) { // Update admin task overview if admin mode is active
-                        renderAdminTaskOverview();
-                    }
-                }
-            }
-        }
-
-
-        /**
-         * Renders the calendar for the currentMonthYearDisplay date, applying role-based filtering.
-         */
-        function renderCalendar() {
-            while (calendarGrid.children.length > 7) {
-                calendarGrid.removeChild(calendarGrid.lastChild);
-            }
-
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-
-            currentMonthYearDisplay.textContent = currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-            const firstDayOfMonth = new Date(year, month, 1);
-            const lastDayOfMonth = new Date(year, month + 1, 0);
-            const numDaysInMonth = lastDayOfMonth.getDate();
-
-            const firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
-
-            for (let i = 0; i < firstDayOfWeek; i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.classList.add('calendar-day');
-                calendarGrid.appendChild(emptyDay);
-            }
-
-            const todayFormatted = getFormattedDate(new Date());
-            const filterRole = calendarRoleFilter.value; // Get selected filter from dropdown
-
-            // Adjust calendar role filter options based on current user's role
-            calendarRoleFilter.querySelectorAll('option').forEach(option => {
-                option.disabled = false; // Enable all by default
-            });
-
-            if (!isCurrentUserAdmin()) {
-                if (currentUserRole === 'FOH') {
-                    // Disable BOH and Admin options for FOH
-                    calendarRoleFilter.querySelector('option[value="BOH"]').disabled = true;
-                    calendarRoleFilter.querySelector('option[value="Admin"]').disabled = true;
-                    if (filterRole === 'BOH' || filterRole === 'Admin') { // If user was on restricted filter, reset
-                        calendarRoleFilter.value = 'all'; // Default to "All Staff" (which FOH can see)
-                    }
-                } else if (currentUserRole === 'BOH') {
-                    // Disable FOH and Admin options for BOH
-                    calendarRoleFilter.querySelector('option[value="FOH"]').disabled = true;
-                    calendarRoleFilter.querySelector('option[value="Admin"]').disabled = true;
-                    if (filterRole === 'FOH' || filterRole === 'Admin') { // If user was on restricted filter, reset
-                        calendarRoleFilter.value = 'all'; // Default to "All Staff" (which BOH can see)
-                    }
-                }
-            }
-
-
-            for (let dayNum = 1; dayNum <= numDaysInMonth; dayNum++) {
-                const day = new Date(year, month, dayNum);
-                const formattedDate = getFormattedDate(day);
-
-                const dayCell = document.createElement('div');
-                dayCell.classList.add('calendar-day', 'current-month');
-                if (formattedDate === todayFormatted) {
-                    dayCell.classList.add('today');
-                }
-
-                dayCell.innerHTML = `<div class="day-number">${dayNum}</div><ul></ul>`;
-                const ul = dayCell.querySelector('ul');
-
-                const dayRota = rota[formattedDate] || {};
-
-                const staffForDisplay = staffMembers.filter(staff => {
-                    const staffRole = staff.role;
-                    // Apply current user's role restrictions for read-only access
-                    if (!isCurrentUserAdmin()) {
-                        if (currentUserRole === 'FOH' && staffRole === 'BOH') return false; // FOH cannot see BOH shifts
-                        if (currentUserRole === 'BOH' && staffRole === 'FOH') return false; // BOH cannot see FOH shifts
-                    }
-                    // Admins see all staff roles by default.
-
-                    // Apply selected filter from dropdown
-                    if (filterRole === 'all') {
-                        return true; // Show all roles allowed by user's permission
-                    } else {
-                        return staffRole === filterRole; // Only show selected role
-                    }
-                }).sort((a, b) => {
-                    const roleOrder = { 'FOH': 1, 'BOH': 2, 'Admin': 3 };
-                    if (roleOrder[a.role] !== roleOrder[b.role]) {
-                        return roleOrder[a.role] - roleOrder[b.role];
-                    }
-                    return a.name.localeCompare(b.name);
-                });
-
-
-                staffForDisplay.forEach(member => {
-                    const shift = dayRota[member.name];
-                    if (shift) {
-                        const li = document.createElement('li');
-                        li.textContent = `${member.name}: ${shift}`;
-                        li.classList.add(member.role.toLowerCase() + '-shift');
-                        ul.appendChild(li);
-                    }
-                });
-                calendarGrid.appendChild(dayCell);
-            }
-        }
-
-        // --- Admin View Renders ---
-
-        /**
-         * Populates the admin forms with staff members and sets default dates.
-         */
-        function renderAdminForms() {
-            const today = new Date();
-            const formattedToday = getFormattedDate(today);
-
-            renderUserDropdownsInApp(); // Ensure admin dropdowns are populated
-
-            // Disable all admin form elements if current user is not an Admin
-            const adminFormElements = adminView.querySelectorAll('input, select, button');
-            const disableAdminControls = !isCurrentUserAdmin();
-            adminFormElements.forEach(element => {
-                element.disabled = disableAdminControls;
-            });
-
-
-            // Set default dates to today
-            shiftDateInput.value = formattedToday;
-            taskDateInput.value = formattedToday;
-            viewShiftDateInput.value = formattedToday;
-            viewTaskDateInput.value = formattedToday;
-            attendanceDateInput.value = formattedToday; // Set attendance date
-            taskOverviewDateInput.value = formattedToday; // Set task overview date
-
-            // Handle custom shift/task input visibility on load
-            shiftTypeSelect.value = '8AM-4PM'; // Default
-            customShiftInputContainer.style.display = 'none';
-            taskDescriptionSelect.value = 'Slicing Lemons'; // Default
-            customTaskInputContainer.style.display = 'none';
-
-
-            // Trigger initial render of admin assigned lists
-            renderAdminAssignedShifts();
-            renderAdminAssignedTasks();
-            renderAdminShiftAttendance(); // Render attendance
-            renderAdminTaskOverview(); // Render task overview
-        }
-
-        /**
-         * Toggles visibility of custom shift input.
-         */
-        function handleShiftTypeChange() {
-            if (shiftTypeSelect.value === 'custom') {
-                customShiftInputContainer.style.display = 'block';
-                customShiftTypeInput.setAttribute('required', 'true');
+            this.saveData('completedTasks', this.completedTasks);
+            alert(`Image "${file.name}" attached to "${taskName}". (Note: Image data is NOT stored in this demo.)`);
+            // Alpine reactivity will update `myTasks` computed property
+            this.renderHomePage(); // Update home view
+            if (this.isAdminMode) this.renderAdminTaskOverview(); // Update admin view if open
+        },
+
+        // --- Rota View Specific Methods ---
+        renderWeeklyRota() {
+            // Computed property `weeklyRota` handles rendering
+            // No explicit action needed here beyond data updates triggering reactivity
+        },
+
+        // --- Calendar View Specific Methods ---
+        renderCalendar() {
+            // Computed property `calendarDays` handles rendering
+            // No explicit action needed here beyond data updates triggering reactivity
+        },
+        goToPrevMonth() {
+            this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() - 1));
+            // Reactivity handles re-render
+        },
+        goToNextMonth() {
+            this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + 1));
+            // Reactivity handles re-render
+        },
+
+        // --- Admin View Specific Methods ---
+        renderAdminForms() {
+            // Set initial selected values for dropdowns when admin panel is rendered
+            this.shiftForm.staffName = this.user ? this.user.name : (this.staff[0]?.name || '');
+            this.taskForm.staffName = this.user ? this.user.name : (this.staff[0]?.name || '');
+            this.assignedShiftsView.staffName = this.user ? this.user.name : (this.staff[0]?.name || '');
+            this.assignedTasksView.staffName = this.user ? this.user.name : (this.staff[0]?.name || '');
+            this.attendanceView.date = this.todayFormatted;
+            this.taskOverviewView.date = this.todayFormatted;
+
+            // Call render methods for lists that depend on these selections
+            this.renderAdminAssignedShifts();
+            this.renderAdminAssignedTasks();
+            this.renderAdminShiftAttendance();
+            this.renderAdminTaskOverview();
+
+            // Handle custom input visibility for initial state
+            this.handleShiftTypeChange();
+            this.handleTaskDescriptionChange();
+        },
+        handleShiftTypeChange() {
+            if (this.shiftForm.type === 'custom') {
+                // Ensure custom input is shown only for admins
+                document.getElementById('custom-shift-input-container').style.display = this.isCurrentUserAdmin() ? 'block' : 'none';
             } else {
-                customShiftInputContainer.style.display = 'none';
-                customShiftTypeInput.removeAttribute('required');
-                customShiftTypeInput.value = ''; // Clear custom input
+                document.getElementById('custom-shift-input-container').style.display = 'none';
+                this.shiftForm.customType = '';
             }
-        }
-
-        /**
-         * Toggles visibility of custom task input.
-         */
-        function handleTaskDescriptionChange() {
-            if (taskDescriptionSelect.value === 'Custom Task') {
-                customTaskInputContainer.style.display = 'block';
-                customTaskDescriptionInput.setAttribute('required', 'true');
+        },
+        handleTaskDescriptionChange() {
+            if (this.taskForm.description === 'Custom Task') {
+                // Ensure custom input is shown only for admins
+                document.getElementById('custom-task-input-container').style.display = this.isCurrentUserAdmin() ? 'block' : 'none';
             } else {
-                customTaskInputContainer.style.display = 'none';
-                customTaskDescriptionInput.removeAttribute('required');
-                customTaskDescriptionInput.value = ''; // Clear custom input
+                document.getElementById('custom-task-input-container').style.display = 'none';
+                this.taskForm.customDescription = '';
             }
-        }
+        },
+        assignShift() {
+            if (!this.isCurrentUserAdmin()) { alert('Permission denied.'); return; }
 
-        /**
-         * Handles the submission of the assign shift form.
-         * @param {Event} event - The form submit event.
-         */
-        function handleAssignShift(event) {
-            event.preventDefault();
-            const staff = shiftUserSelect.value;
-            const baseDate = new Date(shiftDateInput.value);
-            const repeatDays = parseInt(shiftRepeatDaysInput.value);
-            let shiftType = shiftTypeSelect.value.trim();
+            const staff = this.shiftForm.staffName;
+            const baseDate = new Date(this.shiftForm.date);
+            const repeatDays = this.shiftForm.repeatDays;
+            let shiftType = this.shiftForm.type;
 
             if (shiftType === 'custom') {
-                shiftType = customShiftTypeInput.value.trim();
-                if (!shiftType) {
-                    alert('Please enter a custom shift type.');
-                    return;
-                }
+                shiftType = this.shiftForm.customType.trim();
+                if (!shiftType) { alert('Please enter a custom shift type.'); return; }
             }
-
-            if (!staff || !baseDate || !shiftType) {
-                alert('Please fill all shift assignment fields.');
-                return;
-            }
-            if (shiftType.length < 2 || shiftType.length > 20) {
-                alert('Shift type should be between 2 and 20 characters.');
-                return;
-            }
-            if (isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) {
-                alert('Repeat days must be between 1 and 7.');
-                return;
-            }
+            if (!staff || !baseDate || !shiftType || !repeatDays) { alert('Please fill all shift assignment fields.'); return; }
+            if (shiftType.length < 2 || shiftType.length > 20) { alert('Shift type should be between 2 and 20 characters.'); return; }
+            if (isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) { alert('Repeat days must be between 1 and 7.'); return; }
 
             let assignmentsMade = 0;
             for (let i = 0; i < repeatDays; i++) {
-                const currentDate = addDays(baseDate, i);
-                const formattedDate = getFormattedDate(currentDate);
+                const currentDate = this.addDays(baseDate, i);
+                const formattedDate = this.getFormattedDate(currentDate);
 
-                rota[formattedDate] = rota[formattedDate] || {};
-                rota[formattedDate][staff] = shiftType;
+                this.rota[formattedDate] = this.rota[formattedDate] || {};
+                this.rota[formattedDate][staff] = shiftType;
                 assignmentsMade++;
             }
-
-            saveData(LS_KEYS.ROTA, rota);
-            renderWeeklyRota();
-            renderCalendar();
-            renderAdminAssignedShifts(); // Update admin shift list
-            renderHomePage(); // Update home page for "Who's working"
+            this.saveData('rota', this.rota);
             alert(`Shift '${shiftType}' assigned to ${staff} for ${assignmentsMade} day(s).`);
-            shiftTypeSelect.value = '8AM-4PM'; // Reset select
-            customShiftInputContainer.style.display = 'none'; // Hide custom input
-            customShiftTypeInput.value = ''; // Clear custom input
-            shiftRepeatDaysInput.value = '1'; // Reset repeat days
-        }
 
-        /**
-         * Handles the submission of the assign task form.
-         * @param {Event} event - The form submit event.
-         */
-        function handleAssignTask(event) {
-            event.preventDefault();
-            const staff = taskUserSelect.value;
-            const baseDate = new Date(taskDateInput.value);
-            const repeatDays = parseInt(taskRepeatDaysInput.value);
-            let taskDescription = taskDescriptionSelect.value.trim();
+            // Reset form and update views
+            this.shiftForm.type = '8AM-4PM'; // Reset select
+            this.shiftForm.customType = ''; // Clear custom input
+            this.shiftForm.repeatDays = 1; // Reset repeat days
+            document.getElementById('custom-shift-input-container').style.display = 'none';
+
+            this.renderWeeklyRota();
+            this.renderCalendar();
+            this.renderAdminAssignedShifts();
+            this.renderHomePage(); // Update home page for "Who's working"
+        },
+        assignTask() {
+            if (!this.isCurrentUserAdmin()) { alert('Permission denied.'); return; }
+
+            const staff = this.taskForm.staffName;
+            const baseDate = new Date(this.taskForm.date);
+            const repeatDays = this.taskForm.repeatDays;
+            let taskDescription = this.taskForm.description;
 
             if (taskDescription === 'Custom Task') {
-                taskDescription = customTaskDescriptionInput.value.trim();
-                if (!taskDescription) {
-                    alert('Please enter a custom task description.');
-                    return;
-                }
+                taskDescription = this.taskForm.customDescription.trim();
+                if (!taskDescription) { alert('Please enter a custom task description.'); return; }
             }
 
-            if (!staff || !baseDate || !taskDescription) {
-                alert('Please fill all task assignment fields.');
-                return;
-            }
-
-            if (taskDescription.length < 3 || taskDescription.length > 100) {
-                alert('Task description should be between 3 and 100 characters.');
-                return;
-            }
-            if (isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) {
-                alert('Repeat days must be between 1 and 7.');
-                return;
-            }
+            if (!staff || !baseDate || !taskDescription || !repeatDays) { alert('Please fill all task assignment fields.'); return; }
+            if (taskDescription.length < 3 || taskDescription.length > 100) { alert('Task description should be between 3 and 100 characters.'); return; }
+            if (isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) { alert('Repeat days must be between 1 and 7.'); return; }
 
             let assignmentsMade = 0;
             for (let i = 0; i < repeatDays; i++) {
-                const currentDate = addDays(baseDate, i);
-                const formattedDate = getFormattedDate(currentDate);
+                const currentDate = this.addDays(baseDate, i);
+                const formattedDate = this.getFormattedDate(currentDate);
 
-                dailyTasks[formattedDate] = dailyTasks[formattedDate] || {};
-                dailyTasks[formattedDate][staff] = dailyTasks[formattedDate][staff] || [];
+                this.dailyTasks[formattedDate] = this.dailyTasks[formattedDate] || {};
+                this.dailyTasks[formattedDate][staff] = this.dailyTasks[formattedDate][staff] || [];
 
-                if (!dailyTasks[formattedDate][staff].includes(taskDescription)) {
-                    dailyTasks[formattedDate][staff].push(taskDescription);
+                if (!this.dailyTasks[formattedDate][staff].includes(taskDescription)) {
+                    this.dailyTasks[formattedDate][staff].push(taskDescription);
                     assignmentsMade++;
                 }
             }
 
             if (assignmentsMade > 0) {
-                saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
-                renderHomePage(); // Update home page tasks
-                renderMyTasks();
-                renderAdminAssignedTasks();
-                renderAdminTaskOverview();
+                this.saveData('dailyTasks', this.dailyTasks);
                 alert(`Task '${taskDescription}' added for ${staff} for ${assignmentsMade} day(s).`);
             } else {
                 alert('No new tasks were added (they might already exist).');
             }
 
-            taskDescriptionSelect.value = 'Slicing Lemons'; // Reset select
-            customTaskInputContainer.style.display = 'none'; // Hide custom input
-            customTaskDescriptionInput.value = ''; // Clear custom input
-            taskRepeatDaysInput.value = '1'; // Reset repeat days
-        }
+            // Reset form and update views
+            this.taskForm.description = 'Slicing Lemons'; // Reset select
+            this.taskForm.customDescription = ''; // Clear custom input
+            this.taskForm.repeatDays = 1; // Reset repeat days
+            document.getElementById('custom-task-input-container').style.display = 'none';
 
-        /**
-         * Handles deletion of a shift or task from the admin assigned lists.
-         * @param {Event} event - The click event on the delete button.
-         */
-        function handleDeleteAdminItem(event) {
-            if (event.target.classList.contains('delete-btn')) {
-                // Ensure the delete button is actually enabled (i.e., user is admin)
-                if (event.target.disabled) return;
-
-                const itemType = event.target.dataset.type;
-                const staffName = event.target.dataset.staff;
-                const date = event.target.dataset.date;
-
-                if (itemType === 'task') {
-                    const taskToDelete = event.target.dataset.task;
-                    if (confirm(`Are you sure you want to delete task "${taskToDelete}" for ${staffName} on ${date}?`)) {
-                        if (dailyTasks[date] && dailyTasks[date][staffName]) {
-                            dailyTasks[date][staffName] = dailyTasks[date][staffName].filter(t => t !== taskToDelete);
-                            if (dailyTasks[date][staffName].length === 0) delete dailyTasks[date][staffName];
-                            if (Object.keys(dailyTasks[date]).length === 0) delete dailyTasks[date];
-                            saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
-
-                            // Also remove from completed tasks if it was completed
-                            if (completedTasks[date] && completedTasks[date][staffName] && completedTasks[date][staffName][taskToDelete]) {
-                                delete completedTasks[date][staffName][taskToDelete];
-                                if (Object.keys(completedTasks[date][staffName]).length === 0) delete completedTasks[date][staffName];
-                                if (Object.keys(completedTasks[date]).length === 0) delete completedTasks[date];
-                                saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-                            }
-                            renderAdminAssignedTasks(); // Re-render admin task list
-                            renderHomePage(); // Update home page tasks
-                            renderMyTasks(); // Re-render personal task list
-                            renderAdminTaskOverview(); // Update admin task overview
-                            alert('Task deleted successfully.');
-                        }
-                    }
-                } else if (itemType === 'shift') {
-                    if (confirm(`Are you sure you want to delete the shift for ${staffName} on ${date}?`)) {
-                        if (rota[date] && rota[date][staffName]) {
-                            delete rota[date][staffName];
-                            if (Object.keys(rota[date]).length === 0) delete rota[date];
-                            saveData(LS_KEYS.ROTA, rota);
-                            renderAdminAssignedShifts(); // Re-render admin shift list
-                            renderWeeklyRota(); // Update weekly rota view
-                            renderCalendar(); // Update calendar view
-                            renderHomePage(); // Update home page for "Who's working"
-                            alert('Shift deleted successfully.');
-                        }
-                    }
-                }
-            }
-        }
-
-
-        /**
-         * Navigates the calendar to the previous month.
-         */
-        function goToPrevMonth() {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-            renderCalendar();
-        }
-
-        /**
-         * Navigates the calendar to the next month.
-         */
-        function goToNextMonth() {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-            renderCalendar();
-        }
-
-
-        // --- Main App Initialization ---
-        /**
-         * Initializes the main application after a user has logged in.
-         */
-        function initApp() {
-            try {
-                updateHeaderUserInfo();
-                renderAdminToggleButton();
-                renderUserDropdownsInApp();
-                // All specific view rendering functions are called within showView
-                // and home is now the default view.
-                showView(activeViewId);
-
-                // Set current year in footer
-                document.getElementById('current-year').textContent = new Date().getFullYear();
-
-                // --- Event Listeners ---
-                adminToggleButton.addEventListener('click', toggleAdminView);
-                signOutButton.addEventListener('click', handleSignOut); // Event listener for sign out
-
-                // Clock in/out buttons (both home and my-tasks)
-                clockInOutBtnHome.addEventListener('click', toggleClockStatus);
-
-                navButtons.forEach(button => {
-                    button.addEventListener('click', handleNavButtonClick);
-                });
-
-                // Task list in My Tasks
-                taskList.addEventListener('change', handleTaskCompletionOrImageAttach); // For checkboxes
-                // Add a single listener for attach image buttons on the taskList parent
-                taskList.addEventListener('click', (event) => {
-                    if (event.target.classList.contains('upload-image-btn')) {
-                        const fileInput = event.target.previousElementSibling; // Get the hidden file input
-                        if (fileInput && fileInput.type === 'file') {
-                            fileInput.click();
-                        }
-                    }
-                });
-                taskList.addEventListener('input', (event) => { // Using 'input' for file changes
-                    if (event.target.type === 'file') {
-                        handleTaskCompletionOrImageAttach(event);
-                    }
-                });
-
-
-                // Message board
-                messageInputForm.addEventListener('submit', handleSendMessage);
-
-                // Admin form listeners
-                shiftTypeSelect.addEventListener('change', handleShiftTypeChange);
-                taskDescriptionSelect.addEventListener('change', handleTaskDescriptionChange);
-                assignShiftForm.addEventListener('submit', handleAssignShift);
-                assignTaskForm.addEventListener('submit', handleAssignTask);
-
-                // Admin view list listeners (for viewing and deleting)
-                viewShiftUserSelect.addEventListener('change', renderAdminAssignedShifts);
-                viewShiftDateInput.addEventListener('change', renderAdminAssignedShifts);
-                adminAssignedShiftsList.addEventListener('click', handleDeleteAdminItem); // Event delegation for delete buttons
-
-                viewTaskUserSelect.addEventListener('change', renderAdminAssignedTasks);
-                viewTaskDateInput.addEventListener('change', renderAdminAssignedTasks);
-                adminAssignedTasksList.addEventListener('click', handleDeleteAdminItem); // Event delegation for delete buttons
-
-                // Admin attendance and task overview listeners
-                attendanceDateInput.addEventListener('change', renderAdminShiftAttendance);
-                taskOverviewDateInput.addEventListener('change', renderAdminTaskOverview);
-                taskStatusFilter.addEventListener('change', renderAdminTaskOverview);
-                
-                // Initial render of admin attendance and task overview if admin view is active
-                if (isAdminMode) { // Only render if already in admin mode from a previous session
-                    renderAdminShiftAttendance();
-                    renderAdminTaskOverview();
-                }
+            this.renderHomePage();
+            this.renderMyTasks();
+            this.renderAdminAssignedTasks();
+            this.renderAdminTaskOverview();
+        },
+        renderAdminAssignedShifts() {
+            if (!this.isCurrentUserAdmin()) { this.assignedShifts = []; return; }
+            const staffName = this.assignedShiftsView.staffName;
+            const date = this.assignedShiftsView.date;
             
-                // Ensure delete buttons in Admin View are disabled if not admin
-                const deleteButtonsInAdmin = adminView.querySelectorAll('.delete-btn');
-                const disableDeleteButtons = !isCurrentUserAdmin();
-                deleteButtonsInAdmin.forEach(btn => {
-                    btn.disabled = disableDeleteButtons;
+            if (!staffName || !date) {
+                this.assignedShifts = [];
+                return;
+            }
+
+            const shift = this.rota[date]?.[staffName];
+            this.assignedShifts = shift ? [{ name: staffName, type: shift, date: date }] : [];
+        },
+        renderAdminAssignedTasks() {
+            if (!this.isCurrentUserAdmin()) { this.assignedTasks = []; return; }
+            const staffName = this.assignedTasksView.staffName;
+            const date = this.assignedTasksView.date;
+
+            if (!staffName || !date) {
+                this.assignedTasks = [];
+                return;
+            }
+
+            const tasks = this.dailyTasks[date]?.[staffName] || [];
+            this.assignedTasks = tasks.map(task => ({ name: task }));
+        },
+        renderAdminShiftAttendance() {
+            if (!this.isCurrentUserAdmin()) { this.attendanceList = []; return; }
+            const selectedDate = this.attendanceView.date;
+            if (!selectedDate) {
+                this.attendanceList = [];
+                return;
+            }
+
+            const dailyClockData = this.clockIns[selectedDate] || {};
+            this.attendanceList = this.staff.map(member => {
+                const clockData = dailyClockData[member.name];
+                let statusText = 'Not Clocked In';
+                let status = 'Not Clocked In';
+                if (clockData && clockData.in) {
+                    statusText = `Clocked In: ${this.formatTimestampToTime(clockData.in)}`;
+                    status = 'Clocked In';
+                    if (clockData.out) {
+                        statusText += `, Clocked Out: ${this.formatTimestampToTime(clockData.out)}`;
+                        status = 'Clocked Out'; // More specific status
+                    } else {
+                        statusText += ` (Still Clocked In)`;
+                    }
+                }
+                return { name: member.name, statusText, status };
+            });
+        },
+        renderAdminTaskOverview() {
+            if (!this.isCurrentUserAdmin()) { this.taskOverviewList = []; return; }
+            const selectedDate = this.taskOverviewView.date;
+            const filterStatus = this.taskOverviewView.statusFilter;
+
+            if (!selectedDate) {
+                this.taskOverviewList = [];
+                return;
+            }
+
+            let overviewTasks = [];
+            const tasksForDate = this.dailyTasks[selectedDate] || {};
+            const completedForDate = this.completedTasks[selectedDate] || {};
+
+            this.staff.forEach(member => {
+                const tasks = tasksForDate[member.name] || [];
+                const completed = completedForDate[member.name] || {};
+
+                tasks.forEach(taskName => {
+                    const completionData = completed[taskName];
+                    const isTaskCompleted = !!completionData;
+                    const timestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
+                    const imageName = typeof completionData === 'object' ? completionData.imageName : null;
+
+                    let status = '';
+                    let statusText = '';
+
+                    if (isTaskCompleted) {
+                        status = 'completed';
+                        statusText = 'Completed';
+                    } else {
+                        if (this.isPastEndOfDay(selectedDate)) {
+                            status = 'overdue';
+                            statusText = 'Overdue';
+                        } else {
+                            status = 'pending';
+                            statusText = 'Pending';
+                        }
+                    }
+
+                    if (filterStatus === 'all' || filterStatus === status) {
+                        overviewTasks.push({
+                            staffName: member.name,
+                            taskName: taskName,
+                            status: status,
+                            statusText: statusText,
+                            timestamp: timestamp ? this.formatTimestampToTime(timestamp) : '',
+                            imageName: imageName
+                        });
+                    }
                 });
+            });
+            this.taskOverviewList = overviewTasks.sort((a,b) => a.staffName.localeCompare(b.staffName)); // Sort by staff name
+        },
+        deleteAdminItem(type, staffName, date, taskName = null) {
+            if (!this.isCurrentUserAdmin()) { alert('Permission denied.'); return; }
 
+            if (type === 'task') {
+                if (confirm(`Are you sure you want to delete task "${taskName}" for ${staffName} on ${date}?`)) {
+                    if (this.dailyTasks[date] && this.dailyTasks[date][staffName]) {
+                        this.dailyTasks[date][staffName] = this.dailyTasks[date][staffName].filter(t => t !== taskName);
+                        if (this.dailyTasks[date][staffName].length === 0) delete this.dailyTasks[date][staffName];
+                        if (Object.keys(this.dailyTasks[date]).length === 0) delete this.dailyTasks[date];
+                        this.saveData('dailyTasks', this.dailyTasks);
 
-                // Calendar controls
-                prevMonthBtn.addEventListener('click', goToPrevMonth);
-                nextMonthBtn.addEventListener('click', goToNextMonth);
-                calendarRoleFilter.addEventListener('change', renderCalendar);
-            } catch (e) {
-                console.error(`Error during initApp: ${e.message}`, e);
-                alert("An error occurred during app initialization. Please check the console for details.");
+                        // Also remove from completed tasks if it was completed
+                        if (this.completedTasks[date] && this.completedTasks[date][staffName] && this.completedTasks[date][staffName][taskName]) {
+                            delete this.completedTasks[date][staffName][taskName];
+                            if (Object.keys(this.completedTasks[date][staffName]).length === 0) delete this.completedTasks[date][staffName];
+                            if (Object.keys(this.completedTasks[date]).length === 0) delete this.completedTasks[date];
+                            this.saveData('completedTasks', this.completedTasks);
+                        }
+                        alert('Task deleted successfully.');
+                    }
+                }
+            } else if (type === 'shift') {
+                if (confirm(`Are you sure you want to delete the shift for ${staffName} on ${date}?`)) {
+                    if (this.rota[date] && this.rota[date][staffName]) {
+                        delete this.rota[date][staffName];
+                        if (Object.keys(this.rota[date]).length === 0) delete this.rota[date];
+                        this.saveData('rota', this.rota);
+                        alert('Shift deleted successfully.');
+                    }
+                }
             }
+            // Re-render relevant parts after deletion
+            this.renderAdminAssignedShifts();
+            this.renderAdminAssignedTasks();
+            this.renderWeeklyRota();
+            this.renderCalendar();
+            this.renderHomePage();
+            this.renderAdminTaskOverview();
+        },
+
+        // --- Calendar Navigation ---
+        goToPrevMonth() {
+            this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() - 1));
+        },
+        goToNextMonth() {
+            this.currentCalendarDate = new Date(this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + 1));
         }
-
-
-        // --- Initial Load Logic ---
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeData(); // Load all data first
-
-            // Check if a user was previously logged in
-            if (currentUserName && staffMembers.some(s => s.name === currentUserName)) {
-                landingPage.style.display = 'none';
-                appContainer.style.display = 'flex';
-                initApp(); // User is already logged in, show app directly
-            } else {
-                // No user logged in or user no longer exists, show landing page
-                landingPage.style.display = 'flex';
-                appContainer.style.display = 'none';
-                renderLandingPage();
-            }
-        });
-    </script>
+      }
+    }
+  </script>
 </body>
 </html>
