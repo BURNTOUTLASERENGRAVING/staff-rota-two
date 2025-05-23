@@ -469,15 +469,12 @@
         font-size: 1em;
         margin-bottom: 2px;
     }
-    .working-staff-column .staff-icon .staff-role {
+    .working-staff-column .staff-icon .staff-role { /* This will show the shift */
         font-size: 0.8em;
         padding: 2px 6px;
         background-color: rgba(0,0,0,0.05);
         color: var(--dark-grey);
     }
-    .working-staff-column .staff-icon.foh .icon-placeholder { color: var(--foh-color); }
-    .working-staff-column .staff-icon.boh .icon-placeholder { color: var(--boh-color); }
-    .working-staff-column .staff-icon.admin .icon-placeholder { color: var(--admin-color); }
 
 
     /* My Tasks View */
@@ -828,6 +825,15 @@
         border-color: #ccc;
         opacity: 0.7;
     }
+    /* Ensure delete buttons are also disabled if not admin */
+    .admin-section .delete-btn[disabled] {
+        background-color: #cccccc;
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+        box-shadow: none;
+    }
+
 
     .admin-section button {
       background-color: var(--accent-color);
@@ -1632,6 +1638,13 @@
             localStorage.setItem(LS_KEYS.CURRENT_USER_NAME, JSON.stringify(userName)); // Storing as JSON string
             localStorage.setItem(LS_KEYS.CURRENT_USER_ROLE, JSON.stringify(userRole)); // Storing as JSON string
 
+            // Crucial: Reset admin mode and force home view on *any* new login
+            isAdminMode = false; // Ensure admin mode is off by default for a fresh login
+            saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
+            activeViewId = 'home-view'; // Always direct to home view on fresh login
+            saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
+
+
             landingPage.style.display = 'none';
             appContainer.style.display = 'flex';
             appContainer.style.animation = 'fadeIn 0.5s ease-out'; // Apply animation for smooth transition
@@ -1655,12 +1668,14 @@
             // Clear current user data from localStorage
             localStorage.removeItem(LS_KEYS.CURRENT_USER_NAME);
             localStorage.removeItem(LS_KEYS.CURRENT_USER_ROLE);
-            localStorage.removeItem(LS_KEYS.IS_ADMIN_MODE); // Exit admin mode on sign out
-
+            
+            // Crucial: Ensure isAdminMode is explicitly set to false and saved on sign out
+            localStorage.setItem(LS_KEYS.IS_ADMIN_MODE, JSON.stringify(false)); 
+            
             // Reset current user state variables
             currentUserName = '';
             currentUserRole = '';
-            isAdminMode = false;
+            isAdminMode = false; // Reset JS variable too
 
             // Hide app container and show landing page
             appContainer.style.display = 'none';
@@ -1767,7 +1782,17 @@
             let bohCount = 0;
             let adminCount = 0;
 
-            staffMembers.forEach(member => {
+            // Filter staff based on current user's role for display
+            const staffForWorkingToday = staffMembers.filter(member => {
+                if (!isCurrentUserAdmin()) {
+                    if (currentUserRole === 'FOH' && member.role === 'BOH') return false;
+                    if (currentUserRole === 'BOH' && member.role === 'FOH') return false;
+                }
+                return true;
+            });
+
+
+            staffForWorkingToday.forEach(member => {
                 const shift = todayRota[member.name];
                 if (shift && shift !== 'Off') {
                     const iconDiv = document.createElement('div');
@@ -1985,22 +2010,25 @@
                 return;
             }
 
-            // Clear old task completion data (including image filename references)
+            // Clean up old task completion data (including image filename references) for the current user
             const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
             for (const dateKey in completedTasks) {
-                if (isPastEndOfDay(dateKey)) { // Only clear for past days
-                    for (const staffKey in completedTasks[dateKey]) {
-                        for (const taskKey in completedTasks[dateKey][staffKey]) {
-                            const completionData = completedTasks[dateKey][staffKey][taskKey];
-                            const timestamp = typeof completionData === 'object' ? completionData.timestamp : completionData; // Handle old format
+                // Only process if the date is in the past
+                if (isPastEndOfDay(dateKey)) {
+                    if (completedTasks[dateKey][currentUserName]) { // Check for current user's tasks
+                        for (const taskKey in completedTasks[dateKey][currentUserName]) {
+                            const completionData = completedTasks[dateKey][currentUserName][taskKey];
+                            const timestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
                             if (timestamp < twentyFourHoursAgo) {
-                                delete completedTasks[dateKey][staffKey][taskKey];
+                                delete completedTasks[dateKey][currentUserName][taskKey];
                             }
                         }
-                        if (Object.keys(completedTasks[dateKey][staffKey]).length === 0) {
-                            delete completedTasks[dateKey][staffKey];
+                        // Clean up empty staff entry for that day
+                        if (Object.keys(completedTasks[dateKey][currentUserName]).length === 0) {
+                            delete completedTasks[dateKey][currentUserName];
                         }
                     }
+                    // Clean up empty date entry
                     if (Object.keys(completedTasks[dateKey]).length === 0) {
                         delete completedTasks[dateKey];
                     }
@@ -2442,6 +2470,9 @@
          */
         function handleDeleteAdminItem(event) {
             if (event.target.classList.contains('delete-btn')) {
+                // Ensure the delete button is actually enabled (i.e., user is admin)
+                if (event.target.disabled) return;
+
                 const itemType = event.target.dataset.type;
                 const staffName = event.target.dataset.staff;
                 const date = event.target.dataset.date;
@@ -2572,10 +2603,17 @@
             taskStatusFilter.addEventListener('change', renderAdminTaskOverview);
             
             // Initial render of admin attendance and task overview if admin view is active
-            if (isAdminMode) {
+            if (isAdminMode) { // Only render if already in admin mode from a previous session
                 renderAdminShiftAttendance();
                 renderAdminTaskOverview();
             }
+        
+            // Ensure delete buttons in Admin View are disabled if not admin
+            const deleteButtonsInAdmin = adminView.querySelectorAll('.delete-btn');
+            const disableDeleteButtons = !isCurrentUserAdmin();
+            deleteButtonsInAdmin.forEach(btn => {
+                btn.disabled = disableDeleteButtons;
+            });
 
 
             // Calendar controls
