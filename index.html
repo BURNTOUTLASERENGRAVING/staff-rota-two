@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,8 +29,11 @@
       --completed-border: #4CAF50; /* Green for completed */
       --delete-btn-bg: #dc3545; /* Red for delete */
       --delete-btn-hover: #c82333; /* Darker red */
-      --holiday-bg: #ffeeee; /* Light pink/red for holidays */
-      --holiday-border: #ff6b6b; /* Red for holiday border */
+      --holiday-bg: #ffeeee; /* Light pink/red for business holidays */
+      --holiday-border: #ff6b6b; /* Red for business holiday border */
+      --personal-holiday-bg: #e6f7ff; /* Light blue for personal holidays */
+      --personal-holiday-border: #007bff; /* Blue for personal holiday border */
+
 
       /* Role Colors */
       --foh-color: #007bff; /* Blue for Front of House */
@@ -307,7 +309,7 @@
       margin-bottom: 12px;
       font-size: 1.2em;
     }
-    h4 { /* --- NEW --- For admin sub-sub-headings like "Current Holidays" */
+    h4 {
         color: var(--dark-grey);
         margin-top: 15px;
         margin-bottom: 8px;
@@ -386,7 +388,6 @@
       text-align: center;
     }
 
-    /* --- NEW --- for holiday message on home page */
     #whos-working-holiday-message {
         background-color: var(--holiday-bg);
         color: var(--holiday-border);
@@ -496,11 +497,17 @@
         font-size: 1em;
         margin-bottom: 2px;
     }
-    .working-staff-column .staff-icon .staff-role { /* This will show the shift */
+    .working-staff-column .staff-icon .staff-role { /* This will show the shift or "On Holiday" */
         font-size: 0.8em;
         padding: 2px 6px;
         background-color: rgba(0,0,0,0.05);
         color: var(--dark-grey);
+        word-break: break-word; /* Allow holiday messages to wrap */
+    }
+    .working-staff-column .staff-icon.on-holiday .staff-role {
+        background-color: var(--personal-holiday-bg); /* Or var(--holiday-bg) if you prefer */
+        color: var(--personal-holiday-border); /* Or var(--holiday-border) */
+        font-weight: bold;
     }
 
 
@@ -551,7 +558,6 @@
       cursor: pointer;
       transform: scale(1.1);
     }
-    /* CORRECTED .task-item .upload-image-btn (original bad one was removed) */
     .task-item .upload-image-btn {
         background-color: var(--dark-grey);
         color: white;
@@ -575,7 +581,6 @@
         margin-top: 5px; /* Space between controls and image info */
     }
 
-    /* CORRECTED .task-item.completed */
     .task-item.completed {
       background-color: var(--completed-bg);
       border-color: var(--completed-border);
@@ -745,28 +750,46 @@
       border: 2px solid var(--accent-color);
       box-shadow: 0 0 0 2px rgba(106, 13, 173, 0.3);
     }
-    /* --- NEW --- Holiday styling for calendar day */
-    .calendar-day.holiday-day {
+
+    .calendar-day.holiday-day { /* Business Holiday */
         background-color: var(--holiday-bg);
         border: 1px solid var(--holiday-border);
     }
     .calendar-day.holiday-day .day-number {
         color: var(--holiday-border);
     }
-    .calendar-day.holiday-day:hover::after { /* Tooltip for holiday name */
+    .calendar-day.personal-holiday-day { /* Staff Personal Holiday */
+        background-color: var(--personal-holiday-bg);
+        border: 1px solid var(--personal-holiday-border);
+    }
+    .calendar-day.personal-holiday-day .day-number {
+        color: var(--personal-holiday-border); /* Or choose a contrasting color */
+    }
+    .calendar-day.holiday-day.personal-holiday-day { /* If a day is both, business style might take precedence or define a combined one */
+        background-color: var(--holiday-bg); /* Example: Business holiday style wins */
+        border-color: var(--holiday-border);
+    }
+    .calendar-day.holiday-day.personal-holiday-day .day-number {
+        color: var(--holiday-border);
+    }
+
+
+    .calendar-day.holiday-day:hover::after,
+    .calendar-day.personal-holiday-day:hover::after { /* Tooltip for holiday name */
         content: attr(title);
         position: absolute;
         bottom: 100%; /* Position above the cell */
         left: 50%;
         transform: translateX(-50%);
-        background: var(--holiday-border);
+        background: var(--dark-grey); /* Unified tooltip background */
         color: white;
         padding: 3px 6px;
         border-radius: 4px;
         font-size: 0.9em;
-        white-space: nowrap;
+        white-space: pre-wrap; /* Allow \n to create new lines */
         z-index: 10;
         margin-bottom: 5px; /* Space between cell and tooltip */
+        text-align: left;
     }
 
 
@@ -848,7 +871,7 @@
 
     .admin-section input[type="text"],
     .admin-section input[type="date"],
-    .admin-section input[type="number"], /* --- MODIFIED --- Added number for consistency */
+    .admin-section input[type="number"],
     .admin-section select {
       width: 100%;
       padding: 10px;
@@ -860,16 +883,15 @@
     }
     .admin-section input[type="text"]:focus,
     .admin-section input[type="date"]:focus,
-    .admin-section input[type="number"]:focus, /* --- MODIFIED --- Added number for consistency */
+    .admin-section input[type="number"]:focus,
     .admin-section select:focus {
       outline: none;
       border-color: var(--accent-hover);
       box-shadow: 0 0 0 3px rgba(106, 13, 173, 0.2);
     }
-    /* Disabled inputs in admin section for non-admins */
     .admin-section input[type="text"]:disabled,
     .admin-section input[type="date"]:disabled,
-    .admin-section input[type="number"]:disabled, /* --- MODIFIED --- Added number for consistency */
+    .admin-section input[type="number"]:disabled,
     .admin-section select:disabled,
     .admin-section button:disabled {
         background-color: #f0f0f0;
@@ -878,7 +900,6 @@
         border-color: #ccc;
         opacity: 0.7;
     }
-    /* Ensure delete buttons are also disabled if not admin */
     .admin-section .delete-btn[disabled] {
         background-color: #cccccc;
         cursor: not-allowed;
@@ -911,10 +932,9 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
-    /* Admin Assigned Items Lists & Task Overview */
-    #admin-assigned-tasks, #admin-assigned-shifts, 
-    #admin-attendance-list, #admin-task-overview-list, 
-    #admin-view-tasks-list, #admin-holiday-list /* --- NEW --- */ {
+    #admin-assigned-tasks, #admin-assigned-shifts,
+    #admin-attendance-list, #admin-task-overview-list,
+    #admin-view-tasks-list, #admin-holiday-list {
       list-style: none;
       padding: 0;
       max-height: 250px;
@@ -925,9 +945,9 @@
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    #admin-assigned-tasks li, #admin-assigned-shifts li, 
-    #admin-attendance-list li, #admin-task-overview-list li, 
-    #admin-view-tasks-list li, #admin-holiday-list li /* --- NEW --- */ {
+    #admin-assigned-tasks li, #admin-assigned-shifts li,
+    #admin-attendance-list li, #admin-task-overview-list li,
+    #admin-view-tasks-list li, #admin-holiday-list li {
       padding: 10px 15px;
       border-bottom: 1px solid var(--light-grey);
       display: flex;
@@ -936,25 +956,29 @@
       font-size: 0.95em;
       transition: background-color 0.2s ease;
     }
+    #admin-holiday-list li span { /* Allow holiday name to wrap */
+        white-space: normal;
+        word-break: break-word;
+    }
 
-    #admin-assigned-tasks li:last-child, #admin-assigned-shifts li:last-child, 
-    #admin-attendance-list li:last-child, #admin-task-overview-list li:last-child, 
-    #admin-view-tasks-list li:last-child, #admin-holiday-list li:last-child /* --- NEW --- */ {
+
+    #admin-assigned-tasks li:last-child, #admin-assigned-shifts li:last-child,
+    #admin-attendance-list li:last-child, #admin-task-overview-list li:last-child,
+    #admin-view-tasks-list li:last-child, #admin-holiday-list li:last-child {
       border-bottom: none;
     }
-    #admin-assigned-tasks li:hover, #admin-assigned-shifts li:hover, 
-    #admin-attendance-list li:hover, #admin-task-overview-list li:hover, 
-    #admin-view-tasks-list li:hover, #admin-holiday-list li:hover /* --- NEW --- */ {
+    #admin-assigned-tasks li:hover, #admin-assigned-shifts li:hover,
+    #admin-attendance-list li:hover, #admin-task-overview-list li:hover,
+    #admin-view-tasks-list li:hover, #admin-holiday-list li:hover {
       background-color: #f0f0f0;
     }
 
-    #admin-assigned-tasks li span, #admin-assigned-shifts li span, 
-    #admin-attendance-list li span, #admin-task-overview-list li span, 
-    #admin-view-tasks-list li span, #admin-holiday-list li span /* --- NEW --- */ {
+    #admin-assigned-tasks li span, #admin-assigned-shifts li span,
+    #admin-attendance-list li span, #admin-task-overview-list li span,
+    #admin-view-tasks-list li span, #admin-holiday-list li span {
       flex-grow: 1;
     }
 
-    /* .delete-btn */
     .delete-btn {
       background-color: var(--delete-btn-bg);
       color: white;
@@ -966,6 +990,7 @@
       transition: background-color 0.2s ease, transform 0.1s ease;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       margin-left: 10px;
+      flex-shrink: 0; /* Prevent button from shrinking */
     }
 
     .delete-btn:hover {
@@ -1016,7 +1041,7 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        pointer-events: none; /* Allows clicks to pass through */
+        pointer-events: none;
     }
     .toast {
         background-color: #333;
@@ -1030,15 +1055,16 @@
         min-width: 200px;
         text-align: center;
         font-size: 0.9em;
-        pointer-events: auto; /* Re-enable pointer events for the toast itself */
+        pointer-events: auto;
     }
     .toast.show {
         opacity: 1;
         transform: translateY(0);
     }
-    .toast.success { background-color: #28a745; } /* Green */
-    .toast.error { background-color: #dc3545; }   /* Red */
-    .toast.info { background-color: #007bff; }    /* Blue */
+    .toast.success { background-color: #28a745; }
+    .toast.error { background-color: #dc3545; }
+    .toast.info { background-color: #007bff; }
+    .toast.warning { background-color: #ffc107; color: #333;}
 
 
     /* Media Queries for larger screens (Tablet and Desktop) */
@@ -1082,6 +1108,14 @@
         grid-column: span 1;
         width: auto;
       }
+      /* Specific for holiday form to look better on larger screens */
+      #add-holiday-form {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+      #add-holiday-form button {
+        grid-column: span 1; /* Or adjust as needed */
+      }
+
     }
 
     @media (min-width: 1024px) {
@@ -1106,7 +1140,6 @@
         <div id="staff-icons-container">
             <!-- Staff icons populated by JS -->
         </div>
-        <!-- instant-login on icon click; no Enter App button anymore -->
     </div>
 
     <!-- Main App Container -->
@@ -1119,7 +1152,7 @@
                 <button id="sign-out-btn">Sign Out</button>
             </div>
             <nav class="nav-buttons">
-                <button id="nav-home" class="active">Home</button> <!-- New Home button -->
+                <button id="nav-home" class="active">Home</button>
                 <button id="nav-my-tasks">My Tasks</button>
                 <button id="nav-weekly-rota">Weekly Rota</button>
                 <button id="nav-calendar">Calendar View</button>
@@ -1135,7 +1168,6 @@
                 </div>
 
                 <h2>Who's Working Today?</h2>
-                <!-- --- NEW --- Container for holiday message -->
                 <div id="whos-working-holiday-message" style="display: none;"></div>
                 <div class="who-is-working-grid">
                     <div class="working-staff-column">
@@ -1330,22 +1362,32 @@
                             <input type="date" id="view-task-date">
                         </div>
                     </div>
-                    <ul id="admin-view-tasks-list"> 
+                    <ul id="admin-view-tasks-list">
                         <li class="no-data">Select staff & date to view assigned tasks.</li>
                     </ul>
                 </div>
-                
-                <!-- --- NEW --- Holiday Management Section -->
+
                 <div class="admin-section" id="holiday-management-section">
                     <h3>Manage Holidays</h3>
                     <form id="add-holiday-form">
                         <div>
-                            <label for="holiday-date-input">Date:</label>
-                            <input type="date" id="holiday-date-input" required>
+                            <label for="holiday-name-input">Holiday Name/Reason:</label>
+                            <input type="text" id="holiday-name-input" placeholder="e.g., Annual Leave, Bank Holiday" required>
                         </div>
                         <div>
-                            <label for="holiday-name-input">Holiday Name:</label>
-                            <input type="text" id="holiday-name-input" placeholder="e.g., Bank Holiday" required>
+                            <label for="holiday-start-date-input">Start Date:</label>
+                            <input type="date" id="holiday-start-date-input" required>
+                        </div>
+                        <div>
+                            <label for="holiday-end-date-input">End Date:</label>
+                            <input type="date" id="holiday-end-date-input" required>
+                        </div>
+                        <div>
+                            <label for="holiday-staff-select">Assign To:</label>
+                            <select id="holiday-staff-select" required>
+                                <option value="__BUSINESS__">Business Holiday (All Staff)</option>
+                                <!-- Staff members populated by JS -->
+                            </select>
                         </div>
                         <button type="submit" id="add-holiday-btn">Add Holiday</button>
                     </form>
@@ -1399,14 +1441,12 @@
         </footer>
     </div>
 
-    <!-- Toast Container (for messages like "Shift assigned successfully!") -->
+    <!-- Toast Container -->
     <div id="toast-container"></div>
 
     <script>
         /*
         * JavaScript Logic
-        * Handles data storage, rendering, and user interactions.
-        * Uses localStorage for persistence.
         */
 
         // --- DOM Elements ---
@@ -1425,8 +1465,8 @@
         const clockStatusBannerHome = document.getElementById('clock-status-banner-home');
         const clockStatusTextHome = document.getElementById('clock-status-text-home');
         const clockInOutBtnHome = document.getElementById('clock-in-out-btn-home');
-        const whosWorkingHolidayMessage = document.getElementById('whos-working-holiday-message'); // --- NEW ---
-        const whosWorkingGrid = document.querySelector('#home-view .who-is-working-grid'); // --- NEW --- (to hide/show)
+        const whosWorkingHolidayMessage = document.getElementById('whos-working-holiday-message');
+        const whosWorkingGrid = document.querySelector('#home-view .who-is-working-grid');
         const fohWorkingList = document.getElementById('foh-working-list');
         const bohWorkingList = document.getElementById('boh-working-list');
         const adminWorkingList = document.getElementById('admin-working-list');
@@ -1449,7 +1489,7 @@
         const prevMonthBtn = document.getElementById('prev-month-btn');
         const nextMonthBtn = document.getElementById('next-month-btn');
         const currentMonthYearDisplay = document.getElementById('current-month-year');
-        const calendarGridElement = document.querySelector('#calendar-view .calendar-grid'); // Renamed to avoid conflict
+        const calendarGridElement = document.querySelector('#calendar-view .calendar-grid');
         const calendarRoleFilter = document.getElementById('calendar-role-filter');
 
         // Admin View elements
@@ -1483,10 +1523,12 @@
         const viewTaskDateInput = document.getElementById('view-task-date');
         const adminAssignedTasksList = document.getElementById('admin-view-tasks-list');
 
-        // --- NEW --- Admin Holiday Management elements
+        // Admin Holiday Management elements
         const addHolidayForm = document.getElementById('add-holiday-form');
-        const holidayDateInput = document.getElementById('holiday-date-input');
         const holidayNameInput = document.getElementById('holiday-name-input');
+        const holidayStartDateInput = document.getElementById('holiday-start-date-input');
+        const holidayEndDateInput = document.getElementById('holiday-end-date-input');
+        const holidayStaffSelect = document.getElementById('holiday-staff-select');
         const adminHolidayList = document.getElementById('admin-holiday-list');
 
 
@@ -1508,7 +1550,7 @@
             COMPLETED_TASKS: 'completedTasks',
             CLOCK_INS: 'clockIns',
             MESSAGE_BOARD: 'messageBoard',
-            HOLIDAYS: 'holidays', // --- NEW ---
+            HOLIDAYS: 'holidays',
             CURRENT_USER_NAME: 'currentUserName',
             CURRENT_USER_ROLE: 'currentUserRole',
             IS_ADMIN_MODE: 'isAdminMode',
@@ -1522,7 +1564,8 @@
         let completedTasks = {};
         let clockIns = {};
         let messageBoard = [];
-        let holidays = []; // --- NEW --- { date: 'YYYY-MM-DD', name: 'Holiday Name' }
+        // Holiday structure: { name: 'Holiday Name', startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD', staffName: 'Staff Name' or '__BUSINESS__' }
+        let holidays = [];
         let currentUserName = '';
         let currentUserRole = '';
         let isAdminMode = false;
@@ -1588,10 +1631,10 @@
         function getWeekDays(startDate) {
             const weekDays = [];
             const date = new Date(startDate);
-            date.setHours(0, 0, 0, 0); 
+            date.setHours(0, 0, 0, 0);
 
-            const dayOfWeek = date.getDay(); 
-            const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
+            const dayOfWeek = date.getDay();
+            const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
             date.setDate(diff);
 
             for (let i = 0; i < 7; i++) {
@@ -1604,10 +1647,8 @@
         function isPastEndOfDay(dateString) {
             const checkDate = new Date(dateString);
             const today = new Date();
-
             checkDate.setHours(23, 59, 59, 999);
             today.setHours(0, 0, 0, 0);
-
             return checkDate < today;
         }
 
@@ -1617,6 +1658,13 @@
 
         function isCurrentUserAdmin() {
             return currentUserRole === 'Admin';
+        }
+
+        function isDateInRange(dateToCheck, startDateStr, endDateStr) {
+            const checkTime = new Date(dateToCheck).setHours(0,0,0,0);
+            const startTime = new Date(startDateStr).setHours(0,0,0,0);
+            const endTime = new Date(endDateStr).setHours(0,0,0,0);
+            return checkTime >= startTime && checkTime <= endTime;
         }
 
         // --- Data Initialization & Default Setup ---
@@ -1640,7 +1688,7 @@
             completedTasks = loadData(LS_KEYS.COMPLETED_TASKS) || {};
             clockIns = loadData(LS_KEYS.CLOCK_INS) || {};
             messageBoard = loadData(LS_KEYS.MESSAGE_BOARD) || [];
-            holidays = loadData(LS_KEYS.HOLIDAYS) || []; // --- NEW ---
+            holidays = loadData(LS_KEYS.HOLIDAYS) || [];
             currentUserName = loadData(LS_KEYS.CURRENT_USER_NAME) || '';
             currentUserRole = loadData(LS_KEYS.CURRENT_USER_ROLE) || '';
             isAdminMode = loadData(LS_KEYS.IS_ADMIN_MODE) || false;
@@ -1652,7 +1700,7 @@
             saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
             saveData(LS_KEYS.CLOCK_INS, clockIns);
             saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
-            saveData(LS_KEYS.HOLIDAYS, holidays); // --- NEW ---
+            saveData(LS_KEYS.HOLIDAYS, holidays);
             saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName);
             saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole);
             saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
@@ -1682,17 +1730,11 @@
                 }
             });
 
-            if (viewId === 'home-view') {
-                renderHomePage();
-            } else if (viewId === 'my-tasks-view') {
-                renderMyTasks();
-            } else if (viewId === 'weekly-rota-view') {
-                renderWeeklyRota();
-            } else if (viewId === 'calendar-view') {
-                renderCalendar();
-            } else if (viewId === 'admin-view') {
-                renderAdminForms(); // This will also render holiday list if in admin
-            }
+            if (viewId === 'home-view') renderHomePage();
+            else if (viewId === 'my-tasks-view') renderMyTasks();
+            else if (viewId === 'weekly-rota-view') renderWeeklyRota();
+            else if (viewId === 'calendar-view') renderCalendar();
+            else if (viewId === 'admin-view') renderAdminForms();
         }
 
         // --- Landing Page Rendering ---
@@ -1709,9 +1751,7 @@
                     <div class="staff-name">${member.name}</div>
                     <div class="staff-role">${member.role}</div>
                 `;
-                iconDiv.addEventListener('click', () => {
-                    handleUserLogin(member.name, member.role);
-                });
+                iconDiv.addEventListener('click', () => handleUserLogin(member.name, member.role));
                 staffIconsContainer.appendChild(iconDiv);
             });
         }
@@ -1721,16 +1761,13 @@
             currentUserRole = userRole;
             saveData(LS_KEYS.CURRENT_USER_NAME, userName);
             saveData(LS_KEYS.CURRENT_USER_ROLE, userRole);
-
-            isAdminMode = false; 
+            isAdminMode = false;
             saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
-            activeViewId = 'home-view'; 
+            activeViewId = 'home-view';
             saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
-
             landingPage.style.display = 'none';
             appContainer.style.display = 'flex';
             appContainer.style.animation = 'fadeIn 0.5s ease-out';
-
             initApp();
             showToast(`Welcome, ${currentUserName}!`, 'success');
         }
@@ -1745,12 +1782,8 @@
             const userName = currentUserName;
             saveData(LS_KEYS.CURRENT_USER_NAME, '');
             saveData(LS_KEYS.CURRENT_USER_ROLE, '');
-            saveData(LS_KEYS.IS_ADMIN_MODE, false); 
-            
-            currentUserName = '';
-            currentUserRole = '';
-            isAdminMode = false;
-
+            saveData(LS_KEYS.IS_ADMIN_MODE, false);
+            currentUserName = ''; currentUserRole = ''; isAdminMode = false;
             appContainer.style.display = 'none';
             landingPage.style.display = 'flex';
             renderLandingPage();
@@ -1758,26 +1791,16 @@
         }
 
         function toggleAdminView() {
-            if (!isCurrentUserAdmin()) {
-                showToast('Permission denied. Only Admin users can access this mode.', 'error');
-                return;
-            }
+            if (!isCurrentUserAdmin()) { showToast('Permission denied.', 'error'); return; }
             isAdminMode = !isAdminMode;
             saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
-
-            renderAdminToggleButton(); 
-            renderUserDropdownsInApp(); 
-            renderAdminForms(); // This includes disabling/enabling all admin elements
-
-            if (isAdminMode) {
-                showView('admin-view');
-                showToast('Admin Mode activated.', 'info');
-            } else {
-                showView('home-view');
-                showToast('Admin Mode deactivated.', 'info');
-            }
+            renderAdminToggleButton();
+            renderUserDropdownsInApp();
+            renderAdminForms();
+            if (isAdminMode) { showView('admin-view'); showToast('Admin Mode activated.', 'info'); }
+            else { showView('home-view'); showToast('Admin Mode deactivated.', 'info'); }
         }
-        
+
         function renderAdminToggleButton() {
             if (isCurrentUserAdmin()) {
                 adminToggleButton.style.display = 'inline-block';
@@ -1786,66 +1809,38 @@
             } else {
                 adminToggleButton.style.display = 'none';
                 adminToggleButton.disabled = true;
-                if (isAdminMode) {
-                    isAdminMode = false;
-                    saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode);
-                }
+                if (isAdminMode) { isAdminMode = false; saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode); }
             }
-
             navButtons.forEach(btn => {
-                if (isAdminMode) {
-                    if (btn.id === 'nav-my-tasks' || btn.id === 'nav-weekly-rota' || btn.id === 'nav-calendar') {
-                        btn.disabled = true;
-                    } else {
-                        btn.disabled = false; 
-                    }
-                } else {
-                    btn.disabled = false;
-                }
+                btn.disabled = isAdminMode ? (btn.id === 'nav-my-tasks' || btn.id === 'nav-weekly-rota' || btn.id === 'nav-calendar') : false;
             });
         }
 
         function handleNavButtonClick(event) {
             const clickedButton = event.target;
             let viewId;
-
             if (clickedButton.id === 'nav-home') viewId = 'home-view';
             else if (clickedButton.id === 'nav-my-tasks') viewId = 'my-tasks-view';
             else if (clickedButton.id === 'nav-weekly-rota') viewId = 'weekly-rota-view';
             else if (clickedButton.id === 'nav-calendar') viewId = 'calendar-view';
             else return;
-
             if (isAdminMode && viewId !== 'admin-view' && viewId !== 'home-view') {
-                showToast("Please exit Admin Mode to access other staff views.", 'info');
-                return;
+                showToast("Please exit Admin Mode to access other staff views.", 'info'); return;
             }
             showView(viewId);
         }
 
         function renderUserDropdownsInApp() {
-            const allStaffSelects = [
-                shiftUserSelect, taskUserSelect,
-                viewShiftUserSelect, viewTaskUserSelect
-            ];
+            const allStaffSelects = [shiftUserSelect, taskUserSelect, viewShiftUserSelect, viewTaskUserSelect];
             allStaffSelects.forEach(select => {
                 select.innerHTML = '';
                 if (staffMembers.length === 0) {
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = ''; defaultOption.textContent = 'No Staff Added';
-                    defaultOption.disabled = true; defaultOption.selected = true;
-                    select.appendChild(defaultOption);
+                    const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'No Staff'; opt.disabled = true; opt.selected = true; select.appendChild(opt);
                 } else {
                     staffMembers.forEach(member => {
-                        const option = document.createElement('option');
-                        option.value = member.name;
-                        option.textContent = `${member.name} (${member.role})`;
-                        select.appendChild(option);
+                        const opt = document.createElement('option'); opt.value = member.name; opt.textContent = `${member.name} (${member.role})`; select.appendChild(opt);
                     });
-                    if (currentUserName && staffMembers.some(s => s.name === currentUserName)) {
-                        select.value = currentUserName;
-                    } else if (staffMembers.length > 0) {
-                        select.value = staffMembers[0].name;
-                    }
+                    select.value = (currentUserName && staffMembers.some(s => s.name === currentUserName)) ? currentUserName : (staffMembers[0]?.name || '');
                 }
             });
         }
@@ -1856,25 +1851,20 @@
             const today = new Date();
             const formattedToday = getFormattedDate(today);
 
-            // --- MODIFIED --- Check for holiday first
-            const todayHoliday = holidays.find(h => h.date === formattedToday);
+            const businessHolidayToday = holidays.find(h =>
+                h.staffName === "__BUSINESS__" && isDateInRange(today, h.startDate, h.endDate)
+            );
 
-            if (todayHoliday) {
-                whosWorkingHolidayMessage.textContent = `Closed Today: ${todayHoliday.name}`;
+            if (businessHolidayToday) {
+                whosWorkingHolidayMessage.textContent = `Closed Today: ${businessHolidayToday.name}${businessHolidayToday.startDate !== businessHolidayToday.endDate ? ' (until ' + getDisplayDate(new Date(businessHolidayToday.endDate)) + ')' : ''}`;
                 whosWorkingHolidayMessage.style.display = 'block';
-                whosWorkingGrid.style.display = 'none'; // Hide staff grid
-                // Clear lists just in case
-                fohWorkingList.innerHTML = '';
-                bohWorkingList.innerHTML = '';
-                adminWorkingList.innerHTML = '';
+                whosWorkingGrid.style.display = 'none';
+                fohWorkingList.innerHTML = ''; bohWorkingList.innerHTML = ''; adminWorkingList.innerHTML = '';
             } else {
                 whosWorkingHolidayMessage.style.display = 'none';
-                whosWorkingGrid.style.display = 'grid'; // Show staff grid
+                whosWorkingGrid.style.display = 'grid';
 
-                // Render Who's Working Today
-                fohWorkingList.innerHTML = '';
-                bohWorkingList.innerHTML = '';
-                adminWorkingList.innerHTML = '';
+                fohWorkingList.innerHTML = ''; bohWorkingList.innerHTML = ''; adminWorkingList.innerHTML = '';
                 const todayRota = rota[formattedToday] || {};
                 let fohCount = 0, bohCount = 0, adminCount = 0;
 
@@ -1887,14 +1877,26 @@
                 });
 
                 staffForWorkingToday.forEach(member => {
+                    const personalHolidayToday = holidays.find(h =>
+                        h.staffName === member.name && isDateInRange(today, h.startDate, h.endDate)
+                    );
                     const shift = todayRota[member.name];
-                    if (shift && shift !== 'Off') {
+                    let displayShiftOrHoliday = shift;
+                    let isOnHoliday = false;
+
+                    if (personalHolidayToday) {
+                        displayShiftOrHoliday = `On Holiday (${personalHolidayToday.name.substring(0,15)}${personalHolidayToday.name.length > 15 ? '...' : ''})`;
+                        isOnHoliday = true;
+                    }
+
+                    if ((shift && shift !== 'Off') || isOnHoliday) {
                         const iconDiv = document.createElement('div');
                         iconDiv.classList.add('staff-icon', member.role.toLowerCase());
+                        if (isOnHoliday) iconDiv.classList.add('on-holiday');
                         iconDiv.innerHTML = `
                             <span class="icon-placeholder">${member.icon}</span>
                             <div class="staff-name">${member.name}</div>
-                            <div class="staff-role">${shift}</div>
+                            <div class="staff-role">${displayShiftOrHoliday}</div>
                         `;
                         if (member.role === 'FOH') { fohWorkingList.appendChild(iconDiv); fohCount++; }
                         else if (member.role === 'BOH') { bohWorkingList.appendChild(iconDiv); bohCount++; }
@@ -1906,413 +1908,311 @@
                 if (adminCount === 0) adminWorkingList.innerHTML = '<li class="no-data">No Admin staff working.</li>';
             }
 
-            // Render Clock-in/out status
             const userClockData = (clockIns[formattedToday] && clockIns[formattedToday][currentUserName]) || {};
             let clockStatusMessage = '', clockButtonText = 'Clock In';
             clockStatusBannerHome.classList.remove('clocked-in', 'clocked-out');
+            if (userClockData.in && !userClockData.out) { clockStatusMessage = `Clocked in: ${formatTimestampToTime(userClockData.in)}`; clockButtonText = 'Clock Out'; clockStatusBannerHome.classList.add('clocked-in');}
+            else if (userClockData.in && userClockData.out) { clockStatusMessage = `In: ${formatTimestampToTime(userClockData.in)}, Out: ${formatTimestampToTime(userClockData.out)}`; clockButtonText = 'Clock In'; clockStatusBannerHome.classList.add('clocked-out');}
+            else { clockStatusMessage = 'Not clocked in for today.'; clockButtonText = 'Clock In'; clockStatusBannerHome.classList.add('clocked-out');}
+            clockStatusTextHome.textContent = clockStatusMessage; clockInOutBtnHome.textContent = clockButtonText;
 
-            if (userClockData.in && !userClockData.out) {
-                clockStatusMessage = `You are clocked in since ${formatTimestampToTime(userClockData.in)}`;
-                clockButtonText = 'Clock Out'; clockStatusBannerHome.classList.add('clocked-in');
-            } else if (userClockData.in && userClockData.out) {
-                clockStatusMessage = `Clocked in: ${formatTimestampToTime(userClockData.in)}, Clocked out: ${formatTimestampToTime(userClockData.out)}`;
-                clockButtonText = 'Clock In'; clockStatusBannerHome.classList.add('clocked-out');
-            } else {
-                clockStatusMessage = 'You are not clocked in for today.';
-                clockButtonText = 'Clock In'; clockStatusBannerHome.classList.add('clocked-out');
-            }
-            clockStatusTextHome.textContent = clockStatusMessage;
-            clockInOutBtnHome.textContent = clockButtonText;
-
-            // Render My Tasks for Home Page
             homeTaskList.innerHTML = '';
             const tasksForToday = (dailyTasks[formattedToday] && dailyTasks[formattedToday][currentUserName]) || [];
             const completedTasksForToday = (completedTasks[formattedToday] && completedTasks[formattedToday][currentUserName]) || {};
-
-            if (tasksForToday.length === 0) {
-                homeTaskList.innerHTML = '<li class="no-tasks">No tasks assigned for today.</li>';
-            } else {
+            if (tasksForToday.length === 0) { homeTaskList.innerHTML = '<li class="no-tasks">No tasks for today.</li>'; }
+            else {
                 tasksForToday.forEach(task => {
-                    const li = document.createElement('li');
-                    const completionData = completedTasksForToday[task];
-                    const isCompleted = !!completionData;
-                    const completionTimestamp = typeof completionData === 'object' ? completionData.timestamp : null;
-                    let taskStatusText = isCompleted ? 'Completed' : 'Pending';
-                    if (!isCompleted && isPastEndOfDay(formattedToday)) {
-                        taskStatusText = 'Overdue'; li.classList.add('incomplete');
-                    } else if (isCompleted) { li.classList.add('completed'); }
-                    li.textContent = `${task} (${taskStatusText})`;
-                    if (completionTimestamp) li.textContent += ` @ ${formatTimestampToTime(completionTimestamp)}`;
-                    li.classList.add('task-item');
-                    homeTaskList.appendChild(li);
+                    const li = document.createElement('li'); const compData = completedTasksForToday[task];
+                    const isComp = !!compData; const compTS = typeof compData === 'object' ? compData.timestamp : null;
+                    let taskStatus = isComp ? 'Completed' : 'Pending';
+                    if (!isComp && isPastEndOfDay(formattedToday)) { taskStatus = 'Overdue'; li.classList.add('incomplete'); }
+                    else if (isComp) { li.classList.add('completed'); }
+                    li.textContent = `${task} (${taskStatus})`; if (compTS) li.textContent += ` @ ${formatTimestampToTime(compTS)}`;
+                    li.classList.add('task-item'); homeTaskList.appendChild(li);
                 });
             }
-            cleanupMessages();
-            renderMessageBoard();
+            cleanupMessages(); renderMessageBoard();
         }
 
         function toggleClockStatus() {
-            const today = new Date();
-            const formattedToday = getFormattedDate(today);
-            const now = Date.now();
+            const today = new Date(), formattedToday = getFormattedDate(today), now = Date.now();
             clockIns[formattedToday] = clockIns[formattedToday] || {};
             clockIns[formattedToday][currentUserName] = clockIns[formattedToday][currentUserName] || {};
             const userClockData = clockIns[formattedToday][currentUserName];
-
-            if (!userClockData.in) {
-                userClockData.in = now; userClockData.out = null;
-                showToast(`${currentUserName} clocked in at ${formatTimestampToTime(now)}.`, 'success');
-            } else if (userClockData.in && !userClockData.out) {
-                userClockData.out = now;
-                showToast(`${currentUserName} clocked out at ${formatTimestampToTime(now)}.`, 'success');
-            } else if (userClockData.in && userClockData.out) {
-                userClockData.in = now; userClockData.out = null;
-                showToast(`${currentUserName} re-clocked in at ${formatTimestampToTime(now)}.`, 'info');
-            }
-            saveData(LS_KEYS.CLOCK_INS, clockIns);
-            renderHomePage(); renderMyTasks();
-            if (isAdminMode) renderAdminShiftAttendance();
+            if (!userClockData.in) { userClockData.in = now; userClockData.out = null; showToast(`${currentUserName} clocked in.`, 'success'); }
+            else if (userClockData.in && !userClockData.out) { userClockData.out = now; showToast(`${currentUserName} clocked out.`, 'success'); }
+            else if (userClockData.in && userClockData.out) { userClockData.in = now; userClockData.out = null; showToast(`${currentUserName} re-clocked in.`, 'info'); }
+            saveData(LS_KEYS.CLOCK_INS, clockIns); renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminShiftAttendance();
         }
 
         function cleanupMessages() {
-            const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
-            messageBoard = messageBoard.filter(msg => msg.timestamp > twentyFourHoursAgo);
+            const threshold = Date.now() - (24 * 60 * 60 * 1000);
+            messageBoard = messageBoard.filter(msg => msg.timestamp > threshold);
             saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
         }
 
         function renderMessageBoard() {
             messageList.innerHTML = '';
-            if (messageBoard.length === 0) {
-                messageList.innerHTML = '<li class="no-data">No messages yet.</li>'; return;
-            }
-            [...messageBoard].reverse().forEach(message => {
+            if (messageBoard.length === 0) { messageList.innerHTML = '<li class="no-data">No messages.</li>'; return; }
+            [...messageBoard].reverse().forEach(msg => {
                 const li = document.createElement('li');
-                li.innerHTML = `
-                    <span class="message-sender">${message.sender}:</span>
-                    <span class="message-text">${message.text}</span>
-                    <span class="message-timestamp">(${new Date(message.timestamp).toLocaleString()})</span>
-                `;
+                li.innerHTML = `<span class="message-sender">${msg.sender}:</span> <span class="message-text">${msg.text}</span> <span class="message-timestamp">(${new Date(msg.timestamp).toLocaleString()})</span>`;
                 messageList.appendChild(li);
             });
         }
 
         function handleSendMessage(event) {
-            event.preventDefault();
-            const messageText = messageTextarea.value.trim();
-            if (!messageText) { showToast('Message cannot be empty.', 'error'); return; }
-            if (!currentUserName) { showToast('Please log in to send a message.', 'error'); return; }
-            const newMessage = { sender: currentUserName, text: messageText, timestamp: Date.now() };
-            messageBoard.push(newMessage);
-            saveData(LS_KEYS.MESSAGE_BOARD, messageBoard);
-            messageTextarea.value = '';
-            renderMessageBoard();
-            showToast('Message sent!', 'success', 1500);
+            event.preventDefault(); const text = messageTextarea.value.trim();
+            if (!text) { showToast('Message empty.', 'error'); return; }
+            if (!currentUserName) { showToast('Log in to send.', 'error'); return; }
+            messageBoard.push({ sender: currentUserName, text, timestamp: Date.now() });
+            saveData(LS_KEYS.MESSAGE_BOARD, messageBoard); messageTextarea.value = '';
+            renderMessageBoard(); showToast('Message sent!', 'success', 1500);
         }
 
         function renderWeeklyRota() {
             rotaGrid.innerHTML = '';
-            const today = new Date();
-            const weekDays = getWeekDays(today);
+            const weekDays = getWeekDays(new Date());
             weekDays.forEach(day => {
                 const formattedDate = getFormattedDate(day);
-                const dayColumn = document.createElement('div');
-                dayColumn.classList.add('rota-day-column');
-                dayColumn.innerHTML = `<strong>${getDisplayDate(day)}</strong><ul></ul>`;
-                const ul = dayColumn.querySelector('ul');
-                const dayRota = rota[formattedDate] || {};
+                const dayCol = document.createElement('div'); dayCol.classList.add('rota-day-column');
+                dayCol.innerHTML = `<strong>${getDisplayDate(day)}</strong><ul></ul>`;
+                const ul = dayCol.querySelector('ul'); const dayRota = rota[formattedDate] || {};
                 const staffForDisplay = staffMembers.filter(member => {
-                    if (!isCurrentUserAdmin()) {
-                        if (currentUserRole === 'FOH' && member.role === 'BOH') return false;
-                        if (currentUserRole === 'BOH' && member.role === 'FOH') return false;
-                    }
+                    if (!isCurrentUserAdmin() && ((currentUserRole === 'FOH' && member.role === 'BOH') || (currentUserRole === 'BOH' && member.role === 'FOH'))) return false;
                     return true;
-                }).sort((a, b) => { /* ... sort logic ... */ return 0; }); // Simplified sort for brevity
-                 staffForDisplay.forEach(member => {
+                }).sort((a,b) => { /* sort logic */ return 0;}); // Simplified for brevity
+                staffForDisplay.forEach(member => {
                     const shift = dayRota[member.name] || 'Off';
-                    const li = document.createElement('li');
-                    li.textContent = `${member.name}: ${shift}`;
-                    li.classList.add(member.role.toLowerCase());
-                    ul.appendChild(li);
+                    const li = document.createElement('li'); li.textContent = `${member.name}: ${shift}`;
+                    li.classList.add(member.role.toLowerCase()); ul.appendChild(li);
                 });
-                rotaGrid.appendChild(dayColumn);
+                rotaGrid.appendChild(dayCol);
             });
         }
 
         function renderMyTasks() {
-            taskList.innerHTML = '';
-            const today = new Date();
-            const formattedToday = getFormattedDate(today);
+            taskList.innerHTML = ''; const today = new Date(), formattedToday = getFormattedDate(today);
             currentDayInfo.textContent = getDisplayDate(today);
-            if (!currentUserName) { taskList.innerHTML = '<li class="no-tasks">Please log in to see your tasks.</li>'; return; }
+            if (!currentUserName) { taskList.innerHTML = '<li class="no-tasks">Log in to see tasks.</li>'; return; }
             const tasksForToday = (dailyTasks[formattedToday] && dailyTasks[formattedToday][currentUserName]) || [];
-            const completedTasksForToday = (completedTasks[formattedToday] && completedTasks[formattedToday][currentUserName]) || {};
-            if (tasksForToday.length === 0) { taskList.innerHTML = '<li class="no-tasks">No tasks assigned for today.</li>'; return; }
-            
-            // Task cleanup logic (simplified)
-            // ...
-
+            const completedForToday = (completedTasks[formattedToday] && completedTasks[formattedToday][currentUserName]) || {};
+            if (tasksForToday.length === 0) { taskList.innerHTML = '<li class="no-tasks">No tasks for today.</li>'; return; }
+            // Task cleanup logic (simplified for brevity)
             tasksForToday.forEach(task => {
                 const li = document.createElement('li'); li.classList.add('task-item');
                 const taskContent = document.createElement('span'); taskContent.textContent = task;
                 const taskControls = document.createElement('div'); taskControls.classList.add('task-item-controls');
                 const checkbox = document.createElement('input'); checkbox.type = 'checkbox';
                 checkbox.dataset.taskName = task; checkbox.dataset.taskDate = formattedToday; checkbox.dataset.staffName = currentUserName;
-                const attachImageInput = document.createElement('input'); attachImageInput.type = 'file'; /* ... */
-                const attachImageBtn = document.createElement('button'); /* ... */
-                const imageInfoSpan = document.createElement('span'); imageInfoSpan.classList.add('attached-image-info');
-                const completionData = completedTasksForToday[task];
-                const isCompleted = !!completionData;
-                const completionTimestamp = typeof completionData === 'object' ? completionData.timestamp : completionData;
-                const imageName = typeof completionData === 'object' ? completionData.imageName : null;
-
-                if (isCompleted) {
-                    checkbox.checked = true; li.classList.add('completed');
-                    attachImageBtn.style.display = 'none';
-                    if (imageName) imageInfoSpan.textContent = `Image: ${imageName} attached.`;
-                } else if (isPastEndOfDay(formattedToday)) { li.classList.add('incomplete'); }
-                taskControls.appendChild(checkbox); taskControls.appendChild(attachImageInput); taskControls.appendChild(attachImageBtn);
+                const attachImgInput = document.createElement('input'); attachImgInput.type = 'file'; attachImgInput.accept = 'image/*'; attachImgInput.style.display = 'none';
+                attachImgInput.dataset.taskName = task; attachImgInput.dataset.taskDate = formattedToday; attachImgInput.dataset.staffName = currentUserName;
+                const attachImgBtn = document.createElement('button'); attachImgBtn.textContent = 'Attach Img'; attachImgBtn.classList.add('upload-image-btn'); attachImgBtn.type = 'button';
+                const imgInfoSpan = document.createElement('span'); imgInfoSpan.classList.add('attached-image-info');
+                const compData = completedForToday[task]; const isComp = !!compData;
+                const compTS = typeof compData === 'object' ? compData.timestamp : compData;
+                const imgName = typeof compData === 'object' ? compData.imageName : null;
+                if (isComp) { checkbox.checked = true; li.classList.add('completed'); attachImgBtn.style.display = 'none'; if (imgName) imgInfoSpan.textContent = `Img: ${imgName}`; }
+                else if (isPastEndOfDay(formattedToday)) { li.classList.add('incomplete'); }
+                taskControls.appendChild(checkbox); taskControls.appendChild(attachImgInput); taskControls.appendChild(attachImgBtn);
                 li.appendChild(taskContent); li.appendChild(taskControls);
-                const timestampSpan = document.createElement('span'); timestampSpan.classList.add('timestamp');
-                if (completionTimestamp) timestampSpan.textContent = formatTimestampToTime(completionTimestamp);
-                li.appendChild(timestampSpan); li.appendChild(imageInfoSpan);
-                taskList.appendChild(li);
+                const tsSpan = document.createElement('span'); tsSpan.classList.add('timestamp'); if (compTS) tsSpan.textContent = formatTimestampToTime(compTS);
+                li.appendChild(tsSpan); li.appendChild(imgInfoSpan); taskList.appendChild(li);
             });
         }
 
         function handleTaskCompletionOrImageAttach(event) {
-            if (event.target.type === 'checkbox') {
-                const checkbox = event.target;
-                const taskName = checkbox.dataset.taskName, taskDate = checkbox.dataset.taskDate, staffName = checkbox.dataset.staffName;
+            const target = event.target;
+            if (target.type === 'checkbox') {
+                const { taskName, taskDate, staffName } = target.dataset;
                 completedTasks[taskDate] = completedTasks[taskDate] || {};
                 completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
-                const existingCompletionData = completedTasks[taskDate][staffName][taskName];
-                const currentImageName = (typeof existingCompletionData === 'object' && existingCompletionData !== null) ? existingCompletionData.imageName : null;
-
-                if (checkbox.checked) {
-                    completedTasks[taskDate][staffName][taskName] = { timestamp: Date.now(), imageName: currentImageName };
-                    showToast(`Task "${taskName}" marked as completed.`, 'success', 1500);
-                } else {
-                    delete completedTasks[taskDate][staffName][taskName];
-                    if (Object.keys(completedTasks[taskDate][staffName]).length === 0) delete completedTasks[taskDate][staffName];
-                    showToast(`Task "${taskName}" marked as pending.`, 'info', 1500);
-                }
-                saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-                renderHomePage(); renderMyTasks();
-                if (isAdminMode) renderAdminTaskOverview();
-            } else if (event.target.type === 'file') {
-                const fileInput = event.target;
-                const taskName = fileInput.dataset.taskName, taskDate = fileInput.dataset.taskDate, staffName = fileInput.dataset.staffName;
-                const file = fileInput.files[0];
+                const existingComp = completedTasks[taskDate][staffName][taskName];
+                const currentImg = (typeof existingComp === 'object' && existingComp !== null) ? existingComp.imageName : null;
+                if (target.checked) { completedTasks[taskDate][staffName][taskName] = { timestamp: Date.now(), imageName: currentImg }; showToast(`Task "${taskName}" completed.`, 'success', 1500); }
+                else { delete completedTasks[taskDate][staffName][taskName]; if (Object.keys(completedTasks[taskDate][staffName]).length === 0) delete completedTasks[taskDate][staffName]; showToast(`Task "${taskName}" pending.`, 'info', 1500); }
+                saveData(LS_KEYS.COMPLETED_TASKS, completedTasks); renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminTaskOverview();
+            } else if (target.type === 'file') {
+                const { taskName, taskDate, staffName } = target.dataset; const file = target.files[0];
                 if (file) {
                     completedTasks[taskDate] = completedTasks[taskDate] || {};
                     completedTasks[taskDate][staffName] = completedTasks[taskDate][staffName] || {};
-                    const currentCompletion = completedTasks[taskDate][staffName][taskName];
-                    const existingTimestamp = (typeof currentCompletion === 'object' && currentCompletion !== null) ? currentCompletion.timestamp : currentCompletion;
-                    completedTasks[taskDate][staffName][taskName] = { timestamp: existingTimestamp || Date.now(), imageName: file.name };
-                    saveData(LS_KEYS.COMPLETED_TASKS, completedTasks);
-                    showToast(`Image "${file.name}" attached to "${taskName}".`, 'success');
-                    renderHomePage(); renderMyTasks();
-                    if (isAdminMode) renderAdminTaskOverview();
+                    const currentComp = completedTasks[taskDate][staffName][taskName];
+                    const existingTS = (typeof currentComp === 'object' && currentComp !== null) ? currentComp.timestamp : currentComp;
+                    completedTasks[taskDate][staffName][taskName] = { timestamp: existingTS || Date.now(), imageName: file.name };
+                    saveData(LS_KEYS.COMPLETED_TASKS, completedTasks); showToast(`Image "${file.name}" attached.`, 'success');
+                    renderHomePage(); renderMyTasks(); if (isAdminMode) renderAdminTaskOverview();
                 } else { showToast('No image selected.', 'info', 1500); }
             }
         }
 
-        function renderCalendar() { // --- MODIFIED ---
-            while (calendarGridElement.children.length > 7) { // Use calendarGridElement
-                calendarGridElement.removeChild(calendarGridElement.lastChild);
-            }
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
+        function renderCalendar() {
+            while (calendarGridElement.children.length > 7) calendarGridElement.removeChild(calendarGridElement.lastChild);
+            const year = currentCalendarDate.getFullYear(), month = currentCalendarDate.getMonth();
             currentMonthYearDisplay.textContent = currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            const firstDayOfMonth = new Date(year, month, 1);
-            const lastDayOfMonth = new Date(year, month + 1, 0);
-            const numDaysInMonth = lastDayOfMonth.getDate();
-            const firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
+            const firstDayOfMonth = new Date(year, month, 1), lastDayOfMonth = new Date(year, month + 1, 0);
+            const numDaysInMonth = lastDayOfMonth.getDate(), firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
+            for (let i = 0; i < firstDayOfWeek; i++) { const ed = document.createElement('div'); ed.classList.add('calendar-day'); calendarGridElement.appendChild(ed); }
+            const todayFormatted = getFormattedDate(new Date()), filterRole = calendarRoleFilter.value;
+            // Calendar role filter adjustment (simplified for brevity)
+            calendarRoleFilter.querySelectorAll('option').forEach(opt => opt.disabled = false);
+            if(!isCurrentUserAdmin()){ /* ... disable options based on currentUserRole ... */ }
 
-            for (let i = 0; i < firstDayOfWeek; i++) {
-                const emptyDay = document.createElement('div'); emptyDay.classList.add('calendar-day');
-                calendarGridElement.appendChild(emptyDay); // Use calendarGridElement
-            }
-
-            const todayFormatted = getFormattedDate(new Date());
-            const filterRole = calendarRoleFilter.value;
-
-            // Adjust filter options (simplified for brevity)
-            // ...
 
             for (let dayNum = 1; dayNum <= numDaysInMonth; dayNum++) {
                 const day = new Date(year, month, dayNum);
                 const formattedDate = getFormattedDate(day);
-                const dayCell = document.createElement('div');
-                dayCell.classList.add('calendar-day', 'current-month');
+                const dayCell = document.createElement('div'); dayCell.classList.add('calendar-day', 'current-month');
                 if (formattedDate === todayFormatted) dayCell.classList.add('today');
 
-                // --- NEW --- Check for holiday
-                const holiday = holidays.find(h => h.date === formattedDate);
-                if (holiday) {
-                    dayCell.classList.add('holiday-day');
-                    dayCell.title = holiday.name; // For tooltip
-                }
+                let holidayTooltip = "", isBusinessHoliday = false, isPersonalHoliday = false;
+                holidays.forEach(h => {
+                    if (isDateInRange(day, h.startDate, h.endDate)) {
+                        if (h.staffName === "__BUSINESS__") {
+                            isBusinessHoliday = true;
+                            holidayTooltip += `${h.name} (Business)${h.startDate !== h.endDate ? ' to '+getDisplayDate(new Date(h.endDate)) : ''}\n`;
+                        } else {
+                            const staffOnHoliday = getStaffMember(h.staffName);
+                            if (staffOnHoliday && (filterRole === 'all' || filterRole === staffOnHoliday.role || isCurrentUserAdmin() || h.staffName === currentUserName)) {
+                                isPersonalHoliday = true;
+                                holidayTooltip += `${h.staffName}: ${h.name}${h.startDate !== h.endDate ? ' to '+getDisplayDate(new Date(h.endDate)) : ''}\n`;
+                            }
+                        }
+                    }
+                });
+
+                if (isBusinessHoliday) dayCell.classList.add('holiday-day');
+                if (isPersonalHoliday && !isBusinessHoliday) dayCell.classList.add('personal-holiday-day');
+                if (holidayTooltip) dayCell.title = holidayTooltip.trim();
 
                 dayCell.innerHTML = `<div class="day-number">${dayNum}</div><ul></ul>`;
                 const ul = dayCell.querySelector('ul');
-                const dayRota = rota[formattedDate] || {};
-                const staffForDisplay = staffMembers.filter(staff => {
-                    // Filter logic (simplified for brevity)
-                    // ...
-                    return true; 
-                }).sort((a,b) => 0); // Simplified sort
 
-                staffForDisplay.forEach(member => {
-                    const shift = dayRota[member.name];
-                    if (shift && shift !== 'Off') {
-                        const li = document.createElement('li');
-                        li.textContent = `${member.name}: ${shift}`;
-                        li.classList.add(member.role.toLowerCase() + '-shift');
-                        ul.appendChild(li);
-                    }
-                });
-                calendarGridElement.appendChild(dayCell); // Use calendarGridElement
+                if (isBusinessHoliday) {
+                    const li = document.createElement('li'); li.textContent = "Business Holiday";
+                    li.style.textAlign = "center"; li.style.fontWeight = "bold"; ul.appendChild(li);
+                } else {
+                    const dayRota = rota[formattedDate] || {};
+                    const staffForDisplay = staffMembers.filter(staff => {
+                        if (filterRole !== 'all' && staff.role !== filterRole) return false;
+                        if (!isCurrentUserAdmin() && ((currentUserRole === 'FOH' && staff.role === 'BOH') || (currentUserRole === 'BOH' && staff.role === 'FOH'))) return false;
+                        return true;
+                    }).sort((a, b) => { /* sort logic */ return 0; });
+
+                    staffForDisplay.forEach(member => {
+                        const personalHolidayForMember = holidays.find(h => h.staffName === member.name && isDateInRange(day, h.startDate, h.endDate));
+                        const shift = dayRota[member.name];
+                        if (personalHolidayForMember) {
+                            const li = document.createElement('li');
+                            li.textContent = `${member.name}: On Holiday`;
+                            li.style.backgroundColor = 'var(--personal-holiday-bg)'; li.style.color = 'var(--personal-holiday-border)';
+                            ul.appendChild(li);
+                        } else if (shift && shift !== 'Off') {
+                            const li = document.createElement('li'); li.textContent = `${member.name}: ${shift}`;
+                            li.classList.add(member.role.toLowerCase() + '-shift'); ul.appendChild(li);
+                        }
+                    });
+                }
+                calendarGridElement.appendChild(dayCell);
             }
         }
-        // --- NEW --- Calendar Navigation
-        function goToPrevMonth() {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-            renderCalendar();
-        }
-        function goToNextMonth() {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-            renderCalendar();
-        }
-
+        function goToPrevMonth() { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); renderCalendar(); }
+        function goToNextMonth() { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); renderCalendar(); }
 
         // --- Admin View Renders ---
+        function populateHolidayStaffSelect() {
+            holidayStaffSelect.innerHTML = '<option value="__BUSINESS__">Business Holiday (All Staff)</option>';
+            staffMembers.forEach(member => {
+                const opt = document.createElement('option'); opt.value = member.name; opt.textContent = member.name;
+                holidayStaffSelect.appendChild(opt);
+            });
+        }
 
         function renderAdminForms() {
-            const today = new Date();
-            const formattedToday = getFormattedDate(today);
-            renderUserDropdownsInApp();
-
+            const today = new Date(), formattedToday = getFormattedDate(today);
+            renderUserDropdownsInApp(); populateHolidayStaffSelect();
             const adminFormElements = adminView.querySelectorAll('input, select, button');
             const disableAdminControls = !isCurrentUserAdmin();
-            adminFormElements.forEach(element => {
-                element.disabled = disableAdminControls;
-            });
+            adminFormElements.forEach(el => el.disabled = disableAdminControls);
 
-            shiftDateInput.value = formattedToday;
-            taskDateInput.value = formattedToday;
-            viewShiftDateInput.value = formattedToday;
-            viewTaskDateInput.value = formattedToday;
-            holidayDateInput.value = formattedToday; // --- NEW ---
-            attendanceDateInput.value = formattedToday;
-            taskOverviewDateInput.value = formattedToday;
-
-            shiftTypeSelect.value = '8AM-4PM'; customShiftInputContainer.style.display = 'none';
-            taskDescriptionSelect.value = 'Slicing Lemons'; customTaskInputContainer.style.display = 'none';
-
-            renderAdminAssignedShifts();
-            renderAdminAssignedTasks();
-            renderAdminHolidayList(); // --- NEW ---
-            renderAdminShiftAttendance();
-            renderAdminTaskOverview();
+            shiftDateInput.value = formattedToday; taskDateInput.value = formattedToday;
+            viewShiftDateInput.value = formattedToday; viewTaskDateInput.value = formattedToday;
+            holidayStartDateInput.value = formattedToday; holidayEndDateInput.value = formattedToday;
+            attendanceDateInput.value = formattedToday; taskOverviewDateInput.value = formattedToday;
+            shiftTypeSelect.value = '8AM-4PM'; customShiftInputContainer.style.display = 'none'; customShiftTypeInput.value = '';
+            taskDescriptionSelect.value = 'Slicing Lemons'; customTaskInputContainer.style.display = 'none'; customTaskDescriptionInput.value = '';
+            renderAdminAssignedShifts(); renderAdminAssignedTasks(); renderAdminHolidayList();
+            renderAdminShiftAttendance(); renderAdminTaskOverview();
         }
 
         function handleShiftTypeChange() {
-            if (shiftTypeSelect.value === 'custom') {
-                customShiftInputContainer.style.display = 'block'; customShiftTypeInput.setAttribute('required', 'true');
-            } else {
-                customShiftInputContainer.style.display = 'none'; customShiftTypeInput.removeAttribute('required'); customShiftTypeInput.value = '';
-            }
+            customShiftInputContainer.style.display = shiftTypeSelect.value === 'custom' ? 'block' : 'none';
+            customShiftTypeInput.required = shiftTypeSelect.value === 'custom';
+            if(shiftTypeSelect.value !== 'custom') customShiftTypeInput.value = '';
         }
         function handleTaskDescriptionChange() {
-            if (taskDescriptionSelect.value === 'Custom Task') {
-                customTaskInputContainer.style.display = 'block'; customTaskDescriptionInput.setAttribute('required', 'true');
-            } else {
-                customTaskInputContainer.style.display = 'none'; customTaskDescriptionInput.removeAttribute('required'); customTaskDescriptionInput.value = '';
-            }
+            customTaskInputContainer.style.display = taskDescriptionSelect.value === 'Custom Task' ? 'block' : 'none';
+            customTaskDescriptionInput.required = taskDescriptionSelect.value === 'Custom Task';
+            if(taskDescriptionSelect.value !== 'Custom Task') customTaskDescriptionInput.value = '';
         }
 
         function handleAssignShift(event) {
             event.preventDefault();
             if (!isCurrentUserAdmin()) { showToast('Permission denied.', 'error'); return; }
-            const staff = shiftUserSelect.value;
-            const baseDateStr = shiftDateInput.value; // Keep as string for holiday check
-            const baseDate = new Date(baseDateStr);
+            const staff = shiftUserSelect.value, baseDate = new Date(shiftDateInput.value);
             const repeatDays = parseInt(shiftRepeatDaysInput.value);
-            let shiftType = shiftTypeSelect.value.trim();
-            if (shiftType === 'custom') shiftType = customShiftTypeInput.value.trim();
-            if (!staff || !baseDateStr || !shiftType || !shiftType) { showToast('Please fill all fields.', 'error'); return; }
-            // Validation (simplified)
-
-            let assignmentsMade = 0;
+            let shiftType = shiftTypeSelect.value === 'custom' ? customShiftTypeInput.value.trim() : shiftTypeSelect.value.trim();
+            if (!staff || !shiftDateInput.value || !shiftType || isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) {
+                showToast('Invalid shift input.', 'error'); return;
+            }
+            let assignmentsMade = 0, holidayConflicts = 0;
             for (let i = 0; i < repeatDays; i++) {
-                const currentDate = addDays(baseDate, i);
-                const formattedDate = getFormattedDate(currentDate);
-
-                // --- NEW --- Check for holiday before assigning shift
-                const holidayOnDate = holidays.find(h => h.date === formattedDate);
-                if (holidayOnDate) {
-                    showToast(`Warning: ${formattedDate} is ${holidayOnDate.name}. Shift for ${staff} not assigned.`, 'info', 4000);
-                    continue; // Skip assignment for this day
-                }
-
-                rota[formattedDate] = rota[formattedDate] || {};
-                rota[formattedDate][staff] = shiftType;
-                assignmentsMade++;
+                const currentDate = addDays(baseDate, i), formattedDate = getFormattedDate(currentDate);
+                const businessHoliday = holidays.find(h => h.staffName === "__BUSINESS__" && isDateInRange(currentDate, h.startDate, h.endDate));
+                if (businessHoliday) { showToast(`Shift not assigned: ${formattedDate} is Business Holiday (${businessHoliday.name}).`, 'warning', 4000); holidayConflicts++; continue; }
+                const personalHoliday = holidays.find(h => h.staffName === staff && isDateInRange(currentDate, h.startDate, h.endDate));
+                if (personalHoliday) { showToast(`Shift not assigned: ${staff} on holiday (${personalHoliday.name}) on ${formattedDate}.`, 'warning', 4000); holidayConflicts++; continue; }
+                rota[formattedDate] = rota[formattedDate] || {}; rota[formattedDate][staff] = shiftType; assignmentsMade++;
             }
-            if (assignmentsMade > 0) {
-                saveData(LS_KEYS.ROTA, rota);
-                renderWeeklyRota(); renderCalendar(); renderAdminAssignedShifts(); renderHomePage();
-                showToast(`Shift assigned for ${assignmentsMade} day(s).`, 'success');
-            }
-            // Reset form (simplified)
+            if (assignmentsMade > 0) { saveData(LS_KEYS.ROTA, rota); showToast(`Shift assigned for ${assignmentsMade} day(s).`, 'success'); }
+            else if (holidayConflicts === 0) { showToast('Shift already exists or no valid days.', 'info'); }
+            if (holidayConflicts > 0 && assignmentsMade === 0) { showToast('No shifts assigned due to holidays.', 'info'); }
+            renderWeeklyRota(); renderCalendar(); renderAdminAssignedShifts(); renderHomePage();
+            shiftTypeSelect.value = '8AM-4PM'; customShiftInputContainer.style.display = 'none'; customShiftTypeInput.value = ''; shiftRepeatDaysInput.value = '1';
         }
 
         function handleAssignTask(event) {
             event.preventDefault();
             if (!isCurrentUserAdmin()) { showToast('Permission denied.', 'error'); return; }
-            const staff = taskUserSelect.value;
-            const baseDate = new Date(taskDateInput.value);
+            const staff = taskUserSelect.value, baseDate = new Date(taskDateInput.value);
             const repeatDays = parseInt(taskRepeatDaysInput.value);
-            let taskDescription = taskDescriptionSelect.value.trim();
-            if (taskDescription === 'Custom Task') taskDescription = customTaskDescriptionInput.value.trim();
-            // Validation (simplified)
-
+            let taskDesc = taskDescriptionSelect.value === 'Custom Task' ? customTaskDescriptionInput.value.trim() : taskDescriptionSelect.value.trim();
+             if (!staff || !taskDateInput.value || !taskDesc || isNaN(repeatDays) || repeatDays < 1 || repeatDays > 7) {
+                showToast('Invalid task input.', 'error'); return;
+            }
             let assignmentsMade = 0;
             for (let i = 0; i < repeatDays; i++) {
-                const currentDate = addDays(baseDate, i);
-                const formattedDate = getFormattedDate(currentDate);
+                const currentDate = addDays(baseDate, i), formattedDate = getFormattedDate(currentDate);
                 dailyTasks[formattedDate] = dailyTasks[formattedDate] || {};
                 dailyTasks[formattedDate][staff] = dailyTasks[formattedDate][staff] || [];
-                if (!dailyTasks[formattedDate][staff].includes(taskDescription)) {
-                    dailyTasks[formattedDate][staff].push(taskDescription);
-                    assignmentsMade++;
-                }
+                if (!dailyTasks[formattedDate][staff].includes(taskDesc)) { dailyTasks[formattedDate][staff].push(taskDesc); assignmentsMade++; }
             }
-            if (assignmentsMade > 0) {
-                saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
-                renderHomePage(); renderMyTasks(); renderAdminAssignedTasks(); renderAdminTaskOverview();
-                showToast(`Task added for ${assignmentsMade} day(s).`, 'success');
-            }
-            // Reset form (simplified)
+            if (assignmentsMade > 0) { saveData(LS_KEYS.DAILY_TASKS, dailyTasks); showToast(`Task added for ${assignmentsMade} day(s).`, 'success'); }
+            else { showToast('Task already exists or no new assignments.', 'info'); }
+            renderHomePage(); renderMyTasks(); renderAdminAssignedTasks(); renderAdminTaskOverview();
+            taskDescriptionSelect.value = 'Slicing Lemons'; customTaskInputContainer.style.display = 'none'; customTaskDescriptionInput.value = ''; taskRepeatDaysInput.value = '1';
         }
 
-        // --- NEW --- Holiday Management Functions
         function renderAdminHolidayList() {
             adminHolidayList.innerHTML = '';
-            if (holidays.length === 0) {
-                adminHolidayList.innerHTML = '<li class="no-data">No holidays defined.</li>';
-                return;
-            }
-            // Sort holidays by date for consistent display
-            const sortedHolidays = [...holidays].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            sortedHolidays.forEach(holiday => {
+            if (holidays.length === 0) { adminHolidayList.innerHTML = '<li class="no-data">No holidays.</li>'; return; }
+            const sortedHolidays = [...holidays].sort((a, b) => new Date(a.startDate) - new Date(b.startDate) || a.staffName.localeCompare(b.staffName));
+            sortedHolidays.forEach((holiday, index) => {
                 const li = document.createElement('li');
-                li.innerHTML = `
-                    <span>${holiday.date}: ${holiday.name}</span>
-                    <button class="delete-btn" data-type="holiday" data-date="${holiday.date}" ${isCurrentUserAdmin() ? '' : 'disabled'}>Delete</button>
-                `;
+                const assignee = holiday.staffName === "__BUSINESS__" ? "Business" : `Staff: ${holiday.staffName}`;
+                const dateRange = holiday.startDate === holiday.endDate ? holiday.startDate : `${holiday.startDate} to ${holiday.endDate}`;
+                li.innerHTML = `<span><strong>${holiday.name}</strong> (${assignee})<br>${dateRange}</span>
+                                <button class="delete-btn" data-type="holiday" data-index="${index}" ${isCurrentUserAdmin() ? '' : 'disabled'}>Del</button>`;
                 adminHolidayList.appendChild(li);
             });
         }
@@ -2320,159 +2220,125 @@
         function handleAddHoliday(event) {
             event.preventDefault();
             if (!isCurrentUserAdmin()) { showToast('Permission denied.', 'error'); return; }
-
-            const holidayDate = holidayDateInput.value;
-            const holidayName = holidayNameInput.value.trim();
-
-            if (!holidayDate || !holidayName) {
-                showToast('Please provide both date and name for the holiday.', 'error');
-                return;
-            }
-            if (holidays.some(h => h.date === holidayDate)) {
-                showToast('A holiday already exists for this date.', 'error');
-                return;
-            }
-
-            holidays.push({ date: holidayDate, name: holidayName });
+            const name = holidayNameInput.value.trim(), startDate = holidayStartDateInput.value;
+            const endDate = holidayEndDateInput.value, staffName = holidayStaffSelect.value;
+            if (!name || !startDate || !endDate || !staffName) { showToast('All holiday fields required.', 'error'); return; }
+            if (new Date(endDate) < new Date(startDate)) { showToast('End date before start date.', 'error'); return; }
+            // Optional: Overlap check for holidays
+            holidays.push({ name, startDate, endDate, staffName });
             saveData(LS_KEYS.HOLIDAYS, holidays);
-            renderAdminHolidayList();
-            renderCalendar(); // Update calendar to show new holiday
-            renderHomePage();   // Update home page (in case today is now a holiday)
-            showToast(`Holiday "${holidayName}" added for ${holidayDate}.`, 'success');
-            holidayDateInput.value = getFormattedDate(new Date()); // Reset to today
-            holidayNameInput.value = '';
+            renderAdminHolidayList(); renderCalendar(); renderHomePage();
+            showToast(`Holiday "${name}" added.`, 'success');
+            holidayNameInput.value = ''; holidayStartDateInput.value = getFormattedDate(new Date()); holidayEndDateInput.value = getFormattedDate(new Date());
         }
 
-
         function handleDeleteAdminItem(event) {
-            if (!event.target.classList.contains('delete-btn')) return;
-            if (event.target.disabled) { showToast('Permission denied.', 'error'); return; }
-
-            const itemType = event.target.dataset.type;
-            const staffName = event.target.dataset.staff;
-            const date = event.target.dataset.date;
-
+            if (!event.target.classList.contains('delete-btn') || event.target.disabled) return;
+            const itemType = event.target.dataset.type, staff = event.target.dataset.staff, date = event.target.dataset.date;
             if (itemType === 'task') {
-                const taskToDelete = event.target.dataset.task;
-                if (confirm(`Delete task "${taskToDelete}" for ${staffName} on ${date}?`)) {
-                    if (dailyTasks[date] && dailyTasks[date][staffName]) {
-                        dailyTasks[date][staffName] = dailyTasks[date][staffName].filter(t => t !== taskToDelete);
-                        // Cleanup logic (simplified)
+                const task = event.target.dataset.task;
+                if (confirm(`Delete task "${task}" for ${staff} on ${date}?`)) {
+                    if (dailyTasks[date] && dailyTasks[date][staff]) {
+                        dailyTasks[date][staff] = dailyTasks[date][staff].filter(t => t !== task);
+                        if (dailyTasks[date][staff].length === 0) delete dailyTasks[date][staff];
+                        if (Object.keys(dailyTasks[date]).length === 0) delete dailyTasks[date];
                         saveData(LS_KEYS.DAILY_TASKS, dailyTasks);
-                        // Also remove from completedTasks (simplified)
-                        renderAdminAssignedTasks(); renderHomePage(); renderMyTasks(); renderAdminTaskOverview();
-                        showToast('Task deleted.', 'success');
+                        if (completedTasks[date]?.[staff]?.[task]) { delete completedTasks[date][staff][task]; /* cleanup */ saveData(LS_KEYS.COMPLETED_TASKS, completedTasks); }
+                        renderAdminAssignedTasks(); renderHomePage(); renderMyTasks(); renderAdminTaskOverview(); showToast('Task deleted.', 'success');
                     }
                 }
             } else if (itemType === 'shift') {
-                if (confirm(`Delete shift for ${staffName} on ${date}?`)) {
-                    if (rota[date] && rota[date][staffName]) {
-                        delete rota[date][staffName];
-                        // Cleanup logic (simplified)
-                        saveData(LS_KEYS.ROTA, rota);
-                        renderAdminAssignedShifts(); renderWeeklyRota(); renderCalendar(); renderHomePage();
-                        showToast('Shift deleted.', 'success');
+                if (confirm(`Delete shift for ${staff} on ${date}?`)) {
+                    if (rota[date]?.[staff]) {
+                        delete rota[date][staff]; if (Object.keys(rota[date]).length === 0) delete rota[date]; saveData(LS_KEYS.ROTA, rota);
+                        renderAdminAssignedShifts(); renderWeeklyRota(); renderCalendar(); renderHomePage(); showToast('Shift deleted.', 'success');
                     }
                 }
-            } else if (itemType === 'holiday') { // --- NEW ---
-                const holidayDate = event.target.dataset.date;
-                const holidayToDelete = holidays.find(h => h.date === holidayDate);
-                if (holidayToDelete && confirm(`Delete holiday "${holidayToDelete.name}" on ${holidayDate}?`)) {
-                    holidays = holidays.filter(h => h.date !== holidayDate);
-                    saveData(LS_KEYS.HOLIDAYS, holidays);
-                    renderAdminHolidayList();
-                    renderCalendar(); // Refresh calendar view
-                    renderHomePage();   // Refresh home page view
-                    showToast('Holiday deleted.', 'success');
+            } else if (itemType === 'holiday') {
+                const index = parseInt(event.target.dataset.index, 10);
+                if (isNaN(index) || index < 0 || index >= holidays.length) { showToast('Error deleting holiday.', 'error'); return; }
+                const holiday = holidays[index];
+                if (confirm(`Delete holiday "${holiday.name}" (${holiday.startDate} to ${holiday.endDate})?`)) {
+                    holidays.splice(index, 1); saveData(LS_KEYS.HOLIDAYS, holidays);
+                    renderAdminHolidayList(); renderCalendar(); renderHomePage(); showToast('Holiday deleted.', 'success');
                 }
             }
         }
 
         function renderAdminAssignedShifts() {
-            const selectedStaff = viewShiftUserSelect.value; const selectedDate = viewShiftDateInput.value;
+            const staff = viewShiftUserSelect.value, date = viewShiftDateInput.value;
             adminAssignedShiftsList.innerHTML = '';
-            if (!selectedStaff || !selectedDate) { adminAssignedShiftsList.innerHTML = '<li class="no-data">Select staff & date.</li>'; return; }
-            const staffShift = (rota[selectedDate] || {})[selectedStaff];
-            if (staffShift) {
-                const li = document.createElement('li'); /* ... */
-                li.innerHTML = `<span>${selectedStaff}: ${staffShift}</span><button class="delete-btn" data-type="shift" ... ${isCurrentUserAdmin() ? '' : 'disabled'}>Delete</button>`;
-                adminAssignedShiftsList.appendChild(li);
-            } else { adminAssignedShiftsList.innerHTML = '<li class="no-data">No shift assigned.</li>'; }
+            if (!staff || !date) { adminAssignedShiftsList.innerHTML = '<li class="no-data">Select staff & date.</li>'; return; }
+            const shift = (rota[date] || {})[staff];
+            if (shift) { const li = document.createElement('li'); li.innerHTML = `<span>${staff}: ${shift}</span><button class="delete-btn" data-type="shift" data-staff="${staff}" data-date="${date}" ${isCurrentUserAdmin()?'':'disabled'}>Del</button>`; adminAssignedShiftsList.appendChild(li); }
+            else { adminAssignedShiftsList.innerHTML = '<li class="no-data">No shift assigned.</li>'; }
         }
 
         function renderAdminAssignedTasks() {
-            const selectedStaff = viewTaskUserSelect.value; const selectedDate = viewTaskDateInput.value;
+            const staff = viewTaskUserSelect.value, date = viewTaskDateInput.value;
             adminAssignedTasksList.innerHTML = '';
-            if (!selectedStaff || !selectedDate) { adminAssignedTasksList.innerHTML = '<li class="no-data">Select staff & date.</li>'; return; }
-            const staffTasks = ((dailyTasks[selectedDate] || {})[selectedStaff]) || [];
-            if (staffTasks.length > 0) {
-                staffTasks.forEach(task => {
-                    const li = document.createElement('li'); /* ... */
-                    li.innerHTML = `<span>${task}</span><button class="delete-btn" data-type="task" ... ${isCurrentUserAdmin() ? '' : 'disabled'}>Delete</button>`;
-                    adminAssignedTasksList.appendChild(li);
-                });
-            } else { adminAssignedTasksList.innerHTML = '<li class="no-data">No tasks assigned.</li>'; }
+            if (!staff || !date) { adminAssignedTasksList.innerHTML = '<li class="no-data">Select staff & date.</li>'; return; }
+            const tasks = ((dailyTasks[date] || {})[staff]) || [];
+            if (tasks.length > 0) { tasks.forEach(task => { const li = document.createElement('li'); li.innerHTML = `<span>${task}</span><button class="delete-btn" data-type="task" data-staff="${staff}" data-date="${date}" data-task="${task}" ${isCurrentUserAdmin()?'':'disabled'}>Del</button>`; adminAssignedTasksList.appendChild(li); }); }
+            else { adminAssignedTasksList.innerHTML = '<li class="no-data">No tasks assigned.</li>'; }
         }
 
         function renderAdminShiftAttendance() {
-            const selectedDate = attendanceDateInput.value; adminAttendanceList.innerHTML = '';
-            if (!selectedDate) { adminAttendanceList.innerHTML = '<li class="no-data">Select date.</li>'; return; }
-            const attendanceForDate = clockIns[selectedDate] || {}; const shiftsForDate = rota[selectedDate] || {}; let hasData = false;
-            const sortedStaff = [...staffMembers].sort((a,b) => 0); // Simplified sort
+            const date = attendanceDateInput.value; adminAttendanceList.innerHTML = '';
+            if (!date) { adminAttendanceList.innerHTML = '<li class="no-data">Select date.</li>'; return; }
+            const attForDate = clockIns[date] || {}, shiftsForDate = rota[date] || {}; let hasData = false;
+            const sortedStaff = [...staffMembers].sort((a,b) => { /* sort logic */ return 0; });
             sortedStaff.forEach(member => {
-                const shift = shiftsForDate[member.name]; const clockData = attendanceForDate[member.name] || {};
+                const shift = shiftsForDate[member.name], clockData = attForDate[member.name] || {};
                 if (shift) {
                     hasData = true; const li = document.createElement('li'); let statusText = '', statusClass = '';
                     if (clockData.in && !clockData.out) { statusText = `In: ${formatTimestampToTime(clockData.in)}`; statusClass = 'completed'; }
                     else if (clockData.in && clockData.out) { statusText = `In: ${formatTimestampToTime(clockData.in)}, Out: ${formatTimestampToTime(clockData.out)}`; statusClass = 'completed'; }
-                    else if (isPastEndOfDay(selectedDate) && shift !== 'Off') { statusText = 'Missed Shift?'; statusClass = 'overdue'; }
+                    else if (isPastEndOfDay(date) && shift !== 'Off') { statusText = 'Missed Shift?'; statusClass = 'overdue'; }
                     else { statusText = 'Not Clocked In'; statusClass = 'pending'; }
-                    li.classList.add(statusClass);
-                    li.innerHTML = `<span>${member.name} (${shift}): ${statusText}</span>`;
-                    adminAttendanceList.appendChild(li);
+                    li.classList.add(statusClass); li.innerHTML = `<span>${member.name} (${shift}): ${statusText}</span>`; adminAttendanceList.appendChild(li);
                 }
             });
             if (!hasData) adminAttendanceList.innerHTML = '<li class="no-data">No assigned shifts.</li>';
         }
-        
+
         function renderAdminTaskOverview() {
-            const selectedDate = taskOverviewDateInput.value; const statusFilter = taskStatusFilter.value;
+            const date = taskOverviewDateInput.value, filter = taskStatusFilter.value;
             adminTaskOverviewList.innerHTML = '';
-            if (!selectedDate) { adminTaskOverviewList.innerHTML = '<li class="no-data">Select date & filter.</li>'; return; }
-            const tasksForDate = dailyTasks[selectedDate] || {}; const completedForDate = completedTasks[selectedDate] || {}; let hasData = false;
+            if (!date) { adminTaskOverviewList.innerHTML = '<li class="no-data">Select date & filter.</li>'; return; }
+            const tasksForDate = dailyTasks[date] || {}, compForDate = completedTasks[date] || {}; let hasData = false;
             staffMembers.forEach(member => {
-                const staffTasks = tasksForDate[member.name] || []; const staffCompletedTasks = completedForDate[member.name] || {};
+                const staffTasks = tasksForDate[member.name] || [], staffComp = compForDate[member.name] || {};
                 staffTasks.forEach(task => {
-                    hasData = true; const isCompleted = !!staffCompletedTasks[task];
-                    // Status logic & filtering (simplified)
-                    let status = isCompleted ? 'completed' : (isPastEndOfDay(selectedDate) ? 'overdue' : 'pending');
-                    if (statusFilter === 'all' || statusFilter === status) {
-                        const li = document.createElement('li'); /* ... */
-                        li.classList.add('admin-task-overview-item', status);
-                        li.innerHTML = `<span>${member.name}: ${task} (${status})</span>`;
-                        adminTaskOverviewList.appendChild(li);
+                    hasData = true; const isComp = !!staffComp[task];
+                    let status = isComp ? 'completed' : (isPastEndOfDay(date) ? 'overdue' : 'pending');
+                    if (filter === 'all' || filter === status) {
+                        const li = document.createElement('li'); li.classList.add('admin-task-overview-item', status);
+                        let details = `${member.name}: ${task} (${status})`;
+                        if(isComp && typeof staffComp[task] === 'object') {
+                            if(staffComp[task].timestamp) details += ` @ ${formatTimestampToTime(staffComp[task].timestamp)}`;
+                            if(staffComp[task].imageName) details += ` [Img: ${staffComp[task].imageName}]`;
+                        }
+                        li.innerHTML = `<span>${details}</span>`; adminTaskOverviewList.appendChild(li);
                     }
                 });
             });
             if (!hasData) adminTaskOverviewList.innerHTML = '<li class="no-data">No tasks found.</li>';
         }
 
-
         // --- Main App Initialization ---
         function initApp() {
-            updateHeaderUserInfo();
-            renderAdminToggleButton();
-            renderUserDropdownsInApp();
+            updateHeaderUserInfo(); renderAdminToggleButton(); renderUserDropdownsInApp();
             showView(activeViewId);
             document.getElementById('current-year').textContent = new Date().getFullYear();
 
             adminToggleButton.addEventListener('click', toggleAdminView);
             signOutButton.addEventListener('click', handleSignOut);
             clockInOutBtnHome.addEventListener('click', toggleClockStatus);
-            navButtons.forEach(button => button.addEventListener('click', handleNavButtonClick));
+            navButtons.forEach(btn => btn.addEventListener('click', handleNavButtonClick));
             taskList.addEventListener('change', handleTaskCompletionOrImageAttach);
-            taskList.addEventListener('click', (event) => { if (event.target.classList.contains('upload-image-btn')) event.target.previousElementSibling.click(); });
-            taskList.addEventListener('input', (event) => { if (event.target.type === 'file') handleTaskCompletionOrImageAttach(event); });
+            taskList.addEventListener('click', (e) => { if (e.target.classList.contains('upload-image-btn')) e.target.previousElementSibling.click(); });
+            taskList.addEventListener('input', (e) => { if (e.target.type === 'file') handleTaskCompletionOrImageAttach(e); });
             messageInputForm.addEventListener('submit', handleSendMessage);
             shiftTypeSelect.addEventListener('change', handleShiftTypeChange);
             taskDescriptionSelect.addEventListener('change', handleTaskDescriptionChange);
@@ -2483,21 +2349,18 @@
             adminAssignedShiftsList.addEventListener('click', handleDeleteAdminItem);
             viewTaskUserSelect.addEventListener('change', renderAdminAssignedTasks);
             viewTaskDateInput.addEventListener('change', renderAdminAssignedTasks);
-            adminAssignedTasksList.addEventListener('click', handleDeleteAdminItem); // Will handle task deletes
-
-            // --- NEW --- Holiday form and list listeners
+            adminAssignedTasksList.addEventListener('click', handleDeleteAdminItem);
             addHolidayForm.addEventListener('submit', handleAddHoliday);
-            adminHolidayList.addEventListener('click', handleDeleteAdminItem); // Will handle holiday deletes
-
+            adminHolidayList.addEventListener('click', handleDeleteAdminItem);
             attendanceDateInput.addEventListener('change', renderAdminShiftAttendance);
             taskOverviewDateInput.addEventListener('change', renderAdminTaskOverview);
             taskStatusFilter.addEventListener('change', renderAdminTaskOverview);
-            
+
             if (isAdminMode) { renderAdminShiftAttendance(); renderAdminTaskOverview(); renderAdminHolidayList(); }
-        
-            const deleteButtonsInAdmin = adminView.querySelectorAll('.delete-btn');
-            const disableDeleteButtons = !isCurrentUserAdmin();
-            deleteButtonsInAdmin.forEach(btn => btn.disabled = disableDeleteButtons);
+
+            const deleteBtnsAdmin = adminView.querySelectorAll('.delete-btn');
+            const disableDelBtns = !isCurrentUserAdmin();
+            deleteBtnsAdmin.forEach(btn => btn.disabled = disableDelBtns);
 
             prevMonthBtn.addEventListener('click', goToPrevMonth);
             nextMonthBtn.addEventListener('click', goToNextMonth);
@@ -2509,19 +2372,16 @@
             if ('serviceWorker' in navigator) {
               window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
-                  .then(reg => console.log('Service Worker: Registered'))
-                  .catch(err => console.error('Service Worker: Registration failed:', err));
+                  .then(reg => console.log('SW registered.'))
+                  .catch(err => console.error('SW reg failed:', err));
               });
             }
             if (currentUserName && staffMembers.some(s => s.name === currentUserName)) {
-                landingPage.style.display = 'none'; appContainer.style.display = 'flex';
-                initApp();
+                landingPage.style.display = 'none'; appContainer.style.display = 'flex'; initApp();
             } else {
-                landingPage.style.display = 'flex'; appContainer.style.display = 'none';
-                renderLandingPage();
+                landingPage.style.display = 'flex'; appContainer.style.display = 'none'; renderLandingPage();
             }
         });
     </script>
 </body>
 </html>
-```
