@@ -197,14 +197,59 @@
     #message-input-form button { padding: 10px 15px; font-size: 0.9em; border-radius: 6px; background-color: var(--accent-color); color: white; border: none; cursor: pointer; }
     #message-input-form button:hover { background-color: var(--accent-hover); }
 
-    #calendar-view .calendar-controls, #my-availability-view .availability-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    #calendar-view .calendar-controls h3, #my-availability-view .availability-controls h3 { margin: 0; font-size: 1.4em; color: var(--accent-color); }
-    #calendar-view .calendar-controls button, #my-availability-view .availability-controls button { background-color: var(--dark-grey); color: white; padding: 8px 12px; border-radius: 5px; transition: background-color 0.2s ease; }
-    #calendar-view .calendar-controls button:hover, #my-availability-view .availability-controls button:hover { background-color: #555; }
-    #calendar-view .calendar-controls select { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9em; background-color: var(--primary-bg); color: var(--text-color); }
-    #calendar-view .calendar-controls select:disabled { background-color: #f0f0f0; cursor: not-allowed; }
-    #calendar-view .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 15px; }
-    .calendar-grid .day-name { font-weight: bold; text-align: center; padding: 10px 5px; background-color: var(--light-grey); border-radius: 5px; color: var(--dark-grey); font-size: 0.9em; }
+    /* Shared Calendar Controls */
+    .calendar-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .calendar-controls h3, .calendar-controls h4 { /* h4 for admin availability calendar title */
+        margin: 0;
+        font-size: 1.4em;
+        color: var(--accent-color);
+    }
+    .calendar-controls h4 { font-size: 1.2em; } /* Slightly smaller for h4 */
+    .calendar-controls button {
+        background-color: var(--dark-grey);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .calendar-controls button:hover { background-color: #555; }
+    .calendar-controls select {
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        font-size: 0.9em;
+        background-color: var(--primary-bg);
+        color: var(--text-color);
+    }
+    .calendar-controls select:disabled { background-color: #f0f0f0; cursor: not-allowed; }
+
+    /* Shared Calendar Grid styles */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-top: 15px;
+    }
+    .calendar-grid .day-name {
+      font-weight: bold;
+      text-align: center;
+      padding: 10px 5px;
+      background-color: var(--light-grey);
+      border-radius: 5px;
+      color: var(--dark-grey);
+      font-size: 0.9em;
+    }
+
+    /* Main Calendar View & Admin Availability Calendar Day Styling */
     .calendar-day { background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; min-height: 100px; padding: 8px; display: flex; flex-direction: column; overflow: hidden; font-size: 0.85em; position: relative; }
     .calendar-day.current-month { background-color: var(--secondary-bg); }
     .calendar-day.today { border: 2px solid var(--accent-color); box-shadow: 0 0 0 2px rgba(106,13,173,0.3); }
@@ -219,11 +264,13 @@
     .calendar-day ul { list-style: none; padding: 0; margin-top: 5px; flex-grow: 1; overflow-y: auto; -ms-overflow-style: none; scrollbar-width: none; }
     .calendar-day ul::-webkit-scrollbar { display: none; }
     .calendar-day li { padding: 3px 6px; margin-bottom: 3px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.8em; color: var(--dark-grey); }
-    .calendar-day li.foh-shift { background-color: var(--foh-light-bg); color: var(--foh-color); }
-    .calendar-day li.boh-shift { background-color: var(--boh-light-bg); color: var(--boh-color); }
-    .calendar-day li.admin-shift { background-color: var(--admin-light-bg); color: var(--admin-color); }
+    #calendar-view .calendar-day li.foh-shift { background-color: var(--foh-light-bg); color: var(--foh-color); }
+    #calendar-view .calendar-day li.boh-shift { background-color: var(--boh-light-bg); color: var(--boh-color); }
+    #calendar-view .calendar-day li.admin-shift { background-color: var(--admin-light-bg); color: var(--admin-color); }
 
-    #availability-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+
+    /* My Availability View */
+    #availability-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); } /* Already uses .calendar-grid */
     .availability-day-column { background-color: var(--light-grey); border-radius: 8px; padding: 15px; border: 1px solid var(--border-color); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
     .availability-day-column strong { display: block; margin-bottom: 10px; color: var(--accent-color); font-size: 1.1em; text-align: center; }
     .availability-day-column .availability-slots label { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.95em; cursor: pointer; padding: 5px; border-radius: 4px; transition: background-color 0.2s ease; }
@@ -232,6 +279,19 @@
     .availability-day-column .availability-slots input[type="checkbox"]:checked + span { font-weight: bold; color: var(--accent-color); }
     #staff-availability-display-admin { border-left: 3px solid var(--accent-color); }
     #staff-availability-display-admin strong { color: var(--accent-color); }
+
+    /* Admin Availability Calendar Specifics */
+    #admin-availability-calendar-grid .calendar-day ul { font-size: 0.78em; max-height: 70px; padding-left: 3px; line-height: 1.3; }
+    #admin-availability-calendar-grid .calendar-day li { padding: 2px 4px; margin-bottom: 2px; border-radius: 3px; white-space: normal; word-break: break-word; }
+    #admin-availability-calendar-grid .calendar-day li.avail-morning { background-color: #fff3cd; color: #856404; border-left: 3px solid #ffda6b; }
+    #admin-availability-calendar-grid .calendar-day li.avail-afternoon { background-color: #d1ecf1; color: #0c5460; border-left: 3px solid #75c6d6; }
+    #admin-availability-calendar-grid .calendar-day li.avail-evening { background-color: #d4edda; color: #155724; border-left: 3px solid #65c476; }
+    #admin-availability-calendar-grid .calendar-day li.avail-fullday { background-color: #cce5ff; color: #004085; border-left: 3px solid #6baaff; font-weight: bold; }
+    #admin-availability-calendar-grid .calendar-day li.avail-unavailable { background-color: #f8d7da; color: #721c24; border-left: 3px solid #f0828a; }
+    #admin-availability-calendar-grid .calendar-day li.no-availability-specified,
+    #admin-availability-calendar-grid .calendar-day li.no-data { /* Shared style for no data messages */
+        font-style: italic; color: var(--dark-grey); background-color: transparent; border-left: none; text-align: center; padding: 5px 0;
+    }
 
 
     #admin-view { background-color: var(--light-grey); padding: 25px; border-radius: 12px; margin-top: 20px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
@@ -259,18 +319,6 @@
     .admin-task-overview-item.completed { background-color: var(--completed-bg); color: var(--boh-color); border-left: 4px solid var(--completed-border); }
     .admin-task-overview-item.pending { background-color: var(--secondary-bg); color: var(--dark-grey); border-left: 4px solid var(--dark-grey); }
     .admin-task-overview-item.overdue { background-color: var(--incomplete-bg); color: var(--incomplete-border); border-left: 4px solid var(--incomplete-border); }
-
-    /* Admin Availability Calendar Specifics */
-    #admin-availability-calendar-section .calendar-controls h4 { margin: 0; font-size: 1.2em; color: var(--accent-color); }
-    #admin-availability-calendar-grid .calendar-day ul { font-size: 0.78em; max-height: 70px; padding-left: 3px; line-height: 1.3; }
-    #admin-availability-calendar-grid .calendar-day li { padding: 2px 4px; margin-bottom: 2px; border-radius: 3px; white-space: normal; word-break: break-word; }
-    #admin-availability-calendar-grid .calendar-day li.avail-morning { background-color: #fff3cd; color: #856404; border-left: 3px solid #ffda6b; }
-    #admin-availability-calendar-grid .calendar-day li.avail-afternoon { background-color: #d1ecf1; color: #0c5460; border-left: 3px solid #75c6d6; }
-    #admin-availability-calendar-grid .calendar-day li.avail-evening { background-color: #d4edda; color: #155724; border-left: 3px solid #65c476; }
-    #admin-availability-calendar-grid .calendar-day li.avail-fullday { background-color: #cce5ff; color: #004085; border-left: 3px solid #6baaff; font-weight: bold; }
-    #admin-availability-calendar-grid .calendar-day li.avail-unavailable { background-color: #f8d7da; color: #721c24; border-left: 3px solid #f0828a; }
-    #admin-availability-calendar-grid .calendar-day li.no-availability-specified { font-style: italic; color: var(--dark-grey); background-color: transparent; border-left: none; text-align: center; padding: 5px 0; }
-
 
     footer { text-align: center; padding: 15px; font-size: 0.8em; color: var(--dark-grey); border-top: 1px solid var(--border-color); background-color: var(--light-grey); margin-top: auto; border-radius: 0 0 12px 12px; }
     #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
@@ -373,7 +421,7 @@
                     <button id="prev-month-btn">← Prev</button><h3 id="current-month-year"></h3><button id="next-month-btn">Next →</button>
                     <select id="calendar-role-filter"><option value="all">All</option><option value="FOH">FOH</option><option value="BOH">BOH</option><option value="Admin">Admin</option></select>
                 </div>
-                <div class="calendar-grid">
+                <div class="calendar-grid"> <!-- This one is for the main calendar view -->
                     <div class="day-name">Mon</div><div class="day-name">Tue</div><div class="day-name">Wed</div><div class="day-name">Thu</div><div class="day-name">Fri</div><div class="day-name">Sat</div><div class="day-name">Sun</div>
                 </div>
             </section>
@@ -407,8 +455,9 @@
                         <select id="admin-availability-staff-filter">
                             <option value="all">All Available Staff</option>
                         </select>
+                        <button id="refresh-admin-availability-btn" style="margin-left: auto;">Refresh Data</button>
                     </div>
-                    <div class="calendar-grid" id="admin-availability-calendar-grid">
+                    <div class="calendar-grid" id="admin-availability-calendar-grid"> <!-- This one is for the admin availability calendar -->
                         <div class="day-name">Mon</div> <div class="day-name">Tue</div> <div class="day-name">Wed</div> <div class="day-name">Thu</div> <div class="day-name">Fri</div> <div class="day-name">Sat</div> <div class="day-name">Sun</div>
                     </div>
                 </div>
@@ -419,7 +468,7 @@
                         <div><label for="task-user-select">Staff:</label><select id="task-user-select" required></select></div>
                         <div><label for="task-date">Date:</label><input type="date" id="task-date" required></div>
                         <div><label for="task-description-select">Task:</label><select id="task-description-select" required><option value="">Select</option><option value="Slicing Lemons">Slicing Lemons</option><option value="Rolling Silverware">Rolling Silverware</option><option value="Polishing Glasses">Polishing Glasses</option><option value="Cleaning Beer Lines">Cleaning Beer Lines</option><option value="Cleaning Fridge Seals">Cleaning Fridge Seals</option><option value="Cleaning Glasswash">Cleaning Glasswash</option><option value="Custom Task">Custom Task</option></select></div>
-                        <div id="custom-task-input-container" style="display:none;"><label for="custom-task-description">Custom:</label><input type="text" id="custom-task-description"></div>
+                        <div id="custom-task-description-container" style="display:none;"><label for="custom-task-description">Custom:</label><input type="text" id="custom-task-description"></div>
                         <div><label for="task-repeat-days">Repeat (days):</label><input type="number" id="task-repeat-days" value="1" min="1" max="7"></div>
                         <button type="submit">Add Task</button>
                     </form>
@@ -477,7 +526,7 @@
         const viewShiftUserSelect = document.getElementById('view-shift-user-select'), viewShiftDateInput = document.getElementById('view-shift-date'), adminAssignedShiftsList = document.getElementById('admin-assigned-shifts');
         const assignTaskForm = document.getElementById('assign-task-form'), taskUserSelect = document.getElementById('task-user-select'), taskDateInput = document.getElementById('task-date');
         const taskDescriptionSelect = document.getElementById('task-description-select');
-        const customTaskInputContainerForTasks = document.getElementById('custom-task-input-container');
+        const customTaskDescriptionContainer = document.getElementById('custom-task-description-container'); // Corrected ID for task custom container
         const customTaskDescriptionInput = document.getElementById('custom-task-description'), taskRepeatDaysInput = document.getElementById('task-repeat-days');
         const viewTaskUserSelect = document.getElementById('view-task-user-select'), viewTaskDateInput = document.getElementById('view-task-date'), adminAssignedTasksList = document.getElementById('admin-view-tasks-list');
         const addHolidayForm = document.getElementById('add-holiday-form'), holidayNameInput = document.getElementById('holiday-name-input'), holidayStartDateInput = document.getElementById('holiday-start-date-input');
@@ -485,6 +534,7 @@
         const adminAvailabilityCalendarSection = document.getElementById('admin-availability-calendar-section'), adminPrevMonthAvailabilityBtn = document.getElementById('admin-prev-month-availability-btn');
         const adminNextMonthAvailabilityBtn = document.getElementById('admin-next-month-availability-btn'), adminCurrentMonthYearAvailabilityDisplay = document.getElementById('admin-current-month-year-availability');
         const adminAvailabilityStaffFilter = document.getElementById('admin-availability-staff-filter'), adminAvailabilityCalendarGrid = document.getElementById('admin-availability-calendar-grid');
+        const refreshAdminAvailabilityBtn = document.getElementById('refresh-admin-availability-btn');
         const attendanceDateInput = document.getElementById('attendance-date'), adminAttendanceList = document.getElementById('admin-attendance-list');
         const taskOverviewDateInput = document.getElementById('task-overview-date'), taskStatusFilter = document.getElementById('task-status-filter'), adminTaskOverviewList = document.getElementById('admin-task-overview-list');
 
@@ -525,15 +575,34 @@
         function handleNavButtonClick(e){const cB=e.target;let vI;if(cB.id==='nav-home')vI='home-view';else if(cB.id==='nav-my-tasks')vI='my-tasks-view';else if(cB.id==='nav-my-availability')vI='my-availability-view';else if(cB.id==='nav-weekly-rota')vI='weekly-rota-view';else if(cB.id==='nav-calendar')vI='calendar-view';else return; if(isAdminMode&&vI!=='admin-view'&&vI!=='home-view'){showToast("Exit Admin Mode.",'info');return;} if(vI === 'my-availability-view' && currentUserRole === 'Admin' && !isAdminMode){showToast("Admins don't set availability here.",'info');return;} showView(vI);}
         function renderUserDropdownsInApp(){const sS=[shiftUserSelect,taskUserSelect,viewShiftUserSelect,viewTaskUserSelect];sS.forEach(s=>{s.innerHTML='';if(staffMembers.length===0){const o=document.createElement('option');o.value='';o.textContent='No Staff';o.disabled=true;o.selected=true;s.appendChild(o);}else{staffMembers.forEach(m=>{const o=document.createElement('option');o.value=m.name;o.textContent=`${m.name} (${m.role})`;s.appendChild(o);});s.value=(currentUserName&&staffMembers.some(st=>st.name===currentUserName))?currentUserName:(staffMembers[0]?.name||'');}});}
 
-        function renderHomePage() { /* ... Same as before ... */ }
-        function toggleClockStatus(){ /* ... Same as before ... */ }
-        function cleanupMessages(){ /* ... Same as before ... */ }
-        function renderMessageBoard(){ /* ... Same as before ... */ }
-        function handleSendMessage(e){ /* ... Same as before ... */ }
-        function renderMyTasks(){ /* ... Same as before ... */ }
-        function handleTaskCompletionOrImageAttach(e){ /* ... Same as before ... */ }
-        function renderWeeklyRota(){ /* ... Same as before ... */ }
-        function renderCalendar(){ /* ... Same as before ... */ }
+        function renderHomePage() {
+            const today = new Date(), formattedToday = getFormattedDate(today);
+            const businessHolidayToday = holidays.find(h => h.staffName === "__BUSINESS__" && isDateInRange(today, h.startDate, h.endDate));
+            if (businessHolidayToday) {
+                whosWorkingHolidayMessage.textContent = `Closed Today: ${businessHolidayToday.name}${businessHolidayToday.startDate !== businessHolidayToday.endDate ? ' (until ' + getDisplayDate(new Date(businessHolidayToday.endDate)) + ')' : ''}`;
+                whosWorkingHolidayMessage.style.display = 'block'; whosWorkingGrid.style.display = 'none';
+                fohWorkingList.innerHTML = ''; bohWorkingList.innerHTML = ''; adminWorkingList.innerHTML = '';
+            } else {
+                whosWorkingHolidayMessage.style.display = 'none'; whosWorkingGrid.style.display = 'grid';
+                fohWorkingList.innerHTML = ''; bohWorkingList.innerHTML = ''; adminWorkingList.innerHTML = '';
+                const todayRota = rota[formattedToday] || {}; let fC=0,bC=0,aC=0;
+                const staffToday = staffMembers.filter(m=>{if(!isCurrentUserAdmin()&&((currentUserRole==='FOH'&&m.role==='BOH')||(currentUserRole==='BOH'&&m.role==='FOH')))return false;return true;});
+                staffToday.forEach(m=>{const pHoliday=holidays.find(h=>h.staffName===m.name&&isDateInRange(today,h.startDate,h.endDate)); const sft=todayRota[m.name];let dS=sft;let iOH=false; if(pHoliday){dS=`On Holiday (${pHoliday.name.substring(0,15)}${pHoliday.name.length>15?'...':''})`;iOH=true;} if((sft&&sft!=='Off')||iOH){const iD=document.createElement('div');iD.classList.add('staff-icon',m.role.toLowerCase());if(iOH)iD.classList.add('on-holiday');iD.innerHTML=`<span class="icon-placeholder">${m.icon}</span><div class="staff-name">${m.name}</div><div class="staff-role">${dS||'N/A'}</div>`;if(m.role==='FOH'){fohWorkingList.appendChild(iD);fC++;}else if(m.role==='BOH'){bohWorkingList.appendChild(iD);bC++;}else if(m.role==='Admin'){adminWorkingList.appendChild(iD);aC++;}}});
+                if(fC===0)fohWorkingList.innerHTML='<li class="no-data">No FOH.</li>';if(bC===0)bohWorkingList.innerHTML='<li class="no-data">No BOH.</li>';if(aC===0)adminWorkingList.innerHTML='<li class="no-data">No Admin.</li>';
+            }
+            const uCD=(clockIns[formattedToday]&&clockIns[formattedToday][currentUserName])||{};let cSM='',cBT='Clock In';clockStatusBannerHome.classList.remove('clocked-in','clocked-out');if(uCD.in&&!uCD.out){cSM=`In: ${formatTimestampToTime(uCD.in)}`;cBT='Clock Out';clockStatusBannerHome.classList.add('clocked-in');}else if(uCD.in&&uCD.out){cSM=`In: ${formatTimestampToTime(uCD.in)}, Out: ${formatTimestampToTime(uCD.out)}`;cBT='Clock In';clockStatusBannerHome.classList.add('clocked-out');}else{cSM='Not clocked in.';cBT='Clock In';clockStatusBannerHome.classList.add('clocked-out');} clockStatusTextHome.textContent=cSM;clockInOutBtnHome.textContent=cBT;
+            homeTaskList.innerHTML='';const tsksToday=(dailyTasks[formattedToday]&&dailyTasks[formattedToday][currentUserName])||[];const compToday=(completedTasks[formattedToday]&&completedTasks[formattedToday][currentUserName])||{};if(tsksToday.length===0){homeTaskList.innerHTML='<li class="no-tasks">No tasks.</li>';}else{tsksToday.forEach(t=>{const li=document.createElement('li');const cD=compToday[t];const iC=!!cD;const cTS=typeof cD==='object'?cD.timestamp:null;let tS=iC?'Completed':'Pending';if(!iC&&isPastEndOfDay(formattedToday)){tS='Overdue';li.classList.add('incomplete');}else if(iC){li.classList.add('completed');} li.textContent=`${t} (${tS})`;if(cTS)li.textContent+=` @ ${formatTimestampToTime(cTS)}`;li.classList.add('task-item');homeTaskList.appendChild(li);});}
+            cleanupMessages();renderMessageBoard();
+        }
+        function toggleClockStatus(){const t=new Date(),fT=getFormattedDate(t),n=Date.now();clockIns[fT]=clockIns[fT]||{};clockIns[fT][currentUserName]=clockIns[fT][currentUserName]||{};const uCD=clockIns[fT][currentUserName];if(!uCD.in){uCD.in=n;uCD.out=null;showToast(`${currentUserName} clocked in.`,'success');}else if(uCD.in&&!uCD.out){uCD.out=n;showToast(`${currentUserName} clocked out.`,'success');}else if(uCD.in&&uCD.out){uCD.in=n;uCD.out=null;showToast(`${currentUserName} re-clocked in.`,'info');} saveData(LS_KEYS.CLOCK_INS,clockIns);renderHomePage();renderMyTasks();if(isAdminMode)renderAdminShiftAttendance();}
+        function cleanupMessages(){const thr=Date.now()-(24*60*60*1000);messageBoard=messageBoard.filter(m=>m.timestamp>thr);saveData(LS_KEYS.MESSAGE_BOARD,messageBoard);}
+        function renderMessageBoard(){messageList.innerHTML='';if(messageBoard.length===0){messageList.innerHTML='<li class="no-data">No messages.</li>';return;}[...messageBoard].reverse().forEach(m=>{const li=document.createElement('li');li.innerHTML=`<span class="message-sender">${m.sender}:</span> <span class="message-text">${m.text}</span> <span class="message-timestamp">(${new Date(m.timestamp).toLocaleString()})</span>`;messageList.appendChild(li);});}
+        function handleSendMessage(e){e.preventDefault();const txt=messageTextarea.value.trim();if(!txt){showToast('Msg empty.','error');return;}if(!currentUserName){showToast('Log in.','error');return;}messageBoard.push({sender:currentUserName,text:txt,timestamp:Date.now()});saveData(LS_KEYS.MESSAGE_BOARD,messageBoard);messageTextarea.value='';renderMessageBoard();showToast('Msg sent!','success',1500);}
+        function renderMyTasks(){taskList.innerHTML='';const t=new Date(),fT=getFormattedDate(t);currentDayInfo.textContent=getDisplayDate(t);if(!currentUserName){taskList.innerHTML='<li class="no-tasks">Log in.</li>';return;}const tsksT=(dailyTasks[fT]&&dailyTasks[fT][currentUserName])||[];const compT=(completedTasks[fT]&&completedTasks[fT][currentUserName])||{};if(tsksT.length===0){taskList.innerHTML='<li class="no-tasks">No tasks.</li>';return;}tsksT.forEach(tsk=>{const li=document.createElement('li');li.classList.add('task-item');const tC=document.createElement('span');tC.textContent=tsk;const tCt=document.createElement('div');tCt.classList.add('task-item-controls');const cb=document.createElement('input');cb.type='checkbox';cb.dataset.taskName=tsk;cb.dataset.taskDate=fT;cb.dataset.staffName=currentUserName;const aII=document.createElement('input');aII.type='file';aII.accept='image/*';aII.style.display='none';aII.dataset.taskName=tsk;aII.dataset.taskDate=fT;aII.dataset.staffName=currentUserName;const aIB=document.createElement('button');aIB.textContent='Attach Img';aIB.classList.add('upload-image-btn');aIB.type='button';const iIS=document.createElement('span');iIS.classList.add('attached-image-info');const cD=compT[tsk];const iCp=!!cD;const cTS=typeof cD==='object'?cD.timestamp:cD;const iN=typeof cD==='object'?cD.imageName:null;if(iCp){cb.checked=true;li.classList.add('completed');aIB.style.display='none';if(iN)iIS.textContent=`Img: ${iN}`;}else if(isPastEndOfDay(fT)){li.classList.add('incomplete');}tCt.appendChild(cb);tCt.appendChild(aII);tCt.appendChild(aIB);li.appendChild(tC);li.appendChild(tCt);const tsS=document.createElement('span');tsS.classList.add('timestamp');if(cTS)tsS.textContent=formatTimestampToTime(cTS);li.appendChild(tsS);li.appendChild(iIS);taskList.appendChild(li);});}
+        function handleTaskCompletionOrImageAttach(e){const tgt=e.target;if(tgt.type==='checkbox'){const{taskName,taskDate,staffName}=tgt.dataset;completedTasks[taskDate]=completedTasks[taskDate]||{};completedTasks[taskDate][staffName]=completedTasks[taskDate][staffName]||{};const exC=completedTasks[taskDate][staffName][taskName];const curI=(typeof exC==='object'&&exC!==null)?exC.imageName:null;if(tgt.checked){completedTasks[taskDate][staffName][taskName]={timestamp:Date.now(),imageName:curI};showToast(`Task "${taskName}" done.`,'success',1500);}else{delete completedTasks[taskDate][staffName][taskName];if(Object.keys(completedTasks[taskDate][staffName]).length===0)delete completedTasks[taskDate][staffName];showToast(`Task "${taskName}" pending.`,'info',1500);} saveData(LS_KEYS.COMPLETED_TASKS,completedTasks);renderHomePage();renderMyTasks();if(isAdminMode)renderAdminTaskOverview();}else if(tgt.type==='file'){const{taskName,taskDate,staffName}=tgt.dataset;const f=tgt.files[0];if(f){completedTasks[taskDate]=completedTasks[taskDate]||{};completedTasks[taskDate][staffName]=completedTasks[taskDate][staffName]||{};const curC=completedTasks[taskDate][staffName][taskName];const exTS=(typeof curC==='object'&&curC!==null)?curC.timestamp:curC;completedTasks[taskDate][staffName][taskName]={timestamp:exTS||Date.now(),imageName:f.name};saveData(LS_KEYS.COMPLETED_TASKS,completedTasks);showToast(`Img "${f.name}" saved.`,'success');renderHomePage();renderMyTasks();if(isAdminMode)renderAdminTaskOverview();}else{showToast('No img selected.','info',1500);}}}
+        function renderWeeklyRota(){rotaGrid.innerHTML='';const wD=getWeekDays(new Date());wD.forEach(d=>{const fD=getFormattedDate(d);const dC=document.createElement('div');dC.classList.add('rota-day-column');dC.innerHTML=`<strong>${getDisplayDate(d)}</strong><ul></ul>`;const ul=dC.querySelector('ul');const dR=rota[fD]||{};const sD=staffMembers.filter(m=>{if(!isCurrentUserAdmin()&&((currentUserRole==='FOH'&&m.role==='BOH')||(currentUserRole==='BOH'&&m.role==='FOH')))return false;return true;}).sort((a,b)=>{ const roleOrder={'FOH':1,'BOH':2,'Admin':3}; if(roleOrder[a.role]!==roleOrder[b.role])return roleOrder[a.role]-roleOrder[b.role]; return a.name.localeCompare(b.name);});sD.forEach(m=>{const s=dR[m.name]||'Off';const li=document.createElement('li');li.textContent=`${m.name}: ${s}`;li.classList.add(m.role.toLowerCase());ul.appendChild(li);});rotaGrid.appendChild(dC);});}
+        function renderCalendar(){if (!calendarGridElement) {console.error("Original calendarGridElement not found!"); return;} while(calendarGridElement.children.length>7)calendarGridElement.removeChild(calendarGridElement.lastChild);const y=currentCalendarDate.getFullYear(),m=currentCalendarDate.getMonth();currentMonthYearDisplay.textContent=currentCalendarDate.toLocaleDateString('en-US',{month:'long',year:'numeric'});const fDoM=new Date(y,m,1),lDoM=new Date(y,m+1,0);const nDiM=lDoM.getDate(),fDoW=(fDoM.getDay()+6)%7;for(let i=0;i<fDoW;i++){const eD=document.createElement('div');eD.classList.add('calendar-day');calendarGridElement.appendChild(eD);} const tF=getFormattedDate(new Date()),fR=calendarRoleFilter.value;calendarRoleFilter.querySelectorAll('option').forEach(o=>o.disabled=false);if(!isCurrentUserAdmin()){if(currentUserRole==='FOH'){calendarRoleFilter.querySelector('option[value="BOH"]').disabled=true;calendarRoleFilter.querySelector('option[value="Admin"]').disabled=true;if(fR==='BOH'||fR==='Admin')calendarRoleFilter.value='all';}else if(currentUserRole==='BOH'){calendarRoleFilter.querySelector('option[value="FOH"]').disabled=true;calendarRoleFilter.querySelector('option[value="Admin"]').disabled=true;if(fR==='FOH'||fR==='Admin')calendarRoleFilter.value='all';}}
+            for(let dN=1;dN<=nDiM;dN++){const day=new Date(y,m,dN);const fD=getFormattedDate(day);const dCell=document.createElement('div');dCell.classList.add('calendar-day','current-month');if(fD===tF)dCell.classList.add('today');let hTT="",iBH=false,iPH=false;holidays.forEach(h=>{if(isDateInRange(day,h.startDate,h.endDate)){if(h.staffName==="__BUSINESS__"){iBH=true;hTT+=`${h.name} (Business)${h.startDate!==h.endDate?' to '+getDisplayDate(new Date(h.endDate)):''}\n`;}else{const sOH=getStaffMember(h.staffName);if(sOH&&(fR==='all'||fR===sOH.role||isCurrentUserAdmin()||h.staffName===currentUserName)){iPH=true;hTT+=`${h.staffName}: ${h.name}${h.startDate!==h.endDate?' to '+getDisplayDate(new Date(h.endDate)):''}\n`;}}}});if(iBH)dCell.classList.add('holiday-day');if(iPH&&!iBH)dCell.classList.add('personal-holiday-day');if(hTT)dCell.title=hTT.trim();dCell.innerHTML=`<div class="day-number">${dN}</div><ul></ul>`;const ul=dCell.querySelector('ul');if(iBH){const li=document.createElement('li');li.textContent="Business Holiday";li.style.textAlign="center";li.style.fontWeight="bold";ul.appendChild(li);}else{const dR=rota[fD]||{};const sD=staffMembers.filter(s=>{if(fR!=='all'&&s.role!==fR)return false;if(!isCurrentUserAdmin()&&((currentUserRole==='FOH'&&s.role==='BOH')||(currentUserRole==='BOH'&&s.role==='FOH')))return false;return true;}).sort((a,b)=>{ const roleOrder={'FOH':1,'BOH':2,'Admin':3}; if(roleOrder[a.role]!==roleOrder[b.role])return roleOrder[a.role]-roleOrder[b.role]; return a.name.localeCompare(b.name);});sD.forEach(mem=>{const pHFM=holidays.find(h=>h.staffName===mem.name&&isDateInRange(day,h.startDate,h.endDate));const sft=dR[mem.name];if(pHFM){const li=document.createElement('li');li.textContent=`${mem.name}: On Holiday`;li.style.backgroundColor='var(--personal-holiday-bg)';li.style.color='var(--personal-holiday-border)';li.style.borderRadius='3px';li.style.padding='2px 4px';ul.appendChild(li);}else if(sft&&sft!=='Off'){const li=document.createElement('li');li.textContent=`${mem.name}: ${sft}`;li.classList.add(mem.role.toLowerCase()+'-shift');ul.appendChild(li);}}); } calendarGridElement.appendChild(dCell);}}
         function goToPrevMonth(){currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1);renderCalendar();}
         function goToNextMonth(){currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1);renderCalendar();}
 
@@ -550,7 +619,7 @@
                 if (!foundAnyAvailabilityForDay && ul.children.length === 0) { const li = document.createElement('li'); li.classList.add('no-data'); li.textContent = (selectedStaffFilter === 'all') ? 'No Avail.' : 'None Set'; ul.appendChild(li); } adminAvailabilityCalendarGrid.appendChild(dayCell); } }
         function adminChangeAvailabilityCalendarMonth(direction) { currentAdminAvailabilityCalendarDate.setMonth(currentAdminAvailabilityCalendarDate.getMonth() + direction); renderAdminAvailabilityCalendar(); }
 
-        function renderAdminForms(){const tD=new Date(),fTD=getFormattedDate(tD);renderUserDropdownsInApp();populateHolidayStaffSelect(); populateAdminAvailabilityStaffFilter(); const aFE=adminView.querySelectorAll('input,select,button');const dAC=!isCurrentUserAdmin();aFE.forEach(e=>e.disabled=dAC);shiftDateInput.value=fTD;taskDateInput.value=fTD;viewShiftDateInput.value=fTD;viewTaskDateInput.value=fTD;holidayStartDateInput.value=fTD;holidayEndDateInput.value=fTD;attendanceDateInput.value=fTD;taskOverviewDateInput.value=fTD;shiftTypeSelect.value='8AM-4PM';customShiftInputContainer.style.display='none';customShiftTypeInput.value='';taskDescriptionSelect.value=(taskDescriptionSelect.options[1]?taskDescriptionSelect.options[1].value:'Slicing Lemons'); customTaskInputContainerForTasks.style.display='none';customTaskDescriptionInput.value='';
+        function renderAdminForms(){const tD=new Date(),fTD=getFormattedDate(tD);renderUserDropdownsInApp();populateHolidayStaffSelect(); populateAdminAvailabilityStaffFilter(); const aFE=adminView.querySelectorAll('input,select,button');const dAC=!isCurrentUserAdmin();aFE.forEach(e=>e.disabled=dAC);shiftDateInput.value=fTD;taskDateInput.value=fTD;viewShiftDateInput.value=fTD;viewTaskDateInput.value=fTD;holidayStartDateInput.value=fTD;holidayEndDateInput.value=fTD;attendanceDateInput.value=fTD;taskOverviewDateInput.value=fTD;shiftTypeSelect.value='8AM-4PM';customShiftInputContainer.style.display='none';customShiftTypeInput.value='';taskDescriptionSelect.value=(taskDescriptionSelect.options[1]?taskDescriptionSelect.options[1].value:'Slicing Lemons'); customTaskDescriptionContainer.style.display='none';customTaskDescriptionInput.value='';
             viewShiftUserSelect.addEventListener('change',()=>{if(viewShiftUserSelect.value&&viewShiftDateInput.value)displayStaffAvailabilityInAdmin(viewShiftUserSelect.value,viewShiftDateInput.value);else clearStaffAvailabilityDisplayAdmin();});
             viewShiftDateInput.addEventListener('change',()=>{if(viewShiftUserSelect.value&&viewShiftDateInput.value)displayStaffAvailabilityInAdmin(viewShiftUserSelect.value,viewShiftDateInput.value);else clearStaffAvailabilityDisplayAdmin();});
             shiftUserSelect.addEventListener('change',()=>{if(shiftUserSelect.value&&shiftDateInput.value)displayStaffAvailabilityInAdmin(shiftUserSelect.value,shiftDateInput.value);else clearStaffAvailabilityDisplayAdmin();});
@@ -558,9 +627,9 @@
             if(shiftUserSelect.value&&shiftDateInput.value)displayStaffAvailabilityInAdmin(shiftUserSelect.value,shiftDateInput.value);else clearStaffAvailabilityDisplayAdmin();
             renderAdminAssignedShifts();renderAdminAssignedTasks();renderAdminHolidayList();renderAdminAvailabilityCalendar();renderAdminShiftAttendance();renderAdminTaskOverview();}
         function handleShiftTypeChange(){customShiftInputContainer.style.display=shiftTypeSelect.value==='custom'?'block':'none';customShiftTypeInput.required=shiftTypeSelect.value==='custom';if(shiftTypeSelect.value!=='custom')customShiftTypeInput.value='';}
-        function handleTaskDescriptionChange(){customTaskInputContainerForTasks.style.display=taskDescriptionSelect.value==='Custom Task'?'block':'none';customTaskDescriptionInput.required=taskDescriptionSelect.value==='Custom Task';if(taskDescriptionSelect.value!=='Custom Task')customTaskDescriptionInput.value='';}
+        function handleTaskDescriptionChange(){customTaskDescriptionContainer.style.display=taskDescriptionSelect.value==='Custom Task'?'block':'none';customTaskDescriptionInput.required=taskDescriptionSelect.value==='Custom Task';if(taskDescriptionSelect.value!=='Custom Task')customTaskDescriptionInput.value='';}
         function handleAssignShift(e){e.preventDefault();if(!isCurrentUserAdmin()){showToast('Permission denied.','error');return;}const stf=shiftUserSelect.value,bD=new Date(shiftDateInput.value);const rD=parseInt(shiftRepeatDaysInput.value);let sT=shiftTypeSelect.value==='custom'?customShiftTypeInput.value.trim():shiftTypeSelect.value.trim();if(!stf||!shiftDateInput.value||!sT||isNaN(rD)||rD<1||rD>7){showToast('Invalid input.','error');return;}let aM=0,hC=0;for(let i=0;i<rD;i++){const cD=addDays(bD,i),fD=getFormattedDate(cD);const bH=holidays.find(h=>h.staffName==="__BUSINESS__"&&isDateInRange(cD,h.startDate,h.endDate));if(bH){showToast(`No shift: ${fD} is Business Holiday (${bH.name}).`,'warning',4000);hC++;continue;}const pH=holidays.find(h=>h.staffName===stf&&isDateInRange(cD,h.startDate,h.endDate));if(pH){showToast(`No shift: ${stf} on holiday (${pH.name}) on ${fD}.`,'warning',4000);hC++;continue;}rota[fD]=rota[fD]||{};rota[fD][stf]=sT;aM++;} if(aM>0){saveData(LS_KEYS.ROTA,rota);showToast(`Shift for ${aM} day(s).`,'success');}else if(hC===0){showToast('Shift exists or no valid days.','info');} if(hC>0&&aM===0){showToast('No shifts due to holidays.','info');} renderWeeklyRota();renderCalendar();renderAdminAssignedShifts();renderHomePage();shiftTypeSelect.value='8AM-4PM';customShiftInputContainer.style.display='none';customShiftTypeInput.value='';shiftRepeatDaysInput.value='1';}
-        function handleAssignTask(e){e.preventDefault();if(!isCurrentUserAdmin()){showToast('Permission denied.','error');return;}const stf=taskUserSelect.value,bD=new Date(taskDateInput.value);const rD=parseInt(taskRepeatDaysInput.value);let tDsc=taskDescriptionSelect.value==='Custom Task'?customTaskDescriptionInput.value.trim():taskDescriptionSelect.value.trim();if(!stf||!taskDateInput.value||!tDsc||isNaN(rD)||rD<1||rD>7){showToast('Invalid input.','error');return;}let aM=0;for(let i=0;i<rD;i++){const cD=addDays(bD,i),fD=getFormattedDate(cD);dailyTasks[fD]=dailyTasks[fD]||{};dailyTasks[fD][stf]=dailyTasks[fD][stf]||[];if(!dailyTasks[fD][stf].includes(tDsc)){dailyTasks[fD][stf].push(tDsc);aM++;}} if(aM>0){saveData(LS_KEYS.DAILY_TASKS,dailyTasks);showToast(`Task for ${aM} day(s).`,'success');}else{showToast('Task exists.','info');} renderHomePage();renderMyTasks();renderAdminAssignedTasks();renderAdminTaskOverview();taskDescriptionSelect.value=(taskDescriptionSelect.options[1] ? taskDescriptionSelect.options[1].value : '');customTaskInputContainerForTasks.style.display='none';customTaskDescriptionInput.value='';taskRepeatDaysInput.value='1';}
+        function handleAssignTask(e){e.preventDefault();if(!isCurrentUserAdmin()){showToast('Permission denied.','error');return;}const stf=taskUserSelect.value,bD=new Date(taskDateInput.value);const rD=parseInt(taskRepeatDaysInput.value);let tDsc=taskDescriptionSelect.value==='Custom Task'?customTaskDescriptionInput.value.trim():taskDescriptionSelect.value.trim();if(!stf||!taskDateInput.value||!tDsc||isNaN(rD)||rD<1||rD>7){showToast('Invalid input.','error');return;}let aM=0;for(let i=0;i<rD;i++){const cD=addDays(bD,i),fD=getFormattedDate(cD);dailyTasks[fD]=dailyTasks[fD]||{};dailyTasks[fD][stf]=dailyTasks[fD][stf]||[];if(!dailyTasks[fD][stf].includes(tDsc)){dailyTasks[fD][stf].push(tDsc);aM++;}} if(aM>0){saveData(LS_KEYS.DAILY_TASKS,dailyTasks);showToast(`Task for ${aM} day(s).`,'success');}else{showToast('Task exists.','info');} renderHomePage();renderMyTasks();renderAdminAssignedTasks();renderAdminTaskOverview();taskDescriptionSelect.value=(taskDescriptionSelect.options[1] ? taskDescriptionSelect.options[1].value : '');customTaskDescriptionContainer.style.display='none';customTaskDescriptionInput.value='';taskRepeatDaysInput.value='1';}
         function renderAdminHolidayList(){adminHolidayList.innerHTML='';if(holidays.length===0){adminHolidayList.innerHTML='<li class="no-data">No holidays.</li>';return;}const sH=[...holidays].sort((a,b)=>new Date(a.startDate)-new Date(b.startDate)||a.staffName.localeCompare(b.staffName));sH.forEach((h,idx)=>{const li=document.createElement('li');const ass=h.staffName==="__BUSINESS__"?"Business":`Staff: ${h.staffName}`;const dR=h.startDate===h.endDate?h.startDate:`${h.startDate} to ${h.endDate}`;li.innerHTML=`<span><strong>${h.name}</strong> (${ass})<br>${dR}</span><button class="delete-btn" data-type="holiday" data-index="${idx}" ${isCurrentUserAdmin()?'':'disabled'}>Del</button>`;adminHolidayList.appendChild(li);});}
         function handleAddHoliday(e){e.preventDefault();if(!isCurrentUserAdmin()){showToast('Permission denied.','error');return;}const n=holidayNameInput.value.trim(),sD=holidayStartDateInput.value,eD=holidayEndDateInput.value,sN=holidayStaffSelect.value;if(!n||!sD||!eD||!sN){showToast('All fields required.','error');return;}if(new Date(eD)<new Date(sD)){showToast('End before start.','error');return;}holidays.push({name:n,startDate:sD,endDate:eD,staffName:sN});saveData(LS_KEYS.HOLIDAYS,holidays);renderAdminHolidayList();renderCalendar();renderHomePage();showToast(`Holiday "${n}" added.`,'success');holidayNameInput.value='';holidayStartDateInput.value=getFormattedDate(new Date());holidayEndDateInput.value=getFormattedDate(new Date());}
         function handleDeleteAdminItem(e){if(!e.target.classList.contains('delete-btn')||e.target.disabled)return;const iT=e.target.dataset.type,stf=e.target.dataset.staff,d=e.target.dataset.date;if(iT==='task'){const tsk=e.target.dataset.task;if(confirm(`Del task "${tsk}" for ${stf} on ${d}?`)){if(dailyTasks[d]&&dailyTasks[d][stf]){dailyTasks[d][stf]=dailyTasks[d][stf].filter(t=>t!==tsk);if(dailyTasks[d][stf].length===0)delete dailyTasks[d][stf];if(Object.keys(dailyTasks[d]).length===0)delete dailyTasks[d];saveData(LS_KEYS.DAILY_TASKS,dailyTasks);if(completedTasks[d]?.[stf]?.[tsk]){delete completedTasks[d][stf][tsk]; if(Object.keys(completedTasks[d][stf]).length===0)delete completedTasks[d][stf]; if(Object.keys(completedTasks[d]).length===0)delete completedTasks[d]; saveData(LS_KEYS.COMPLETED_TASKS,completedTasks);}renderAdminAssignedTasks();renderHomePage();renderMyTasks();renderAdminTaskOverview();showToast('Task deleted.','success');}}}else if(iT==='shift'){if(confirm(`Del shift for ${stf} on ${d}?`)){if(rota[d]?.[stf]){delete rota[d][stf];if(Object.keys(rota[d]).length===0)delete rota[d];saveData(LS_KEYS.ROTA,rota);renderAdminAssignedShifts();renderWeeklyRota();renderCalendar();renderHomePage();showToast('Shift deleted.','success');}}}else if(iT==='holiday'){const idx=parseInt(e.target.dataset.index,10);if(isNaN(idx)||idx<0||idx>=holidays.length){showToast('Error deleting.','error');return;}const h=holidays[idx];if(confirm(`Del holiday "${h.name}" (${h.startDate} to ${h.endDate})?`)){holidays.splice(idx,1);saveData(LS_KEYS.HOLIDAYS,holidays);renderAdminHolidayList();renderCalendar();renderHomePage();showToast('Holiday deleted.','success');}}}
@@ -575,6 +644,7 @@
             if(adminPrevMonthAvailabilityBtn) adminPrevMonthAvailabilityBtn.addEventListener('click', () => adminChangeAvailabilityCalendarMonth(-1));
             if(adminNextMonthAvailabilityBtn) adminNextMonthAvailabilityBtn.addEventListener('click', () => adminChangeAvailabilityCalendarMonth(1));
             if(adminAvailabilityStaffFilter) adminAvailabilityStaffFilter.addEventListener('change', renderAdminAvailabilityCalendar);
+            if(refreshAdminAvailabilityBtn) refreshAdminAvailabilityBtn.addEventListener('click', () => { renderAdminAvailabilityCalendar(); if (shiftUserSelect.value && shiftDateInput.value) displayStaffAvailabilityInAdmin(shiftUserSelect.value, shiftDateInput.value); showToast('Availability data refreshed for admin view.', 'info'); });
             if(isAdminMode){renderAdminShiftAttendance();renderAdminTaskOverview();renderAdminHolidayList(); renderAdminAvailabilityCalendar();}
             const delBtnsAdm=adminView.querySelectorAll('.delete-btn');const disDelBtns=!isCurrentUserAdmin();delBtnsAdm.forEach(b=>b.disabled=disDelBtns);prevMonthBtn.addEventListener('click',goToPrevMonth);nextMonthBtn.addEventListener('click',goToNextMonth);calendarRoleFilter.addEventListener('change',renderCalendar);
         }
