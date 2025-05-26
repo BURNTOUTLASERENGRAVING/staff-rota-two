@@ -6,7 +6,7 @@
   <title>Staff Rota & Task Checklist</title>
   <!-- <link rel="manifest" href="manifest.json"> -->
   <style>
-    /* ... (All CSS from the previous correct block) ... */
+    /* ... (All existing CSS from the previous correct block) ... */
     :root {
       --primary-bg: #f4f4f4;
       --secondary-bg: #ffffff;
@@ -209,6 +209,10 @@
 
     /* Main Calendar View & Admin Availability Calendar Day Styling */
     .calendar-day { background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; min-height: 100px; padding: 8px; display: flex; flex-direction: column; overflow: hidden; font-size: 0.85em; position: relative; }
+    /* DEBUGGING OUTLINE for all calendar-day cells */
+    /* .calendar-grid .calendar-day { outline: 1px solid red !important; } */
+    /* #calendar-view .calendar-day { outline: 1px solid blue !important; } */
+
     .calendar-day.current-month { background-color: var(--secondary-bg); }
     .calendar-day.today { border: 2px solid var(--accent-color); box-shadow: 0 0 0 2px rgba(106,13,173,0.3); }
     .calendar-day.holiday-day { background-color: var(--holiday-bg); border: 1px solid var(--holiday-border); }
@@ -252,7 +256,6 @@
         display: block; margin-left: auto; margin-right: auto; margin-top: 20px;
     }
     #save-my-availability-btn:hover { background-color: var(--accent-hover); transform: translateY(-1px); }
-
 
     /* Admin Availability Calendar Specifics */
      #admin-availability-calendar-section #admin-availability-calendar-grid.calendar-grid {
@@ -318,6 +321,12 @@
       header .top-controls { order: 3; }
       header h1 { order: 1; }
     }
+
+    /* DEBUGGING CSS */
+    /* .calendar-grid .calendar-day { outline: 1px solid red !important; } */
+    /* #calendar-view .calendar-day { outline: 1px solid blue !important; } */
+    /* #foh-working-list, #boh-working-list, #admin-working-list { outline: 1px dashed red; } */
+
   </style>
 </head>
 <body>
@@ -437,6 +446,7 @@
                         <select id="admin-availability-slot-filter">
                             <option value="all_slots">All Slots</option>
                         </select>
+                        <!-- Refresh button was removed from HTML -->
                     </div>
                     <div class="calendar-grid" id="admin-availability-calendar-grid">
                         <div class="day-name">Mon</div> <div class="day-name">Tue</div> <div class="day-name">Wed</div> <div class="day-name">Thu</div> <div class="day-name">Fri</div> <div class="day-name">Sat</div> <div class="day-name">Sun</div>
@@ -516,7 +526,7 @@
         const adminAvailabilityCalendarSection = document.getElementById('admin-availability-calendar-section'), adminPrevMonthAvailabilityBtn = document.getElementById('admin-prev-month-availability-btn');
         const adminNextMonthAvailabilityBtn = document.getElementById('admin-next-month-availability-btn'), adminCurrentMonthYearAvailabilityDisplay = document.getElementById('admin-current-month-year-availability');
         const adminAvailabilityStaffFilter = document.getElementById('admin-availability-staff-filter'), adminAvailabilityCalendarGrid = document.getElementById('admin-availability-calendar-grid');
-        // const refreshAdminAvailabilityBtn = document.getElementById('refresh-admin-availability-btn'); // Removed as per your instructions
+        // const refreshAdminAvailabilityBtn = document.getElementById('refresh-admin-availability-btn'); // Button removed
         const attendanceDateInput = document.getElementById('attendance-date'), adminAttendanceList = document.getElementById('admin-attendance-list');
         const taskOverviewDateInput = document.getElementById('task-overview-date'), taskStatusFilter = document.getElementById('task-status-filter'), adminTaskOverviewList = document.getElementById('admin-task-overview-list');
         const adminAvailabilitySlotFilter = document.getElementById('admin-availability-slot-filter');
@@ -528,25 +538,32 @@
         const AVAILABILITY_SLOTS = { MORNING: 'Morning (approx. 8am-12pm)', AFTERNOON: 'Afternoon (approx. 12pm-5pm)', EVENING: 'Evening (approx. 5pm-Close)', FULL_DAY: 'Full Day Available', UNAVAILABLE: 'Unavailable All Day' };
         const AVAILABILITY_SLOT_ORDER = [AVAILABILITY_SLOTS.MORNING, AVAILABILITY_SLOTS.AFTERNOON, AVAILABILITY_SLOTS.EVENING, AVAILABILITY_SLOTS.FULL_DAY, AVAILABILITY_SLOTS.UNAVAILABLE];
 
-        function showToast(message, type = 'info', duration = 3000) { /* ... same ... */ }
-        function loadData(key) { /* ... same ... */ }
-        function saveData(key, data) { /* ... same ... */ }
-        function getFormattedDate(date) { /* ... same ... */ }
-        function addDays(date, days) { /* ... same ... */ }
-        function formatTimestampToTime(ts) { /* ... same ... */ }
-        function getDisplayDate(date) { /* ... same ... */ }
-        function getWeekDays(startDate) { /* ... same ... */ }
-        function isPastEndOfDay(dateStr) { /* ... same ... */ }
-        function getStaffMember(name) { /* ... same ... */ }
-        function isCurrentUserAdmin() { /* ... same ... */ }
-        function isDateInRange(dateToCheck, startDateStr, endDateStr) { /* ... same ... */ }
+        function showToast(message, type = 'info', duration = 3000) { const cont = document.getElementById('toast-container'); if (!cont) return; const toast = document.createElement('div'); toast.classList.add('toast', type); toast.textContent = message; cont.appendChild(toast); void toast.offsetWidth; toast.classList.add('show'); setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, duration); }
+        function loadData(key) { const d = localStorage.getItem(key); try { return d ? JSON.parse(d) : null; } catch (e) { console.error(`Error loading data from localStorage for key "${key}":`, e); return null; } }
+        function saveData(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error(`Error saving data to localStorage for key "${key}":`, e); } }
+        function getFormattedDate(date) { return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`; }
+        function addDays(date, days) { const nD = new Date(date); nD.setDate(date.getDate() + days); return nD; }
+        function formatTimestampToTime(ts) { if (!ts) return 'N/A'; return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+        function getDisplayDate(date) { return date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
+        function getWeekDays(startDate) { const wD = [], d = new Date(startDate); d.setHours(0,0,0,0); const dOW = d.getDay(), diff = d.getDate()-dOW+(dOW===0?-6:1); d.setDate(diff); for(let i=0;i<7;i++){wD.push(new Date(d));d.setDate(d.getDate()+1);} return wD;}
+        function isPastEndOfDay(dateStr) { const cD=new Date(dateStr), t=new Date(); cD.setHours(23,59,59,999); t.setHours(0,0,0,0); return cD < t; }
+        function getStaffMember(name) { return staffMembers.find(s => s.name === name); }
+        function isCurrentUserAdmin() { return currentUserRole === 'Admin'; }
+        function isDateInRange(dateToCheck, startDateStr, endDateStr) { const cT=new Date(dateToCheck).setHours(0,0,0,0), sT=new Date(startDateStr).setHours(0,0,0,0), eT=new Date(endDateStr).setHours(0,0,0,0); return cT >= sT && cT <= eT; }
 
         function initializeData() {
+            console.log("Initializing data...");
             staffMembers=loadData(LS_KEYS.STAFF_MEMBERS)||[ {name:'Jill',role:'FOH',icon:'💁‍♀️'},{name:'Alice',role:'FOH',icon:'💁‍♀️'},{name:'Callum',role:'FOH',icon:'💁‍♀️'},{name:'Jess',role:'FOH',icon:'💁‍♀️'},{name:'Danny',role:'BOH',icon:'👩‍🍳'},{name:'Neil',role:'BOH',icon:'👩‍🍳'},{name:'Terry',role:'BOH',icon:'👩‍🍳'},{name:'Richard',role:'BOH',icon:'👩‍🍳'},{name:'Johnny',role:'Admin',icon:'🤵'},{name:'Lyndsey',role:'Admin',icon:'🤵'},{name:'Collin',role:'Admin',icon:'🤵'} ];
             rota=loadData(LS_KEYS.ROTA)||{}; dailyTasks=loadData(LS_KEYS.DAILY_TASKS)||{}; completedTasks=loadData(LS_KEYS.COMPLETED_TASKS)||{}; clockIns=loadData(LS_KEYS.CLOCK_INS)||{}; messageBoard=loadData(LS_KEYS.MESSAGE_BOARD)||[]; holidays=loadData(LS_KEYS.HOLIDAYS)||[]; availability=loadData(LS_KEYS.AVAILABILITY)||{};
             currentUserName=loadData(LS_KEYS.CURRENT_USER_NAME)||''; currentUserRole=loadData(LS_KEYS.CURRENT_USER_ROLE)||''; isAdminMode=loadData(LS_KEYS.IS_ADMIN_MODE)||false; activeViewId=loadData(LS_KEYS.LAST_ACTIVE_VIEW)||'home-view';
 
+            console.log("Loaded staffMembers:", JSON.stringify(staffMembers).substring(0,100) + "..."); // Log snippet
+            console.log("Loaded rota:", JSON.stringify(rota).substring(0,100) + "...");
+            console.log("Loaded clockIns:", JSON.stringify(clockIns).substring(0,100) + "...");
+            console.log("Loaded currentUserName:", currentUserName);
+
             saveData(LS_KEYS.STAFF_MEMBERS, staffMembers); saveData(LS_KEYS.ROTA, rota); saveData(LS_KEYS.DAILY_TASKS, dailyTasks); saveData(LS_KEYS.COMPLETED_TASKS, completedTasks); saveData(LS_KEYS.CLOCK_INS, clockIns); saveData(LS_KEYS.MESSAGE_BOARD, messageBoard); saveData(LS_KEYS.HOLIDAYS, holidays); saveData(LS_KEYS.AVAILABILITY, availability); saveData(LS_KEYS.CURRENT_USER_NAME, currentUserName); saveData(LS_KEYS.CURRENT_USER_ROLE, currentUserRole); saveData(LS_KEYS.IS_ADMIN_MODE, isAdminMode); saveData(LS_KEYS.LAST_ACTIVE_VIEW, activeViewId);
+            console.log("Data initialization complete.");
         }
         function showView(viewId){mainSections.forEach(s=>{s.classList.remove('active');s.style.display='none';}); const tS=document.getElementById(viewId); if(tS){tS.classList.add('active');tS.style.display='flex';} activeViewId=viewId; saveData(LS_KEYS.LAST_ACTIVE_VIEW,activeViewId); navButtons.forEach(b=>{b.classList.remove('active');if(b.id===`nav-${viewId.replace('-view','')}`)b.classList.add('active');}); if(viewId==='home-view')renderHomePage();else if(viewId==='my-tasks-view')renderMyTasks();else if(viewId==='my-availability-view'){currentAvailabilityWeekDate = new Date(); renderMyAvailabilityView();}else if(viewId==='weekly-rota-view')renderWeeklyRota();else if(viewId==='calendar-view')renderCalendar();else if(viewId==='admin-view')renderAdminForms();}
         function renderLandingPage(){staffIconsContainer.innerHTML='';staffMembers.forEach(m=>{const iD=document.createElement('div');iD.className=`staff-icon ${m.role.toLowerCase()}`;iD.dataset.name=m.name;iD.dataset.role=m.role;iD.innerHTML=`<span class="icon-placeholder">${m.icon}</span><div class="staff-name">${m.name}</div><div class="staff-role">${m.role}</div>`;iD.addEventListener('click',()=>handleUserLogin(m.name,m.role));staffIconsContainer.appendChild(iD);});}
@@ -558,14 +575,87 @@
         function handleNavButtonClick(e){const cB=e.target;let vI;if(cB.id==='nav-home')vI='home-view';else if(cB.id==='nav-my-tasks')vI='my-tasks-view';else if(cB.id==='nav-my-availability')vI='my-availability-view';else if(cB.id==='nav-weekly-rota')vI='weekly-rota-view';else if(cB.id==='nav-calendar')vI='calendar-view';else return; if(isAdminMode&&vI!=='admin-view'&&vI!=='home-view'){showToast("Exit Admin Mode.",'info');return;} if(vI === 'my-availability-view' && currentUserRole === 'Admin' && !isAdminMode){showToast("Admins don't set availability here.",'info');return;} showView(vI);}
         function renderUserDropdownsInApp(){const sS=[shiftUserSelect,taskUserSelect,viewShiftUserSelect,viewTaskUserSelect];sS.forEach(s=>{s.innerHTML='';if(staffMembers.length===0){const o=document.createElement('option');o.value='';o.textContent='No Staff';o.disabled=true;o.selected=true;s.appendChild(o);}else{staffMembers.forEach(m=>{const o=document.createElement('option');o.value=m.name;o.textContent=`${m.name} (${m.role})`;s.appendChild(o);});s.value=(currentUserName&&staffMembers.some(st=>st.name===currentUserName))?currentUserName:(staffMembers[0]?.name||'');}});}
 
-        function renderHomePage() { /* ... Same as previous correct version ... */ }
+        function renderHomePage() {
+            console.log("renderHomePage called. Current user:", currentUserName, "Role:", currentUserRole);
+            const today = new Date(), formattedToday = getFormattedDate(today);
+            console.log("Formatted today for homepage:", formattedToday);
+
+            const uCD=(clockIns[formattedToday]&&clockIns[formattedToday][currentUserName])||{};
+            console.log("User clock data for banner:", JSON.stringify(uCD));
+            let cSM='',cBT='Clock In';clockStatusBannerHome.classList.remove('clocked-in','clocked-out');if(uCD.in&&!uCD.out){cSM=`In: ${formatTimestampToTime(uCD.in)}`;cBT='Clock Out';clockStatusBannerHome.classList.add('clocked-in');}else if(uCD.in&&uCD.out){cSM=`In: ${formatTimestampToTime(uCD.in)}, Out: ${formatTimestampToTime(uCD.out)}`;cBT='Clock In';clockStatusBannerHome.classList.add('clocked-out');}else{cSM='Not clocked in.';cBT='Clock In';clockStatusBannerHome.classList.add('clocked-out');} clockStatusTextHome.textContent=cSM;clockInOutBtnHome.textContent=cBT;
+
+            const businessHolidayToday = holidays.find(h => h.staffName === "__BUSINESS__" && isDateInRange(today, h.startDate, h.endDate));
+            console.log("Business holiday today:", businessHolidayToday);
+            if (businessHolidayToday) {
+                whosWorkingHolidayMessage.textContent = `Closed Today: ${businessHolidayToday.name}${businessHolidayToday.startDate !== businessHolidayToday.endDate ? ' (until ' + getDisplayDate(new Date(businessHolidayToday.endDate)) + ')' : ''}`;
+                whosWorkingHolidayMessage.style.display = 'block'; whosWorkingGrid.style.display = 'none';
+                fohWorkingList.innerHTML = ''; bohWorkingList.innerHTML = ''; adminWorkingList.innerHTML = '';
+            } else {
+                whosWorkingHolidayMessage.style.display = 'none'; whosWorkingGrid.style.display = 'grid';
+                fohWorkingList.innerHTML = ''; bohWorkingList.innerHTML = ''; adminWorkingList.innerHTML = '';
+                const todayRotaForDisplay = rota[formattedToday] || {};
+                console.log("Today's Rota for display:", JSON.stringify(todayRotaForDisplay));
+                console.log("Staff members for 'Who's Working':", JSON.stringify(staffMembers));
+                let fC=0,bC=0,aC=0;
+                const staffToday = staffMembers.filter(m=>{if(!isCurrentUserAdmin()&&((currentUserRole==='FOH'&&m.role==='BOH')||(currentUserRole==='BOH'&&m.role==='FOH')))return false;return true;});
+                let fohListData = [], bohListData = [], adminListData = []; // For debug logging
+                staffToday.forEach(m=>{
+                    const pHoliday=holidays.find(h=>h.staffName===m.name&&isDateInRange(today,h.startDate,h.endDate));
+                    const sft=todayRotaForDisplay[m.name];
+                    // console.log("Checking staff in Who's Working:", m.name, "Shift:", sft, "Personal Holiday:", pHoliday);
+                    let dS=sft;let iOH=false; if(pHoliday){dS=`On Holiday (${pHoliday.name.substring(0,15)}${pHoliday.name.length>15?'...':''})`;iOH=true;}
+                    if((sft&&sft!=='Off')||iOH){
+                        const iD=document.createElement('div');iD.classList.add('staff-icon',m.role.toLowerCase());if(iOH)iD.classList.add('on-holiday');iD.innerHTML=`<span class="icon-placeholder">${m.icon}</span><div class="staff-name">${m.name}</div><div class="staff-role">${dS||'N/A'}</div>`;
+                        if(m.role==='FOH'){fohWorkingList.appendChild(iD);fC++; fohListData.push(m.name);}
+                        else if(m.role==='BOH'){bohWorkingList.appendChild(iD);bC++; bohListData.push(m.name);}
+                        else if(m.role==='Admin'){adminWorkingList.appendChild(iD);aC++; adminListData.push(m.name);}
+                    }
+                });
+                console.log('FOH today data:', fohListData, 'BOH today data:', bohListData, 'Admin today data:', adminListData);
+                if(fC===0 && fohWorkingList.children.length === 0)fohWorkingList.innerHTML='<li class="no-data">No FOH.</li>';if(bC===0 && bohWorkingList.children.length === 0)bohWorkingList.innerHTML='<li class="no-data">No BOH.</li>';if(aC===0 && adminWorkingList.children.length === 0)adminWorkingList.innerHTML='<li class="no-data">No Admin.</li>';
+            }
+            homeTaskList.innerHTML='';const tsksToday=(dailyTasks[formattedToday]&&dailyTasks[formattedToday][currentUserName])||[];const compToday=(completedTasks[formattedToday]&&completedTasks[formattedToday][currentUserName])||{};if(tsksToday.length===0){homeTaskList.innerHTML='<li class="no-tasks">No tasks.</li>';}else{tsksToday.forEach(t=>{const li=document.createElement('li');const cD=compToday[t];const iC=!!cD;const cTS=typeof cD==='object'?cD.timestamp:null;let tS=iC?'Completed':'Pending';if(!iC&&isPastEndOfDay(formattedToday)){tS='Overdue';li.classList.add('incomplete');}else if(iC){li.classList.add('completed');} li.textContent=`${t} (${tS})`;if(cTS)li.textContent+=` @ ${formatTimestampToTime(cTS)}`;li.classList.add('task-item');homeTaskList.appendChild(li);});}
+            cleanupMessages();renderMessageBoard();
+        }
         function toggleClockStatus(){ /* ... Same as previous correct version ... */ }
         function cleanupMessages(){ /* ... Same as previous correct version ... */ }
         function renderMessageBoard(){ /* ... Same as previous correct version ... */ }
         function handleSendMessage(e){ /* ... Same as previous correct version ... */ }
         function renderMyTasks(){ /* ... Same as previous correct version ... */ }
         function handleTaskCompletionOrImageAttach(e){ /* ... Same as previous correct version ... */ }
-        function renderWeeklyRota(){ /* ... Same as previous correct version ... */ }
+
+        function renderWeeklyRota(){
+            console.log('Rota grid element:', rotaGrid); // Debug
+            if (!rotaGrid) { console.error("Weekly rotaGrid is null!"); return; }
+            rotaGrid.innerHTML='';
+            const weekStart = new Date(); // Or use a state variable if you implement week navigation for rota
+            const wD=getWeekDays(weekStart);
+            console.log('Start of week for rota:', weekStart, '— building', wD.length, 'columns'); // Debug
+            console.log("Full rota data for weekly view:", JSON.stringify(rota));
+
+            wD.forEach(d=>{
+                const fD=getFormattedDate(d);const dC=document.createElement('div');dC.classList.add('rota-day-column');dC.innerHTML=`<strong>${getDisplayDate(d)}</strong><ul></ul>`;const ul=dC.querySelector('ul');const dR=rota[fD]||{};
+                // console.log(`Weekly Rota - Rota for ${fD}:`, JSON.stringify(dR)); // Verbose, uncomment if needed
+                const sD=staffMembers.filter(m=>{if(!isCurrentUserAdmin()&&((currentUserRole==='FOH'&&m.role==='BOH')||(currentUserRole==='BOH'&&m.role==='FOH')))return false;return true;}).sort((a,b)=>{ const rO={'FOH':1,'BOH':2,'Admin':3}; if(rO[a.role]!==rO[b.role])return rO[a.role]-rO[b.role]; return a.name.localeCompare(b.name);});
+                // console.log(`Weekly Rota - Staff for display on ${fD}:`, JSON.stringify(sD).substring(0,100)+"..."); // Verbose
+                if (sD.length === 0) {
+                    const li = document.createElement('li'); li.textContent = "No staff to display for this role filter."; ul.appendChild(li);
+                } else {
+                    let hasEntries = false;
+                    sD.forEach(m=>{const s=dR[m.name]||'Off';const li=document.createElement('li');li.textContent=`${m.name}: ${s}`;li.classList.add(m.role.toLowerCase());ul.appendChild(li); if(s !== 'Off') hasEntries = true;});
+                    if (!hasEntries && ul.children.length > 0 && sD.every(staff => (dR[staff.name] || 'Off') === 'Off')) { // Check if all are 'Off' for displayed staff
+                        ul.innerHTML = '<li class="no-data" style="text-align:center;">All Off</li>';
+                    } else if (ul.children.length === 0) {
+                         ul.innerHTML = '<li class="no-data" style="text-align:center;">No Shifts</li>';
+                    }
+                }
+                rotaGrid.appendChild(dC);
+            });
+            if (rotaGrid) { // Check again after potential modifications
+                 console.log('Weekly Rota - Columns defined:', getComputedStyle(rotaGrid).gridTemplateColumns); // Debug
+                 console.log('Weekly Rota - Child columns rendered:', rotaGrid.children.length); // Debug
+            }
+        }
 
         function renderCalendar() {
             if (!calendarGridElement || !currentMonthYearDisplay) { console.error("Main calendar elements (#calendar-view .calendar-grid or #current-month-year) not found!"); return; }
@@ -574,7 +664,9 @@
             const year = currentCalendarDate.getFullYear(),month = currentCalendarDate.getMonth();
             currentMonthYearDisplay.textContent = currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
             const firstDayOfMonth = new Date(year, month, 1), lastDayOfMonth = new Date(year, month + 1, 0);
-            const numDaysInMonth = lastDayOfMonth.getDate(), firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
+            const numDaysInMonth = lastDayOfMonth.getDate(), firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7; // 0 for Monday
+            console.log(`Main Calendar: Rendering month ${month+1}/${year}. First day of week index: ${firstDayOfWeek}, Days in month: ${numDaysInMonth}`);
+
             for (let i = 0; i < firstDayOfWeek; i++) { const emptyDayCell = document.createElement('div'); emptyDayCell.classList.add('calendar-day'); calendarGridElement.appendChild(emptyDayCell); }
             const todayFormatted = getFormattedDate(new Date()), filterRole = calendarRoleFilter.value;
             for (let dayNum = 1; dayNum <= numDaysInMonth; dayNum++) {
@@ -593,7 +685,7 @@
                 if (ul.children.length === 0 && !businessHolidayOnDay) { const li = document.createElement('li'); li.textContent = "No shifts"; li.style.textAlign = 'center'; li.style.color = 'var(--dark-grey)'; li.style.fontSize = '0.9em'; ul.appendChild(li); }
                 calendarGridElement.appendChild(dayCell);
             }
-            console.log("Main calendar rendered, day cells:", calendarGridElement.querySelectorAll('.calendar-day.current-month').length);
+            console.log('Main calendar rendered, day cells with current-month class:', calendarGridElement.querySelectorAll('.calendar-day.current-month').length, "Expected:", numDaysInMonth);
         }
         function goToPrevMonth(){currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1);renderCalendar();}
         function goToNextMonth(){currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1);renderCalendar();}
@@ -615,7 +707,7 @@
                     if (!foundAnyMatchingAvailabilityOrHoliday && ul.children.length === 0) { const li = document.createElement('li'); li.classList.add('no-data'); if (selectedStaffRoleFilter !== 'all' && selectedSlotFilter !== 'all_slots') { li.textContent = 'None for filter'; } else if (selectedStaffRoleFilter !== 'all') { li.textContent = 'No matching avail.'; } else if (selectedSlotFilter !== 'all_slots') { li.textContent = 'None for slot'; } else { li.textContent = 'No Avail.'; } ul.appendChild(li); }
                 } adminAvailabilityCalendarGrid.appendChild(dayCell);
             }
-            console.log("Admin Availability Calendar rendered, day cells:", adminAvailabilityCalendarGrid.querySelectorAll('.calendar-day.current-month').length);
+            console.log('Admin Availability Calendar rendered, day cells:', adminAvailabilityCalendarGrid.querySelectorAll('.calendar-day.current-month').length);
         }
         function adminChangeAvailabilityCalendarMonth(direction) { currentAdminAvailabilityCalendarDate.setMonth(currentAdminAvailabilityCalendarDate.getMonth() + direction); renderAdminAvailabilityCalendar(); }
 
@@ -646,7 +738,6 @@
             if(adminNextMonthAvailabilityBtn) adminNextMonthAvailabilityBtn.addEventListener('click', () => adminChangeAvailabilityCalendarMonth(1));
             if(adminAvailabilityStaffFilter) adminAvailabilityStaffFilter.addEventListener('change', renderAdminAvailabilityCalendar);
             if(adminAvailabilitySlotFilter) adminAvailabilitySlotFilter.addEventListener('change', renderAdminAvailabilityCalendar);
-            // Removed refreshAdminAvailabilityBtn event listener as button was removed
             if(isAdminMode){renderAdminShiftAttendance();renderAdminTaskOverview();renderAdminHolidayList(); renderAdminAvailabilityCalendar();}
             const delBtnsAdm=adminView.querySelectorAll('.delete-btn');const disDelBtns=!isCurrentUserAdmin();delBtnsAdm.forEach(b=>b.disabled=disDelBtns);prevMonthBtn.addEventListener('click',goToPrevMonth);nextMonthBtn.addEventListener('click',goToNextMonth);calendarRoleFilter.addEventListener('change',renderCalendar);
         }
